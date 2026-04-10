@@ -1,18 +1,13 @@
-// CategoryHeader.jsx — Fixed top strip. Module tabs, active gold underline.
-// Tapping a tab switches active module + auto-opens layer panel.
-// Left side has a home button to return to module dashboard.
+// CategoryHeader.jsx — Fixed top strip in map view.
+// Left: home grid icon (returns to module dashboard).
+// Centre: active module name.
+// No tabs — data navigation moved to DataSheet bottom sheet.
 import useModuleStore from '../store/moduleStore'
-import useMapStore from '../store/mapStore'
-import { MODULES } from '../lib/moduleConfig'
+import { getModule } from '../lib/moduleConfig'
 
 export default function CategoryHeader({ onHome }) {
-  const { activeModule, setActiveModule } = useModuleStore()
-  const { setLayerPanelOpen } = useMapStore()
-
-  function handleTabTap(module) {
-    setActiveModule(module.id)
-    setLayerPanelOpen(true)
-  }
+  const { activeModule } = useModuleStore()
+  const module = getModule(activeModule)
 
   return (
     <div
@@ -31,75 +26,71 @@ export default function CategoryHeader({ onHome }) {
         style={{
           height: 44,
           display: 'flex',
-          alignItems: 'stretch',
+          alignItems: 'center',
+          position: 'relative',
         }}
       >
-        {/* Home / logo button */}
+        {/* Home button — grid icon, left */}
         <button
           onClick={onHome}
           aria-label="Back to module dashboard"
           style={{
-            flexShrink: 0,
-            width: 44,
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: 52,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             background: 'none',
             border: 'none',
-            borderRight: '1px solid #2E3035',
             cursor: 'pointer',
-            color: '#E8C96A',
+            color: '#6B7280',
             padding: 0,
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          {/* EE monogram */}
+          {/* 2×2 grid icon */}
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-            <path d="M2 2h6M2 9h5M2 16h6" stroke="#E8C96A" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M10 2h6M10 9h5M10 16h6" stroke="#E8C96A" strokeWidth="2" strokeLinecap="round"/>
+            <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="2" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="10" y="10" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         </button>
 
-        {/* Module tabs — scrollable on small screens */}
+        {/* Module name — centred */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'stretch',
             flex: 1,
-            overflowX: 'auto',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 7,
           }}
         >
-          {MODULES.map((module) => {
-            const isActive = module.id === activeModule
-            return (
-              <button
-                key={module.id}
-                onClick={() => handleTabTap(module)}
-                style={{
-                  flexShrink: 0,
-                  padding: '0 14px',
-                  background: 'none',
-                  border: 'none',
-                  borderBottom: isActive
-                    ? '2px solid #E8C96A'
-                    : '2px solid transparent',
-                  cursor: 'pointer',
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: isActive ? '#E8C96A' : '#6B7280',
-                  transition: 'color 150ms ease, border-color 150ms ease',
-                  WebkitTapHighlightColor: 'transparent',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {module.shortLabel}
-              </button>
-            )
-          })}
+          {module && (
+            <div
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: '50%',
+                background: module.accent,
+                flexShrink: 0,
+              }}
+            />
+          )}
+          <span
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#E8EAF0',
+              letterSpacing: '0.01em',
+            }}
+          >
+            {module?.label ?? 'Explore Eire'}
+          </span>
         </div>
       </div>
     </div>

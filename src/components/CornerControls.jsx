@@ -1,9 +1,12 @@
 // CornerControls.jsx — 4 floating glass buttons, safe-area aware.
 // Layout:
 //   Top-left:     ⚙ Settings
-//   Top-right:    ≡ Layers
+//   Top-right:    ≡ Layers  → opens DataSheet to half state
 //   Bottom-left:  🗺 Basemap
 //   Bottom-centre:📷 Camera (64×64)
+//
+// Bottom buttons are raised 76px (60px collapsed sheet + 16px gap)
+// so they are always visible above the DataSheet.
 import useMapStore from '../store/mapStore'
 
 // Shared glass button style
@@ -21,10 +24,11 @@ const GLASS = {
 }
 
 // Category header height + gap below it
-const TOP_OFFSET = 'calc(env(safe-area-inset-top, 0px) + 44px + 12px)'
+const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 44px + 12px)'
 const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
-const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 24px)'
+// Raised 76px from safe-area: 60px collapsed sheet height + 16px gap
+const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 76px)'
 
 function SettingsBtn({ onPress }) {
   return (
@@ -137,15 +141,22 @@ function CameraBtn({ onPress }) {
 export default function CornerControls() {
   const {
     setSettingsPanelOpen,
-    setLayerPanelOpen,
-    layerPanelOpen,
+    setDataSheetState,
+    dataSheetState,
     setBasemapPickerOpen,
   } = useMapStore()
+
+  function handleLayersPress() {
+    // Toggle between half and collapsed; if already full, stay full
+    if (dataSheetState === 'collapsed') setDataSheetState('half')
+    else if (dataSheetState === 'half')  setDataSheetState('collapsed')
+    // full state: let the sheet handle its own dismiss via swipe
+  }
 
   return (
     <>
       <SettingsBtn onPress={() => setSettingsPanelOpen(true)} />
-      <LayersBtn onPress={() => setLayerPanelOpen(!layerPanelOpen)} />
+      <LayersBtn onPress={handleLayersPress} />
       <BasemapBtn onPress={() => setBasemapPickerOpen(true)} />
       <CameraBtn onPress={() => {/* TODO: open waypoint camera flow */}} />
     </>

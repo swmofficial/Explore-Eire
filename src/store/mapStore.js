@@ -21,9 +21,9 @@ const useMapStore = create((set) => ({
       layerVisibility: { ...state.layerVisibility, [layerId]: visible },
     })),
 
-  // Layer panel open state
-  layerPanelOpen: false,
-  setLayerPanelOpen: (open) => set({ layerPanelOpen: open }),
+  // Data sheet state (bottom sheet replacing layer panel)
+  dataSheetState: 'collapsed', // 'collapsed' | 'half' | 'full'
+  setDataSheetState: (state) => set({ dataSheetState: state }),
 
   // Settings panel open state
   settingsPanelOpen: false,

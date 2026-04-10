@@ -3,26 +3,25 @@
 import { useState } from 'react'
 import useModuleStore from './store/moduleStore'
 import useMapStore from './store/mapStore'
-import useUserStore from './store/userStore'
 import ModuleDashboard from './components/ModuleDashboard'
 import MapView from './components/Map'
 import CategoryHeader from './components/CategoryHeader'
 import CornerControls from './components/CornerControls'
-import LayerPanel from './components/LayerPanel'
+import DataSheet from './components/DataSheet'
 
 export default function App() {
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
   const { setActiveModule } = useModuleStore()
-  const { setLayerPanelOpen } = useMapStore()
+  const { setDataSheetState } = useMapStore()
 
   function enterModule(moduleId) {
     setActiveModule(moduleId)
-    setLayerPanelOpen(false)
+    setDataSheetState('collapsed')
     setView('map')
   }
 
   function goToDashboard() {
-    setLayerPanelOpen(false)
+    setDataSheetState('collapsed')
     setView('dashboard')
   }
 
@@ -35,9 +34,9 @@ export default function App() {
       {/* Map is the base layer — always behind everything */}
       <MapView />
       {/* Overlays in z-order */}
-      <LayerPanel />
       <CategoryHeader onHome={goToDashboard} />
       <CornerControls />
+      <DataSheet />
     </div>
   )
 }
