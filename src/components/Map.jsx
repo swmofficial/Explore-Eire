@@ -7,7 +7,7 @@ import useMapStore from '../store/mapStore'
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY
 
-const SATELLITE_STYLE = `https://api.maptiler.com/maps/satellite/style.json?key=${MAPTILER_KEY}`
+const SATELLITE_STYLE = `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${MAPTILER_KEY}`
 
 export default function Map() {
   const containerRef = useRef(null)
@@ -18,12 +18,19 @@ export default function Map() {
   useEffect(() => {
     if (mapRef.current) return
 
+    console.log('[Map] VITE_MAPTILER_KEY present:', !!MAPTILER_KEY, '| length:', MAPTILER_KEY?.length ?? 0)
+    console.log('[Map] Style URL:', SATELLITE_STYLE)
+
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: SATELLITE_STYLE,
       center: [-8.0, 53.5],
       zoom: 7,
       attributionControl: false, // add custom positioned below
+    })
+
+    map.on('error', (e) => {
+      console.error('[Map] MapLibre error:', e.error?.message ?? e)
     })
 
     // Custom attribution — bottom-right, unobtrusive
