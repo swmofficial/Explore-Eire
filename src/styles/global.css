@@ -259,3 +259,55 @@ html, body {
   font-weight: var(--text-caption-weight);
   color: var(--color-muted);
 }
+
+/* ------------------------------------------------------------
+   MapLibre GL — Overrides
+   ------------------------------------------------------------ */
+
+/* Hide the GeolocateControl button — GPS dot still renders on map.
+   The dot is triggered programmatically on map load. */
+.maplibregl-ctrl-geolocate {
+  display: none !important;
+}
+
+/* Attribution — compact, unobtrusive, safe from corner controls */
+.maplibregl-ctrl-attrib {
+  background: rgba(10,10,10,0.7) !important;
+  color: #6B7280 !important;
+  font-size: 10px !important;
+  border-radius: 4px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #6B7280 !important;
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  margin-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px) !important;
+  margin-right: calc(env(safe-area-inset-right, 0px) + 6px) !important;
+}
+
+/* Remove MapLibre's default logo (MapTiler logo handled separately) */
+.maplibregl-ctrl-logo {
+  display: none !important;
+}
+
+/* GPS dot — blue pulsing dot styling */
+.maplibregl-user-location-dot,
+.maplibregl-user-location-dot::before {
+  background-color: #4B8BE8 !important;
+}
+
+.maplibregl-user-location-dot::before {
+  box-shadow: 0 0 0 0 rgba(75,139,232,0.4) !important;
+}
+
+/* Hide scrollbar on category header tab strip */
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Module icon press effect */
+.module-icon-btn:active > div {
+  transform: scale(0.95);
+}
