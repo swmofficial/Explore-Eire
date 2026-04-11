@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import useMapStore from '../store/mapStore'
+import useUserStore from '../store/userStore'
 import { useGoldSamples } from '../hooks/useGoldSamples'
 import { GOLD_TIERS, GSI_LAYERS } from '../lib/mapConfig'
 
@@ -190,6 +191,7 @@ export default function Map() {
     sessionWaypoints,
     setSelectedSample,
   } = useMapStore()
+  const { isPro } = useUserStore()
 
   const { samples } = useGoldSamples()
 
@@ -452,28 +454,44 @@ export default function Map() {
     if (!map || !mapLoadedRef.current) return
 
     const streamOn = layerVisibility.stream_sediment !== false
-    const visibleTiers = TIER_FILTER_GROUPS[tierFilter] ?? TIER_FILTER_GROUPS.all
 
-    // Tier circle layers
-    for (const t of TIER_LAYERS) {
-      if (!map.getLayer(t.id)) continue
-      const vis = streamOn && visibleTiers.includes(t.id) ? 'visible' : 'none'
-      map.setLayoutProperty(t.id, 'visibility', vis)
+    // Free/guest tier gate — non-pro users see t6+t7 (low + background) only
+    if (!isPro) {
+      const FREE_TIERS = new Set(['gold-t6', 'gold-t7'])
+      for (const t of TIER_LAYERS) {
+        if (!map.getLayer(t.id)) continue
+        map.setLayoutProperty(
+          t.id,
+          'visibility',
+          streamOn && FREE_TIERS.has(t.id) ? 'visible' : 'none'
+        )
+      }
+      // Pro users only for WMS — keep all hidden for non-pro
+      for (const layerId of Object.values(WMS_LAYER_MAP)) {
+        if (!map.getLayer(layerId)) continue
+        map.setLayoutProperty(layerId, 'visibility', 'none')
+      }
+    } else {
+      // Pro: respect tierFilter + individual layerVisibility toggles
+      const visibleTiers = TIER_FILTER_GROUPS[tierFilter] ?? TIER_FILTER_GROUPS.all
+      for (const t of TIER_LAYERS) {
+        if (!map.getLayer(t.id)) continue
+        const vis = streamOn && visibleTiers.includes(t.id) ? 'visible' : 'none'
+        map.setLayoutProperty(t.id, 'visibility', vis)
+      }
+      for (const [storeKey, layerId] of Object.entries(WMS_LAYER_MAP)) {
+        if (!map.getLayer(layerId)) continue
+        const vis = layerVisibility[storeKey] === true ? 'visible' : 'none'
+        map.setLayoutProperty(layerId, 'visibility', vis)
+      }
     }
 
-    // Rock circles
+    // Rock circles — available regardless of tier (own toggle)
     if (map.getLayer('rock-circles')) {
       const vis = layerVisibility.rock_samples === true ? 'visible' : 'none'
       map.setLayoutProperty('rock-circles', 'visibility', vis)
     }
-
-    // WMS raster layers
-    for (const [storeKey, layerId] of Object.entries(WMS_LAYER_MAP)) {
-      if (!map.getLayer(layerId)) continue
-      const vis = layerVisibility[storeKey] === true ? 'visible' : 'none'
-      map.setLayoutProperty(layerId, 'visibility', vis)
-    }
-  }, [layerVisibility, tierFilter])
+  }, [layerVisibility, tierFilter, isPro])
 
   // ── Update session trail ───────────────────────────────────────
   useEffect(() => {

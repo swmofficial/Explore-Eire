@@ -6,6 +6,10 @@ const useUserStore = create((set) => ({
   user: null,
   setUser: (user) => set({ user }),
 
+  // Guest mode — browsing without an account (t6/t7 only, no waypoints)
+  isGuest: false,
+  setIsGuest: (v) => set({ isGuest: v }),
+
   // Subscription state
   isPro: false,
   setIsPro: (isPro) => set({ isPro }),
@@ -26,6 +30,10 @@ const useUserStore = create((set) => ({
 
   showUpgradeSheet: false,
   setShowUpgradeSheet: (show) => set({ showUpgradeSheet: show }),
+
+  // Colour theme — 'dark' | 'light' | 'eire'
+  theme: 'dark',
+  setTheme: (t) => set({ theme: t }),
 }))
 
 export default useUserStore

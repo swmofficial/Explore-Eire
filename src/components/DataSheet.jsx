@@ -85,7 +85,7 @@ function SampleRow({ sample, userPos, onTap }) {
         padding: '10px 16px',
         background: 'none',
         border: 'none',
-        borderBottom: '1px solid #1A1C20',
+        borderBottom: '1px solid var(--color-surface)',
         cursor: 'pointer',
         gap: 12,
         WebkitTapHighlightColor: 'transparent',
@@ -105,20 +105,20 @@ function SampleRow({ sample, userPos, onTap }) {
 
       {/* Sample info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: '#E8EAF0', marginBottom: 2 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-primary)', marginBottom: 2 }}>
           {tierLabel(sample.au_ppb)}
-          <span style={{ fontWeight: 400, color: '#6B7280', marginLeft: 6 }}>
+          <span style={{ fontWeight: 400, color: 'var(--color-muted)', marginLeft: 6 }}>
             {sample.au_ppb} ppb
           </span>
         </div>
-        <div style={{ fontSize: 11, color: '#6B7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 11, color: 'var(--color-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {sample.sample_type ?? 'Stream sediment'} · {sample.survey ?? 'GSI'}
         </div>
       </div>
 
       {/* Distance */}
       {dist !== null && (
-        <span style={{ fontSize: 12, color: '#6B7280', flexShrink: 0 }}>
+        <span style={{ fontSize: 12, color: 'var(--color-muted)', flexShrink: 0 }}>
           {formatDist(dist)}
         </span>
       )}
@@ -251,8 +251,8 @@ export default function DataSheet() {
         left: 0,
         right: 0,
         height: sheetHeight,
-        background: '#111214',
-        borderTop: '1px solid #2E3035',
+        background: 'var(--color-base)',
+        borderTop: '1px solid var(--color-border)',
         borderRadius: '16px 16px 0 0',
         zIndex: 22,
         transition: 'height 320ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -285,7 +285,7 @@ export default function DataSheet() {
             width: 32,
             height: 4,
             borderRadius: 2,
-            background: '#2E3035',
+            background: 'var(--color-border)',
             marginBottom: isCollapsed ? 8 : 4,
             flexShrink: 0,
           }}
@@ -296,7 +296,7 @@ export default function DataSheet() {
           <span
             style={{
               fontSize: 13,
-              color: '#6B7280',
+              color: 'var(--color-muted)',
               fontWeight: 500,
               paddingBottom: 6,
             }}
@@ -332,9 +332,9 @@ export default function DataSheet() {
                     flexShrink: 0,
                     padding: '5px 14px',
                     borderRadius: 20,
-                    border: `1px solid ${active ? '#E8C96A' : '#2E3035'}`,
-                    background: active ? 'rgba(232,201,106,0.15)' : '#1A1C20',
-                    color: active ? '#E8C96A' : '#6B7280',
+                    border: `1px solid ${active ? '#E8C96A' : 'var(--color-border)'}`,
+                    background: active ? 'rgba(232,201,106,0.15)' : 'var(--color-surface)',
+                    color: active ? '#E8C96A' : 'var(--color-muted)',
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -348,7 +348,7 @@ export default function DataSheet() {
             })}
 
             {/* Divider between groups */}
-            <div style={{ width: 1, height: 28, background: '#2E3035', alignSelf: 'center', flexShrink: 0 }} />
+            <div style={{ width: 1, height: 28, background: 'var(--color-border)', alignSelf: 'center', flexShrink: 0 }} />
 
             {/* WMS toggle pills — independent on/off */}
             {WMS_FILTERS.map((f) => {
@@ -361,9 +361,9 @@ export default function DataSheet() {
                     flexShrink: 0,
                     padding: '5px 14px',
                     borderRadius: 20,
-                    border: `1px solid ${on ? 'rgba(91,143,212,0.6)' : '#2E3035'}`,
-                    background: on ? 'rgba(91,143,212,0.15)' : '#1A1C20',
-                    color: on ? '#5B8FD4' : '#6B7280',
+                    border: `1px solid ${on ? 'rgba(91,143,212,0.6)' : 'var(--color-border)'}`,
+                    background: on ? 'rgba(91,143,212,0.15)' : 'var(--color-surface)',
+                    color: on ? '#5B8FD4' : 'var(--color-muted)',
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -378,7 +378,7 @@ export default function DataSheet() {
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: '#2E3035', flexShrink: 0 }} />
+          <div style={{ height: 1, background: 'var(--color-border)', flexShrink: 0 }} />
 
           {/* Section header */}
           <div
@@ -388,7 +388,7 @@ export default function DataSheet() {
               fontWeight: 600,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
-              color: '#6B7280',
+              color: 'var(--color-muted)',
               flexShrink: 0,
             }}
           >
@@ -398,11 +398,11 @@ export default function DataSheet() {
           {/* Sample list — scrollable */}
           <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             {loading ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: '#6B7280', fontSize: 13 }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
                 Loading…
               </div>
             ) : sortedSamples.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: '#6B7280', fontSize: 13 }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
                 No samples match this filter.
               </div>
             ) : (

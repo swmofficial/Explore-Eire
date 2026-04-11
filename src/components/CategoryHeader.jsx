@@ -17,8 +17,8 @@ export default function CategoryHeader({ onHome }) {
         left: 0,
         right: 0,
         zIndex: 20,
-        background: '#0A0A0A',
-        borderBottom: '1px solid #2E3035',
+        background: 'var(--color-void)',
+        borderBottom: '1px solid var(--color-border)',
         paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
@@ -46,7 +46,7 @@ export default function CategoryHeader({ onHome }) {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: '#6B7280',
+            color: 'var(--color-muted)',
             padding: 0,
             WebkitTapHighlightColor: 'transparent',
           }}
@@ -85,7 +85,7 @@ export default function CategoryHeader({ onHome }) {
             style={{
               fontSize: 14,
               fontWeight: 600,
-              color: '#E8EAF0',
+              color: 'var(--color-primary)',
               letterSpacing: '0.01em',
             }}
           >

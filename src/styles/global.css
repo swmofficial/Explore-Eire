@@ -110,6 +110,40 @@
 }
 
 /* ------------------------------------------------------------
+   Theme overrides
+   --color-void / base / surface / raised / border / muted / primary / white
+   Gold accent and module colours stay the same in every theme.
+   Map canvas is always dark regardless of theme.
+   ------------------------------------------------------------ */
+
+[data-theme="light"] {
+  --color-void:    #E8EAF0;
+  --color-base:    #FFFFFF;
+  --color-surface: #F3F4F6;
+  --color-raised:  #E9EAEC;
+  --color-border:  #D1D5DB;
+  --color-muted:   #9CA3AF;
+  --color-primary: #111214;
+  --color-white:   #0A0A0A;
+
+  /* Glass button override for light theme — keep readable on map */
+  --glass-bg:     rgba(240, 242, 245, 0.92);
+  --glass-border: rgba(232, 201, 106, 0.4);
+}
+
+/* Eire — deep forest green */
+[data-theme="eire"] {
+  --color-void:    #0D1F0D;
+  --color-base:    #102010;
+  --color-surface: #162816;
+  --color-raised:  #1C321C;
+  --color-border:  #274027;
+  --color-muted:   #7A9E7A;
+  --color-primary: #EDF0ED;
+  --color-white:   #FFFFFF;
+}
+
+/* ------------------------------------------------------------
    Base Reset
    ------------------------------------------------------------ */
 *, *::before, *::after {
@@ -203,6 +237,13 @@ html, body {
    ------------------------------------------------------------ */
 
 /* Glass button base */
+/* Corner controls stay dark on map regardless of theme */
+[data-theme="light"] .glass-btn {
+  background: rgba(10, 10, 10, 0.88);
+  border: 1px solid rgba(232, 201, 106, 0.25);
+  color: #E8EAF0;
+}
+
 .glass-btn {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);

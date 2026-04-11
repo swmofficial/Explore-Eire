@@ -33,7 +33,7 @@ function Toggle({ checked, onChange, disabled }) {
           width: 36,
           height: 20,
           borderRadius: 10,
-          background: checked && !disabled ? '#E8C96A' : '#2E3035',
+          background: checked && !disabled ? '#E8C96A' : 'var(--color-border)',
           transition: 'background 150ms ease',
           position: 'relative',
         }}
@@ -47,7 +47,7 @@ function Toggle({ checked, onChange, disabled }) {
             width: 16,
             height: 16,
             borderRadius: '50%',
-            background: disabled ? '#6B7280' : '#E8EAF0',
+            background: disabled ? 'var(--color-muted)' : 'var(--color-primary)',
             transition: 'left 150ms ease',
             boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
           }}
@@ -95,7 +95,7 @@ function LayerRow({ layer, visible, onToggle, isPro }) {
       <span
         style={{
           fontSize: 14,
-          color: '#E8EAF0',
+          color: 'var(--color-primary)',
           fontWeight: 400,
           flex: 1,
           minWidth: 0,
@@ -130,7 +130,7 @@ function LayerSection({ section, layerVisibility, onToggle, isPro }) {
           fontWeight: 600,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: '#6B7280',
+          color: 'var(--color-muted)',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -138,14 +138,14 @@ function LayerSection({ section, layerVisibility, onToggle, isPro }) {
       >
         {section.label}
         {section.placeholder && (
-          <span style={{ fontSize: 9, color: '#2E3035', fontWeight: 500 }}>
+          <span style={{ fontSize: 9, color: 'var(--color-border)', fontWeight: 500 }}>
             No data yet
           </span>
         )}
       </div>
 
       {/* Divider */}
-      <div style={{ height: 1, background: '#2E3035', marginBottom: 2 }} />
+      <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 2 }} />
 
       {/* Layer rows */}
       {section.layers.map((layer) => (
@@ -198,8 +198,8 @@ export default function LayerPanel() {
           right: 0,
           bottom: 0,
           width: 'min(80vw, 320px)',
-          background: '#111214',
-          borderLeft: '1px solid #2E3035',
+          background: 'var(--color-base)',
+          borderLeft: '1px solid var(--color-border)',
           zIndex: 30,
           display: 'flex',
           flexDirection: 'column',
@@ -218,7 +218,7 @@ export default function LayerPanel() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '0 16px',
-            borderBottom: '1px solid #2E3035',
+            borderBottom: '1px solid var(--color-border)',
             flexShrink: 0,
           }}
         >
@@ -233,11 +233,11 @@ export default function LayerPanel() {
                 flexShrink: 0,
               }} />
             )}
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#E8EAF0' }}>
+            <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>
               Layers
             </span>
             {module && (
-              <span style={{ fontSize: 12, color: '#6B7280' }}>
+              <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
                 · {module.label}
               </span>
             )}
@@ -250,7 +250,7 @@ export default function LayerPanel() {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              color: '#6B7280',
+              color: 'var(--color-muted)',
               padding: 6,
               display: 'flex',
               alignItems: 'center',
@@ -276,7 +276,7 @@ export default function LayerPanel() {
           }}
         >
           {categories.length === 0 ? (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: '#6B7280', fontSize: 13 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
               No layers available for this module yet.
             </div>
           ) : (
@@ -297,12 +297,12 @@ export default function LayerPanel() {
           <div
             style={{
               padding: '12px 16px',
-              borderTop: '1px solid #2E3035',
-              background: '#0A0A0A',
+              borderTop: '1px solid var(--color-border)',
+              background: 'var(--color-void)',
               flexShrink: 0,
             }}
           >
-            <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 8px', lineHeight: 1.4 }}>
+            <p style={{ fontSize: 12, color: 'var(--color-muted)', margin: '0 0 8px', lineHeight: 1.4 }}>
               Pro layers include GSI geochemistry, bedrock geology, and boreholes.
             </p>
             <button

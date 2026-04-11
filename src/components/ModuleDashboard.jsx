@@ -1,6 +1,8 @@
 // ModuleDashboard.jsx — Home screen. 5 module icons, lock/unlock, branding, CTA.
+// "Sign up free" button opens AuthModal. AuthModal has "Continue as guest" link.
 import useUserStore from '../store/userStore'
 import { MODULES } from '../lib/moduleConfig'
+import AuthModal from './AuthModal'
 
 function LockIcon() {
   return (
@@ -18,7 +20,7 @@ function ComingSoonBadge() {
       fontWeight: 600,
       letterSpacing: '0.04em',
       textTransform: 'uppercase',
-      color: '#6B7280',
+      color: 'var(--color-muted)',
       marginTop: 2,
     }}>
       Soon
@@ -52,9 +54,9 @@ function ModuleIcon({ module, unlocked, onTap }) {
           width: 80,
           height: 80,
           borderRadius: 20,
-          background: '#1A1C20',
+          background: 'var(--color-surface)',
           border: isLocked
-            ? '1px solid #2E3035'
+            ? '1px solid var(--color-border)'
             : `1.5px solid ${module.accent}`,
           opacity: isLocked ? 0.45 : 1,
           display: 'flex',
@@ -65,13 +67,12 @@ function ModuleIcon({ module, unlocked, onTap }) {
         }}
       >
         <span role="img" aria-label={module.label}>{module.icon}</span>
-        {/* Lock overlay */}
         {isLocked && (
           <div style={{
             position: 'absolute',
             bottom: 6,
             right: 6,
-            color: '#6B7280',
+            color: 'var(--color-muted)',
             lineHeight: 0,
           }}>
             <LockIcon />
@@ -85,7 +86,7 @@ function ModuleIcon({ module, unlocked, onTap }) {
         fontWeight: 600,
         textTransform: 'uppercase',
         letterSpacing: '0.08em',
-        color: isLocked ? '#6B7280' : '#E8EAF0',
+        color: isLocked ? 'var(--color-muted)' : 'var(--color-primary)',
         textAlign: 'center',
         lineHeight: 1.2,
         maxWidth: 80,
@@ -102,13 +103,12 @@ export default function ModuleDashboard({ onEnterModule }) {
   const { user, isPro, setShowAuthModal, setShowUpgradeSheet } = useUserStore()
 
   function isUnlocked(module) {
-    // Prospecting is accessible on free tier (limited data)
     if (module.id === 'prospecting') return true
     return isPro
   }
 
   function handleModuleTap(module) {
-    if (!module.available) return // data not ready yet
+    if (!module.available) return
     if (module.id === 'prospecting') {
       onEnterModule(module.id)
       return
@@ -132,7 +132,7 @@ export default function ModuleDashboard({ onEnterModule }) {
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: '#0A0A0A',
+      background: 'var(--color-void)',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -143,9 +143,8 @@ export default function ModuleDashboard({ onEnterModule }) {
       paddingRight: 'max(env(safe-area-inset-right, 0px), 24px)',
     }}>
 
-      {/* Header — branding */}
+      {/* Header */}
       <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
-        {/* Wordmark */}
         <div style={{
           fontSize: 11,
           fontWeight: 600,
@@ -160,7 +159,7 @@ export default function ModuleDashboard({ onEnterModule }) {
           fontSize: 28,
           fontWeight: 700,
           letterSpacing: '-0.02em',
-          color: '#E8EAF0',
+          color: 'var(--color-primary)',
           margin: 0,
           lineHeight: 1.1,
         }}>
@@ -169,7 +168,7 @@ export default function ModuleDashboard({ onEnterModule }) {
         <p style={{
           marginTop: 10,
           fontSize: 14,
-          color: '#6B7280',
+          color: 'var(--color-muted)',
           fontWeight: 400,
         }}>
           Ireland's all-in-one outdoor platform
@@ -200,20 +199,19 @@ export default function ModuleDashboard({ onEnterModule }) {
       <div style={{ flex: '0 0 auto', width: '100%', maxWidth: 320, textAlign: 'center' }}>
         {!isPro && (
           <>
-            {/* Subscription pitch */}
             <div style={{
               marginBottom: 16,
               padding: '12px 16px',
-              background: '#1A1C20',
-              border: '1px solid #2E3035',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: 12,
               textAlign: 'left',
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: '#E8EAF0' }}>Explorer</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Explorer</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#E8C96A' }}>€9.99/mo</span>
               </div>
-              <p style={{ fontSize: 12, color: '#6B7280', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 12, color: 'var(--color-muted)', margin: 0, lineHeight: 1.4 }}>
                 All 5 modules · Offline maps · GPS tracking · 3D terrain
               </p>
             </div>
@@ -237,23 +235,25 @@ export default function ModuleDashboard({ onEnterModule }) {
             </button>
 
             {user && (
-              <p style={{ marginTop: 10, fontSize: 12, color: '#6B7280' }}>
+              <p style={{ marginTop: 10, fontSize: 12, color: 'var(--color-muted)' }}>
                 Annual plan: <span style={{ color: '#E8C96A' }}>€79/year</span> — save 34%
               </p>
             )}
           </>
         )}
 
-        {/* Attribution */}
         <p style={{
           marginTop: isPro ? 0 : 20,
           fontSize: 11,
-          color: '#2E3035',
+          color: 'var(--color-border)',
           textAlign: 'center',
         }}>
           Contains Irish Public Sector Data (GSI) · CC BY 4.0
         </p>
       </div>
+
+      {/* AuthModal — mounted here so it appears over the dashboard */}
+      <AuthModal />
     </div>
   )
 }

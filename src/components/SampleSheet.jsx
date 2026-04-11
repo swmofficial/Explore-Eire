@@ -4,6 +4,7 @@
 // Shows: tier, ppb, sample ID, type, arsenic, lead, ING coords,
 //        upstream note, and a Waypoint button to pin to the session.
 import useMapStore from '../store/mapStore'
+import useUserStore from '../store/userStore'
 import { GOLD_TIERS } from '../lib/mapConfig'
 
 // ── Tier helpers ───────────────────────────────────────────────────
@@ -23,11 +24,11 @@ function DataRow({ label, value }) {
         justifyContent: 'space-between',
         alignItems: 'baseline',
         padding: '7px 0',
-        borderBottom: '1px solid #1A1C20',
+        borderBottom: '1px solid var(--color-surface)',
       }}
     >
-      <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 500 }}>{label}</span>
-      <span style={{ fontSize: 13, color: '#E8EAF0', fontWeight: 400, textAlign: 'right', maxWidth: '60%' }}>
+      <span style={{ fontSize: 12, color: 'var(--color-muted)', fontWeight: 500 }}>{label}</span>
+      <span style={{ fontSize: 13, color: 'var(--color-primary)', fontWeight: 400, textAlign: 'right', maxWidth: '60%' }}>
         {value}
       </span>
     </div>
@@ -38,6 +39,8 @@ function DataRow({ label, value }) {
 
 export default function SampleSheet() {
   const { selectedSample, setSelectedSample, addSessionWaypoint } = useMapStore()
+  const { isGuest, user } = useUserStore()
+  const canSaveWaypoint = !isGuest && !!user
 
   if (!selectedSample) return null
 
@@ -79,8 +82,8 @@ export default function SampleSheet() {
           left: 0,
           right: 0,
           zIndex: 40,
-          background: '#111214',
-          borderTop: '1px solid #2E3035',
+          background: 'var(--color-base)',
+          borderTop: '1px solid var(--color-border)',
           borderRadius: '16px 16px 0 0',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
           animation: 'slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)',
@@ -100,7 +103,7 @@ export default function SampleSheet() {
               width: 32,
               height: 4,
               borderRadius: 2,
-              background: '#2E3035',
+              background: 'var(--color-border)',
             }}
           />
         </div>
@@ -131,7 +134,7 @@ export default function SampleSheet() {
                 fontWeight: 600,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: '#6B7280',
+                color: 'var(--color-muted)',
               }}
             >
               {tier.label}
@@ -139,7 +142,7 @@ export default function SampleSheet() {
             <span
               style={{
                 fontSize: 11,
-                color: '#2E3035',
+                color: 'var(--color-border)',
                 fontWeight: 400,
               }}
             >
@@ -238,17 +241,19 @@ export default function SampleSheet() {
         {/* Waypoint button */}
         <div style={{ padding: '4px 16px 8px' }}>
           <button
-            onClick={handleSaveWaypoint}
+            onClick={canSaveWaypoint ? handleSaveWaypoint : undefined}
+            disabled={!canSaveWaypoint}
+            title={!canSaveWaypoint ? 'Sign in to save waypoints' : undefined}
             style={{
               width: '100%',
               padding: '12px',
-              background: '#E8C96A',
-              color: '#0A0A0A',
-              border: 'none',
+              background: canSaveWaypoint ? '#E8C96A' : 'var(--color-surface)',
+              color: canSaveWaypoint ? '#0A0A0A' : 'var(--color-muted)',
+              border: `1px solid ${canSaveWaypoint ? 'transparent' : 'var(--color-border)'}`,
               borderRadius: 10,
               fontSize: 14,
               fontWeight: 700,
-              cursor: 'pointer',
+              cursor: canSaveWaypoint ? 'pointer' : 'not-allowed',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -260,7 +265,7 @@ export default function SampleSheet() {
               <circle cx="8" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
               <path d="M8 2C5.24 2 3 4.24 3 7c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
             </svg>
-            Save Waypoint
+            {canSaveWaypoint ? 'Save Waypoint' : 'Sign in to save waypoints'}
           </button>
         </div>
       </div>
