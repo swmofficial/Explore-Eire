@@ -8,6 +8,8 @@ import MapView from './components/Map'
 import CategoryHeader from './components/CategoryHeader'
 import CornerControls from './components/CornerControls'
 import DataSheet from './components/DataSheet'
+import LayerPanel from './components/LayerPanel'
+import SampleSheet from './components/SampleSheet'
 
 export default function App() {
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
@@ -37,6 +39,8 @@ export default function App() {
       <CategoryHeader onHome={goToDashboard} />
       <CornerControls />
       <DataSheet />
+      <LayerPanel />
+      <SampleSheet />
     </div>
   )
 }

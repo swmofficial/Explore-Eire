@@ -1,4 +1,4 @@
-// mapStore.js — Zustand store: map state, layers, basemap
+// mapStore.js — Zustand store: map state, layers, basemap, session trail
 import { create } from 'zustand'
 
 const useMapStore = create((set) => ({
@@ -15,15 +15,20 @@ const useMapStore = create((set) => ({
   setIs3D: (is3D) => set({ is3D }),
 
   // Active layer visibility (keyed by layer id)
-  layerVisibility: {},
+  // stream_sediment defaults on so gold markers show immediately
+  layerVisibility: { stream_sediment: true },
   setLayerVisibility: (layerId, visible) =>
     set((state) => ({
       layerVisibility: { ...state.layerVisibility, [layerId]: visible },
     })),
 
-  // Data sheet state (bottom sheet replacing layer panel)
+  // Bottom sheet state
   dataSheetState: 'collapsed', // 'collapsed' | 'half' | 'full'
-  setDataSheetState: (state) => set({ dataSheetState: state }),
+  setDataSheetState: (s) => set({ dataSheetState: s }),
+
+  // Layer panel (right drawer) — independent of bottom sheet
+  layerPanelOpen: false,
+  setLayerPanelOpen: (open) => set({ layerPanelOpen: open }),
 
   // Settings panel open state
   settingsPanelOpen: false,
@@ -36,6 +41,27 @@ const useMapStore = create((set) => ({
   // Selected feature (data point clicked on map)
   selectedFeature: null,
   setSelectedFeature: (feature) => set({ selectedFeature: feature }),
+
+  // Selected sample — drives SampleSheet detail view (null = closed)
+  selectedSample: null,
+  setSelectedSample: (sample) => set({ selectedSample: sample }),
+
+  // Tier filter for gold circle layers on map
+  // 'all' | 'exceptional' | 'high' | 'significant'
+  tierFilter: 'all',
+  setTierFilter: (f) => set({ tierFilter: f }),
+
+  // Session GPS trail — array of {lat, lng, alt, heading, ts}
+  // Rendered as dots on the map canvas when a session is active
+  sessionTrail: [],
+  appendSessionTrailPoint: (pt) =>
+    set((state) => ({ sessionTrail: [...state.sessionTrail, pt] })),
+  clearSessionTrail: () => set({ sessionTrail: [] }),
+
+  // Session waypoints — pinned from sample detail sheet
+  sessionWaypoints: [],
+  addSessionWaypoint: (wp) =>
+    set((state) => ({ sessionWaypoints: [...state.sessionWaypoints, wp] })),
 }))
 
 export default useMapStore

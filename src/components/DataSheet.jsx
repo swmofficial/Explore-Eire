@@ -131,8 +131,11 @@ function SampleRow({ sample, userPos, onTap }) {
 const SWIPE_THRESHOLD = 40
 
 export default function DataSheet() {
-  const { dataSheetState, setDataSheetState, mapInstance, layerVisibility, setLayerVisibility } =
-    useMapStore()
+  const {
+    dataSheetState, setDataSheetState,
+    mapInstance, layerVisibility, setLayerVisibility,
+    setTierFilter, setSelectedSample,
+  } = useMapStore()
   const { activeModule } = useModuleStore()
 
   const [activeDataFilter, setActiveDataFilter] = useState('all')
@@ -163,7 +166,7 @@ export default function DataSheet() {
     setLoading(true)
     let query = supabase
       .from('gold_samples')
-      .select('id, lat, lng, au_ppb, sample_type, survey')
+      .select('id, sample_id, lat, lng, au_ppb, as_mgkg, pb_mgkg, sample_type, survey, easting_ing, northing_ing')
       .limit(300)
 
     const minPpb = DATA_FILTERS.find((f) => f.id === activeDataFilter)?.minPpb ?? 0
@@ -211,11 +214,13 @@ export default function DataSheet() {
     else                  setDataSheetState('collapsed')
   }
 
-  // ── Fly to sample ──────────────────────────────────────────────
+  // ── Fly to sample + open detail sheet ─────────────────────────
   function onSampleTap(sample) {
-    if (!mapInstance) return
-    mapInstance.flyTo({ center: [sample.lng, sample.lat], zoom: 14, duration: 800 })
+    if (mapInstance) {
+      mapInstance.flyTo({ center: [sample.lng, sample.lat], zoom: 14, duration: 800 })
+    }
     setDataSheetState('collapsed')
+    setSelectedSample(sample)
   }
 
   // ── WMS toggle ─────────────────────────────────────────────────
@@ -322,7 +327,7 @@ export default function DataSheet() {
               return (
                 <button
                   key={f.id}
-                  onClick={() => setActiveDataFilter(f.id)}
+                  onClick={() => { setActiveDataFilter(f.id); setTierFilter(f.id) }}
                   style={{
                     flexShrink: 0,
                     padding: '5px 14px',
