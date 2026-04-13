@@ -3,6 +3,17 @@
 import { useState } from 'react'
 import useUserStore from '../store/userStore'
 
+async function startCheckout(plan, userId) {
+  const res = await fetch('/api/create-checkout-session', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ plan, userId }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Checkout failed')
+  return data.url
+}
+
 const FEATURES = [
   'All 5 modules unlocked',
   'Full gold data — all 7 tiers',
@@ -14,8 +25,23 @@ const FEATURES = [
 ]
 
 export default function UpgradeSheet() {
-  const { showUpgradeSheet, setShowUpgradeSheet } = useUserStore()
+  const { showUpgradeSheet, setShowUpgradeSheet, user } = useUserStore()
   const [plan, setPlan] = useState('annual')
+  const [loading, setLoading] = useState(false)
+  const [checkoutError, setCheckoutError] = useState(null)
+
+  async function handleCheckout() {
+    if (!user) return
+    setLoading(true)
+    setCheckoutError(null)
+    try {
+      const url = await startCheckout(plan, user.id)
+      window.location.href = url
+    } catch (err) {
+      setCheckoutError(err.message)
+      setLoading(false)
+    }
+  }
 
   if (!showUpgradeSheet) return null
 
@@ -144,23 +170,32 @@ export default function UpgradeSheet() {
 
           {/* CTA button */}
           <button
-            onClick={() => console.log('Stripe TODO')}
+            onClick={handleCheckout}
+            disabled={loading || !user}
             style={{
               width: '100%',
               height: 52,
-              background: '#E8C96A',
+              background: loading ? 'rgba(232,201,106,0.5)' : '#E8C96A',
               color: '#0A0A0A',
               border: 'none',
               borderRadius: 12,
               fontSize: 16,
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: loading || !user ? 'not-allowed' : 'pointer',
               letterSpacing: '-0.01em',
               WebkitTapHighlightColor: 'transparent',
+              transition: 'background 150ms ease',
             }}
           >
-            Start free trial
+            {loading ? 'Redirecting…' : 'Start free trial'}
           </button>
+
+          {/* Error message */}
+          {checkoutError && (
+            <p style={{ fontSize: 12, color: '#E84B4B', textAlign: 'center', marginTop: 8, marginBottom: 0 }}>
+              {checkoutError}
+            </p>
+          )}
 
           {/* Sub-label */}
           <p style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', marginTop: 10, marginBottom: 0 }}>

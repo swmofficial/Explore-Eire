@@ -5,6 +5,7 @@ import useModuleStore from './store/moduleStore'
 import useMapStore from './store/mapStore'
 import useUserStore from './store/userStore'
 import { useAuth } from './hooks/useAuth'
+import { useSubscription } from './hooks/useSubscription'
 import ModuleDashboard from './components/ModuleDashboard'
 import MapView from './components/Map'
 import SettingsPanel from './components/SettingsPanel'
@@ -13,7 +14,8 @@ import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
 
 export default function App() {
-  useAuth() // initialise Supabase auth state listener
+  useAuth()         // initialise Supabase auth state listener
+  useSubscription() // sync subscription status on mount + after Stripe redirect
 
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
   const { setActiveModule } = useModuleStore()
