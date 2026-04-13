@@ -10,6 +10,7 @@ import MapView from './components/Map'
 import SettingsPanel from './components/SettingsPanel'
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
+import LegalDisclaimerModal from './components/LegalDisclaimerModal'
 
 export default function App() {
   useAuth() // initialise Supabase auth state listener
@@ -35,18 +36,22 @@ export default function App() {
     setView('dashboard')
   }
 
-  if (view === 'dashboard') {
-    return <ModuleDashboard onEnterModule={enterModule} />
-  }
-
   return (
-    <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
-      {/* Map renders the map + its own overlaid UI components */}
-      <MapView onHome={goToDashboard} />
-      {/* App-level panels that sit above Map's overlays */}
-      <SettingsPanel />
-      <AuthModal />
-      <UpgradeSheet />
-    </div>
+    <>
+      {view === 'dashboard' ? (
+        <ModuleDashboard onEnterModule={enterModule} />
+      ) : (
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
+          {/* Map renders the map + its own overlaid UI components */}
+          <MapView onHome={goToDashboard} />
+          {/* App-level panels that sit above Map's overlays */}
+          <SettingsPanel />
+          <AuthModal />
+          <UpgradeSheet />
+        </div>
+      )}
+      {/* Always rendered — can trigger from both dashboard and map views */}
+      <LegalDisclaimerModal />
+    </>
   )
 }
