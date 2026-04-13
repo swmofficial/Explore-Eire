@@ -7,13 +7,9 @@ import useUserStore from './store/userStore'
 import { useAuth } from './hooks/useAuth'
 import ModuleDashboard from './components/ModuleDashboard'
 import MapView from './components/Map'
-import CategoryHeader from './components/CategoryHeader'
-import CornerControls from './components/CornerControls'
-import DataSheet from './components/DataSheet'
-import LayerPanel from './components/LayerPanel'
 import SettingsPanel from './components/SettingsPanel'
-import SampleSheet from './components/SampleSheet'
 import AuthModal from './components/AuthModal'
+import UpgradeSheet from './components/UpgradeSheet'
 
 export default function App() {
   useAuth() // initialise Supabase auth state listener
@@ -45,16 +41,12 @@ export default function App() {
 
   return (
     <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
-      {/* Map is the base layer — always behind everything, always dark */}
-      <MapView />
-      {/* Overlays in z-order */}
-      <CategoryHeader onHome={goToDashboard} />
-      <CornerControls />
-      <DataSheet />
-      <LayerPanel />
+      {/* Map renders the map + its own overlaid UI components */}
+      <MapView onHome={goToDashboard} />
+      {/* App-level panels that sit above Map's overlays */}
       <SettingsPanel />
-      <SampleSheet />
       <AuthModal />
+      <UpgradeSheet />
     </div>
   )
 }

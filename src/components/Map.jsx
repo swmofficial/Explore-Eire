@@ -3,16 +3,28 @@
 // Renders WMS raster overlays: gold heatmap, arsenic, lead, bedrock, geo lines, boreholes.
 // Renders session GPS trail and pinned session waypoints.
 // Click on any gold layer → opens SampleSheet via mapStore.selectedSample.
+// Handles basemap switching and 3D terrain toggle from mapStore.
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
 import { useGoldSamples } from '../hooks/useGoldSamples'
-import { GOLD_TIERS, GSI_LAYERS } from '../lib/mapConfig'
+import {
+  BASEMAPS,
+  DEFAULT_CENTER,
+  DEFAULT_ZOOM,
+  GOLD_TIERS,
+  GSI_LAYERS,
+  TERRAIN_SOURCE,
+  TERRAIN_CONFIG,
+} from '../lib/mapConfig'
+import CategoryHeader from './CategoryHeader'
+import CornerControls from './CornerControls'
+import DataSheet from './DataSheet'
+import SampleSheet from './SampleSheet'
+import LayerPanel from './LayerPanel'
+import BasemapPicker from './BasemapPicker'
 
-const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY
-const SATELLITE_STYLE = `https://api.maptiler.com/maps/hybrid-v4/style.json?key=${MAPTILER_KEY}`
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
 // ── WMS tile URL builder ───────────────────────────────────────────
@@ -71,10 +83,10 @@ const TIER_LAYERS = [
 
 // Which tier layers are shown for each filter state
 const TIER_FILTER_GROUPS = {
-  all:         ['gold-t1','gold-t2','gold-t3','gold-t4','gold-t5','gold-t6','gold-t7'],
-  exceptional: ['gold-t1','gold-t2'],
-  high:        ['gold-t3','gold-t4'],
-  significant: ['gold-t4','gold-t5'],
+  all:         ['gold-t1', 'gold-t2', 'gold-t3', 'gold-t4', 'gold-t5', 'gold-t6', 'gold-t7'],
+  exceptional: ['gold-t1', 'gold-t2'],
+  high:        ['gold-t3', 'gold-t4'],
+  significant: ['gold-t4', 'gold-t5'],
 }
 
 // WMS store key → map layer id
@@ -87,17 +99,16 @@ const WMS_LAYER_MAP = {
   boreholes:    'wms-boreholes',
 }
 
-// ── Helpers ────────────────────────────────────────────────────────
-
-function tierColor(ppb) {
-  const t = GOLD_TIERS.find((x) => ppb >= x.min && ppb < x.max)
-  return t ? t.color : '#74c476'
+const WMS_SOURCES = {
+  gold_heatmap: { sourceId: 'src-gold-heatmap', endpoint: '/wms/geo', layerName: GSI_LAYERS.goldHeatmap, opacity: 0.75 },
+  arsenic:      { sourceId: 'src-arsenic',      endpoint: '/wms/geo', layerName: GSI_LAYERS.arsenic,    opacity: 0.75 },
+  lead:         { sourceId: 'src-lead',          endpoint: '/wms/geo', layerName: GSI_LAYERS.lead,       opacity: 0.75 },
+  bedrock:      { sourceId: 'src-bedrock',       endpoint: '/wms/bed', layerName: GSI_LAYERS.bedrock,    opacity: 0.65 },
+  geo_lines:    { sourceId: 'src-geo-lines',     endpoint: '/wms/bed', layerName: GSI_LAYERS.geoLines,   opacity: 0.75 },
+  boreholes:    { sourceId: 'src-boreholes',     endpoint: '/wms/bore', layerName: GSI_LAYERS.boreholes, opacity: 0.85 },
 }
 
-function tierLabel(ppb) {
-  const t = GOLD_TIERS.find((x) => ppb >= x.min && ppb < x.max)
-  return t ? t.label : 'Background'
-}
+// ── GeoJSON helpers ────────────────────────────────────────────────
 
 function isRockSample(s) {
   return (
@@ -105,8 +116,6 @@ function isRockSample(s) {
     (s.survey && s.survey.toLowerCase().includes('litho'))
   )
 }
-
-// ── GeoJSON builders ───────────────────────────────────────────────
 
 function sampleProperties(s) {
   return {
@@ -174,14 +183,207 @@ function buildWaypointGeoJSON(waypoints) {
   }
 }
 
+// ── addDataLayers ──────────────────────────────────────────────────
+// Adds all sources + layers to the map. Safe to call after setStyle()
+// because style.load clears all sources/layers, so getSource checks
+// will always pass through after a style change.
+function addDataLayers(map, initialSamples = []) {
+  // WMS raster sources + layers (all initially hidden)
+  for (const [key, cfg] of Object.entries(WMS_SOURCES)) {
+    const { sourceId, endpoint, layerName, opacity } = cfg
+    const layerId = WMS_LAYER_MAP[key]
+    if (!map.getSource(sourceId)) {
+      map.addSource(sourceId, {
+        type: 'raster',
+        tiles: [wmsRasterTileUrl(endpoint, layerName)],
+        tileSize: 256,
+      })
+    }
+    if (!map.getLayer(layerId)) {
+      map.addLayer({
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        layout: { visibility: 'none' },
+        paint: { 'raster-opacity': opacity },
+      })
+    }
+  }
+
+  // Stream sediment source
+  if (!map.getSource('stream-samples')) {
+    map.addSource('stream-samples', {
+      type: 'geojson',
+      data: buildStreamGeoJSON(initialSamples),
+    })
+  }
+
+  // 7 tier circle layers — added t7→t1 so higher tiers render on top
+  for (let i = TIER_LAYERS.length - 1; i >= 0; i--) {
+    const t = TIER_LAYERS[i]
+    if (!map.getLayer(t.id)) {
+      map.addLayer({
+        id: t.id,
+        type: 'circle',
+        source: 'stream-samples',
+        filter: t.filter,
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            5, 2.5,
+            10, 5,
+            14, 9,
+          ],
+          'circle-color': t.color,
+          'circle-stroke-color': 'rgba(0,0,0,0.35)',
+          'circle-stroke-width': 0.75,
+          'circle-opacity': 0.92,
+        },
+        layout: { visibility: 'visible' },
+      })
+    }
+  }
+
+  // Rock samples source + layer
+  if (!map.getSource('rock-samples')) {
+    map.addSource('rock-samples', {
+      type: 'geojson',
+      data: buildRockGeoJSON(initialSamples),
+    })
+  }
+  if (!map.getLayer('rock-circles')) {
+    map.addLayer({
+      id: 'rock-circles',
+      type: 'circle',
+      source: 'rock-samples',
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          5, 3,
+          10, 6,
+          14, 10,
+        ],
+        'circle-color': [
+          'step', ['get', 'au_ppb'],
+          '#74c476', 2, '#ffffb2', 5, '#fecc5c', 10, '#fd8d3c',
+          50, '#fc4e2a', 100, '#cb181d', 500, '#67000d',
+        ],
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 1.5,
+        'circle-opacity': 0.88,
+      },
+      layout: { visibility: 'none' },
+    })
+  }
+
+  // Session trail
+  if (!map.getSource('session-trail')) {
+    map.addSource('session-trail', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+  if (!map.getLayer('session-dots')) {
+    map.addLayer({
+      id: 'session-dots',
+      type: 'circle',
+      source: 'session-trail',
+      paint: {
+        'circle-radius': 4,
+        'circle-color': '#4B8BE8',
+        'circle-stroke-color': 'rgba(255,255,255,0.45)',
+        'circle-stroke-width': 1,
+        'circle-opacity': 0.88,
+      },
+    })
+  }
+
+  // Session waypoints
+  if (!map.getSource('session-waypoints-src')) {
+    map.addSource('session-waypoints-src', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+  if (!map.getLayer('session-waypoints')) {
+    map.addLayer({
+      id: 'session-waypoints',
+      type: 'circle',
+      source: 'session-waypoints-src',
+      paint: {
+        'circle-radius': 8,
+        'circle-color': '#E8C96A',
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 2,
+        'circle-opacity': 1,
+      },
+    })
+  }
+}
+
+// ── syncLayerVisibility ────────────────────────────────────────────
+// Reads current state from Zustand directly so it can be called from
+// style.load callbacks where React state closures are stale.
+function syncLayerVisibility(map) {
+  const { layerVisibility, tierFilter } = useMapStore.getState()
+  const { isPro } = useUserStore.getState()
+
+  const streamOn = layerVisibility.stream_sediment !== false
+
+  if (!isPro) {
+    const FREE_TIERS = new Set(['gold-t6', 'gold-t7'])
+    for (const t of TIER_LAYERS) {
+      if (!map.getLayer(t.id)) continue
+      map.setLayoutProperty(
+        t.id,
+        'visibility',
+        streamOn && FREE_TIERS.has(t.id) ? 'visible' : 'none'
+      )
+    }
+    for (const layerId of Object.values(WMS_LAYER_MAP)) {
+      if (!map.getLayer(layerId)) continue
+      map.setLayoutProperty(layerId, 'visibility', 'none')
+    }
+  } else {
+    const visibleTiers = TIER_FILTER_GROUPS[tierFilter] ?? TIER_FILTER_GROUPS.all
+    for (const t of TIER_LAYERS) {
+      if (!map.getLayer(t.id)) continue
+      map.setLayoutProperty(
+        t.id,
+        'visibility',
+        streamOn && visibleTiers.includes(t.id) ? 'visible' : 'none'
+      )
+    }
+    for (const [storeKey, layerId] of Object.entries(WMS_LAYER_MAP)) {
+      if (!map.getLayer(layerId)) continue
+      map.setLayoutProperty(
+        layerId,
+        'visibility',
+        layerVisibility[storeKey] === true ? 'visible' : 'none'
+      )
+    }
+  }
+
+  if (map.getLayer('rock-circles')) {
+    map.setLayoutProperty(
+      'rock-circles',
+      'visibility',
+      layerVisibility.rock_samples === true ? 'visible' : 'none'
+    )
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────
 
-export default function Map() {
+export default function Map({ onHome }) {
   const containerRef  = useRef(null)
   const mapRef        = useRef(null)
   const geolocateRef  = useRef(null)
   const mapLoadedRef  = useRef(false)
   const samplesRef    = useRef([])
+  const sessionTrailRef     = useRef([])
+  const sessionWaypointsRef = useRef([])
+  const is3DRef       = useRef(false)
 
   const {
     setMapInstance,
@@ -190,25 +392,31 @@ export default function Map() {
     sessionTrail,
     sessionWaypoints,
     setSelectedSample,
+    basemap,
+    is3D,
   } = useMapStore()
   const { isPro } = useUserStore()
 
   const { samples } = useGoldSamples()
 
-  // Keep samplesRef current so map load callback can read it
+  // Keep refs in sync for use in style.load callbacks
   samplesRef.current = samples
+  sessionTrailRef.current = sessionTrail
+  sessionWaypointsRef.current = sessionWaypoints
+  is3DRef.current = is3D
 
   // ── Map initialisation (runs once) ────────────────────────────
   useEffect(() => {
     if (mapRef.current) return
 
-    console.log('[Map] VITE_MAPTILER_KEY present:', !!MAPTILER_KEY)
+    const initialStyle =
+      BASEMAPS[useMapStore.getState().basemap]?.styleUrl ?? BASEMAPS.outdoor.styleUrl
 
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: SATELLITE_STYLE,
-      center: [-8.0, 53.5],
-      zoom: 7,
+      style: initialStyle,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       attributionControl: false,
     })
 
@@ -227,138 +435,19 @@ export default function Map() {
     geolocateRef.current = geolocate
 
     map.on('load', () => {
+      addDataLayers(map, samplesRef.current)
       mapLoadedRef.current = true
       setMapInstance(map)
+      syncLayerVisibility(map)
 
-      // ── WMS raster sources + layers ───────────────────────────
-      // Added first so they appear beneath circle layers
-
-      const wmsConfigs = [
-        {
-          sourceId: 'src-gold-heatmap',
-          layerId: 'wms-gold-heatmap',
-          url: wmsRasterTileUrl('/wms/geo', GSI_LAYERS.goldHeatmap),
-          opacity: 0.75,
-        },
-        {
-          sourceId: 'src-arsenic',
-          layerId: 'wms-arsenic',
-          url: wmsRasterTileUrl('/wms/geo', GSI_LAYERS.arsenic),
-          opacity: 0.75,
-        },
-        {
-          sourceId: 'src-lead',
-          layerId: 'wms-lead',
-          url: wmsRasterTileUrl('/wms/geo', GSI_LAYERS.lead),
-          opacity: 0.75,
-        },
-        {
-          sourceId: 'src-bedrock',
-          layerId: 'wms-bedrock',
-          url: wmsRasterTileUrl('/wms/bed', GSI_LAYERS.bedrock),
-          opacity: 0.65,
-        },
-        {
-          sourceId: 'src-geo-lines',
-          layerId: 'wms-geo-lines',
-          url: wmsRasterTileUrl('/wms/bed', GSI_LAYERS.geoLines),
-          opacity: 0.75,
-        },
-        {
-          sourceId: 'src-boreholes',
-          layerId: 'wms-boreholes',
-          url: wmsRasterTileUrl('/wms/bore', GSI_LAYERS.boreholes),
-          opacity: 0.85,
-        },
-      ]
-
-      for (const cfg of wmsConfigs) {
-        map.addSource(cfg.sourceId, {
-          type: 'raster',
-          tiles: [cfg.url],
-          tileSize: 256,
-        })
-        map.addLayer({
-          id: cfg.layerId,
-          type: 'raster',
-          source: cfg.sourceId,
-          layout: { visibility: 'none' },
-          paint: { 'raster-opacity': cfg.opacity },
-        })
-      }
-
-      // ── Stream sediment source ────────────────────────────────
-      map.addSource('stream-samples', {
-        type: 'geojson',
-        data: buildStreamGeoJSON(samplesRef.current),
-      })
-
-      // 7 tier circle layers (t1 highest, t7 background)
-      // Added t7→t1 so higher tiers render on top
-      for (let i = TIER_LAYERS.length - 1; i >= 0; i--) {
-        const t = TIER_LAYERS[i]
-        map.addLayer({
-          id: t.id,
-          type: 'circle',
-          source: 'stream-samples',
-          filter: t.filter,
-          paint: {
-            'circle-radius': [
-              'interpolate', ['linear'], ['zoom'],
-              5, 2.5,
-              10, 5,
-              14, 9,
-            ],
-            'circle-color': t.color,
-            'circle-stroke-color': 'rgba(0,0,0,0.35)',
-            'circle-stroke-width': 0.75,
-            'circle-opacity': 0.92,
-          },
-          layout: { visibility: 'visible' },
-        })
-      }
-
-      // ── Rock samples source + layer ───────────────────────────
-      map.addSource('rock-samples', {
-        type: 'geojson',
-        data: buildRockGeoJSON(samplesRef.current),
-      })
-
-      map.addLayer({
-        id: 'rock-circles',
-        type: 'circle',
-        source: 'rock-samples',
-        paint: {
-          'circle-radius': [
-            'interpolate', ['linear'], ['zoom'],
-            5, 3,
-            10, 6,
-            14, 10,
-          ],
-          'circle-color': [
-            'step', ['get', 'au_ppb'],
-            '#74c476', 2, '#ffffb2', 5, '#fecc5c', 10, '#fd8d3c',
-            50, '#fc4e2a', 100, '#cb181d', 500, '#67000d',
-          ],
-          'circle-stroke-color': '#FFFFFF',
-          'circle-stroke-width': 1.5,
-          'circle-opacity': 0.88,
-        },
-        layout: { visibility: 'none' }, // off by default
-      })
-
-      // ── Click handlers — all gold layers open SampleSheet ─────
+      // ── Click handler — opens SampleSheet ─────────────────────
       const clickableLayers = [...TIER_LAYERS.map((t) => t.id), 'rock-circles']
 
       map.on('click', (e) => {
-        const existingLayers = clickableLayers.filter((id) => map.getLayer(id))
-        if (!existingLayers.length) return
-
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: existingLayers,
-        })
+        const existing = clickableLayers.filter((id) => map.getLayer(id))
+        if (!existing.length) return
+        const features = map.queryRenderedFeatures(e.point, { layers: existing })
         if (!features.length) return
-
         const p = features[0].properties
         setSelectedSample({
           id: p.id,
@@ -378,53 +467,10 @@ export default function Map() {
       })
 
       for (const id of clickableLayers) {
-        map.on('mouseenter', id, () => {
-          map.getCanvas().style.cursor = 'pointer'
-        })
-        map.on('mouseleave', id, () => {
-          map.getCanvas().style.cursor = ''
-        })
+        map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer' })
+        map.on('mouseleave', id, () => { map.getCanvas().style.cursor = '' })
       }
 
-      // ── Session trail source ──────────────────────────────────
-      map.addSource('session-trail', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      })
-
-      map.addLayer({
-        id: 'session-dots',
-        type: 'circle',
-        source: 'session-trail',
-        paint: {
-          'circle-radius': 4,
-          'circle-color': '#4B8BE8',
-          'circle-stroke-color': 'rgba(255,255,255,0.45)',
-          'circle-stroke-width': 1,
-          'circle-opacity': 0.88,
-        },
-      })
-
-      // ── Session waypoints source ──────────────────────────────
-      map.addSource('session-waypoints-src', {
-        type: 'geojson',
-        data: { type: 'FeatureCollection', features: [] },
-      })
-
-      map.addLayer({
-        id: 'session-waypoints',
-        type: 'circle',
-        source: 'session-waypoints-src',
-        paint: {
-          'circle-radius': 8,
-          'circle-color': '#E8C96A',
-          'circle-stroke-color': '#FFFFFF',
-          'circle-stroke-width': 2,
-          'circle-opacity': 1,
-        },
-      })
-
-      // GPS
       try { geolocate.trigger() } catch { /* GPS unavailable */ }
     })
 
@@ -438,86 +484,94 @@ export default function Map() {
     }
   }, [setMapInstance, setSelectedSample]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── Basemap switching ─────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapLoadedRef.current) return
+    const styleUrl = BASEMAPS[basemap]?.styleUrl
+    if (!styleUrl) return
+
+    mapLoadedRef.current = false
+    map.setStyle(styleUrl)
+
+    map.once('style.load', () => {
+      addDataLayers(map, samplesRef.current)
+
+      // Restore current data into sources
+      map.getSource('stream-samples')?.setData(buildStreamGeoJSON(samplesRef.current))
+      map.getSource('rock-samples')?.setData(buildRockGeoJSON(samplesRef.current))
+      map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrailRef.current))
+      map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypointsRef.current))
+
+      syncLayerVisibility(map)
+
+      // Re-apply terrain if 3D was active
+      if (is3DRef.current) {
+        if (!map.getSource('terrain')) {
+          map.addSource('terrain', TERRAIN_SOURCE)
+        }
+        map.setTerrain(TERRAIN_CONFIG)
+      }
+
+      mapLoadedRef.current = true
+    })
+  }, [basemap]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── 3D terrain toggle ─────────────────────────────────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapLoadedRef.current) return
+    if (is3D) {
+      if (!map.getSource('terrain')) {
+        map.addSource('terrain', TERRAIN_SOURCE)
+      }
+      map.setTerrain(TERRAIN_CONFIG)
+    } else {
+      map.setTerrain(null)
+    }
+  }, [is3D])
+
   // ── Update sample sources when data loads ──────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
-    const streamSrc = map.getSource('stream-samples')
-    if (streamSrc) streamSrc.setData(buildStreamGeoJSON(samples))
-    const rockSrc = map.getSource('rock-samples')
-    if (rockSrc) rockSrc.setData(buildRockGeoJSON(samples))
+    map.getSource('stream-samples')?.setData(buildStreamGeoJSON(samples))
+    map.getSource('rock-samples')?.setData(buildRockGeoJSON(samples))
   }, [samples])
 
   // ── Sync all layer visibility ──────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
-
-    const streamOn = layerVisibility.stream_sediment !== false
-
-    // Free/guest tier gate — non-pro users see t6+t7 (low + background) only
-    if (!isPro) {
-      const FREE_TIERS = new Set(['gold-t6', 'gold-t7'])
-      for (const t of TIER_LAYERS) {
-        if (!map.getLayer(t.id)) continue
-        map.setLayoutProperty(
-          t.id,
-          'visibility',
-          streamOn && FREE_TIERS.has(t.id) ? 'visible' : 'none'
-        )
-      }
-      // Pro users only for WMS — keep all hidden for non-pro
-      for (const layerId of Object.values(WMS_LAYER_MAP)) {
-        if (!map.getLayer(layerId)) continue
-        map.setLayoutProperty(layerId, 'visibility', 'none')
-      }
-    } else {
-      // Pro: respect tierFilter + individual layerVisibility toggles
-      const visibleTiers = TIER_FILTER_GROUPS[tierFilter] ?? TIER_FILTER_GROUPS.all
-      for (const t of TIER_LAYERS) {
-        if (!map.getLayer(t.id)) continue
-        const vis = streamOn && visibleTiers.includes(t.id) ? 'visible' : 'none'
-        map.setLayoutProperty(t.id, 'visibility', vis)
-      }
-      for (const [storeKey, layerId] of Object.entries(WMS_LAYER_MAP)) {
-        if (!map.getLayer(layerId)) continue
-        const vis = layerVisibility[storeKey] === true ? 'visible' : 'none'
-        map.setLayoutProperty(layerId, 'visibility', vis)
-      }
-    }
-
-    // Rock circles — available regardless of tier (own toggle)
-    if (map.getLayer('rock-circles')) {
-      const vis = layerVisibility.rock_samples === true ? 'visible' : 'none'
-      map.setLayoutProperty('rock-circles', 'visibility', vis)
-    }
+    syncLayerVisibility(map)
   }, [layerVisibility, tierFilter, isPro])
 
   // ── Update session trail ───────────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
-    const src = map.getSource('session-trail')
-    if (src) src.setData(buildTrailGeoJSON(sessionTrail))
+    map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrail))
   }, [sessionTrail])
 
   // ── Update session waypoints ───────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
-    const src = map.getSource('session-waypoints-src')
-    if (src) src.setData(buildWaypointGeoJSON(sessionWaypoints))
+    map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypoints))
   }, [sessionWaypoints])
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        position: 'absolute',
-        inset: 0,
-        width: '100%',
-        height: '100%',
-      }}
-    />
+    <div style={{ position: 'fixed', inset: 0 }}>
+      <div
+        ref={containerRef}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      />
+      <CategoryHeader onHome={onHome} />
+      <CornerControls />
+      <DataSheet />
+      <SampleSheet />
+      <LayerPanel />
+      <BasemapPicker />
+    </div>
   )
 }

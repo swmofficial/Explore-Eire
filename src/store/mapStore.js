@@ -7,7 +7,7 @@ const useMapStore = create((set) => ({
   setMapInstance: (map) => set({ mapInstance: map }),
 
   // Active basemap
-  basemap: 'outdoor', // 'outdoor' | 'satellite' | 'topo'
+  basemap: 'satellite', // 'outdoor' | 'satellite' | 'topo'
   setBasemap: (basemap) => set({ basemap }),
 
   // 3D terrain toggle

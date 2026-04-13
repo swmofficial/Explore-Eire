@@ -8,6 +8,7 @@
 // Bottom buttons are raised 76px (60px collapsed sheet + 16px gap)
 // so they are always visible above the DataSheet.
 import useMapStore from '../store/mapStore'
+import useUserStore from '../store/userStore'
 
 // Shared glass button style
 const GLASS = {
@@ -141,16 +142,21 @@ function CameraBtn({ onPress }) {
 export default function CornerControls() {
   const {
     setSettingsPanelOpen,
-    setDataSheetState,
-    dataSheetState,
     setBasemapPickerOpen,
+    setLayerPanelOpen,
   } = useMapStore()
+  const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
 
   function handleLayersPress() {
-    // Toggle between half and collapsed; if already full, stay full
-    if (dataSheetState === 'collapsed') setDataSheetState('half')
-    else if (dataSheetState === 'half')  setDataSheetState('collapsed')
-    // full state: let the sheet handle its own dismiss via swipe
+    setLayerPanelOpen(true)
+  }
+
+  function handleCameraPress() {
+    if (!isPro || isGuest) {
+      setShowUpgradeSheet(true)
+    } else {
+      console.log('Camera TODO — waypoint flow coming')
+    }
   }
 
   return (
@@ -158,7 +164,7 @@ export default function CornerControls() {
       <SettingsBtn onPress={() => setSettingsPanelOpen(true)} />
       <LayersBtn onPress={handleLayersPress} />
       <BasemapBtn onPress={() => setBasemapPickerOpen(true)} />
-      <CameraBtn onPress={() => {/* TODO: open waypoint camera flow */}} />
+      <CameraBtn onPress={handleCameraPress} />
     </>
   )
 }
