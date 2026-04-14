@@ -45,14 +45,13 @@ All modules share: map engine, waypoints, offline tiles, GPS tracking, 3D terrai
 
 ---
 
-## Live App (Phase 1 — Ireland Gold)
+## Live App (Phase 2 — Explore Eire)
 
-- **Production URL:** https://ireland-gold-tau.vercel.app
-- **GitHub repo:** https://github.com/swmofficial/ireland-gold
-- **Vercel project:** ireland-gold (swmofficial's projects)
-- **Deployment:** Auto-deploys on every push to `main`
+- **GitHub repo:** https://github.com/swmofficial/Explore-Eire
+- **Deployment:** Vercel — auto-deploys on every push to `main`
+- **VPS (WMS proxy):** `187.124.212.83` / `srv1566939.hstgr.cloud`
 
-Phase 2 will be a new repo under the Explore Eire brand.
+Phase 1 (Ireland Gold) is archived at https://github.com/swmofficial/ireland-gold.
 
 ---
 
@@ -111,6 +110,18 @@ Offline: #FF4444  — persistent badge when no signal
 Online:  #44DD88
 ```
 
+### Themes
+
+Three themes are implemented in `global.css` via `[data-theme]` on `<html>`. Map canvas stays dark regardless of theme.
+
+```
+dark  (default) — #0A0A0A void, #111214 base
+light           — #E8EAF0 void, #FFFFFF base (glass buttons stay dark for legibility on map)
+eire            — #0D1F0D void, #102010 base — deep forest green
+```
+
+Theme is stored in `userStore.theme`, applied in App.jsx via `document.documentElement.setAttribute('data-theme', theme)`. Selectable from SettingsPanel.
+
 ### Typography
 
 ```
@@ -122,7 +133,7 @@ Caption:  12px / 400 — metadata, secondary info
 Label:    11px / 500 / uppercase / tracking 0.08em — category tabs, section labels
 ```
 
-Font: system-ui / -apple-system stack. No custom font dependency.
+**Font: Plus Jakarta Sans** — loaded from Google Fonts. Fallback: system-ui / -apple-system / BlinkMacSystemFont. Loaded in `index.html` via preconnect + stylesheet link.
 
 ### Component Specifications
 
@@ -141,7 +152,7 @@ Min height:    30% viewport
 Max height:    85% viewport
 Corner radius: 16px top only (border-radius: 16px 16px 0 0)
 Handle:        32×4px, #2E3035, centered, margin-bottom: 12px
-Background:    #111214
+Background:    #111214 (var(--color-base))
 Border-top:    1px solid #2E3035
 ```
 
@@ -149,18 +160,17 @@ Border-top:    1px solid #2E3035
 ```
 Width:      80% screen, max 320px
 Height:     full
-Animation:  slideInRight 260ms ease-out
-Overlay:    rgba(0,0,0,0.5) behind, overlayFadeIn 200ms
+Transition: transform 260ms ease-out (translateX)
+Overlay:    rgba(0,0,0,0.5) behind, backdropFadeIn 200ms
 ```
 
 **Category header strip:**
 ```
 Height:     44px + safe-area-inset-top
-Background: #0A0A0A solid
-Tab font:   11px / 600 / uppercase
-Active tab: #E8C96A, 2px gold underline
-Inactive:   #6B7280
+Background: #0A0A0A solid (var(--color-void))
+Content:    Home grid icon (left) + module name + accent dot (centre)
 Border-bottom: 1px solid #2E3035
+NOTE: No tabs — data/layer navigation moved to DataSheet bottom sheet
 ```
 
 **Module icons (dashboard):**
@@ -169,7 +179,7 @@ Size:           80×80px
 Corner radius:  20px
 Background:     #1A1C20
 Unlocked border: 1.5px solid [module accent colour]
-Locked:         border: 1px solid #2E3035, opacity: 0.4
+Locked:         border: 1px solid #2E3035, opacity: 0.45
 Label:          8px / 600 / uppercase, below icon
 ```
 
@@ -183,12 +193,11 @@ New:     background rgba(91,143,212,0.15), color #3A6DB8
 ### Motion Principles
 
 ```
-Bottom sheet open:  350ms / spring(stiffness: 300, damping: 30)
-Layer panel slide:  260ms / ease-out
-Modal overlay:      200ms / ease-out (fade + scale 0.96→1)
-Map camera fly:     800ms / ease-in-out (MapLibre flyTo)
+Bottom sheet open:  320ms cubic-bezier(0.32, 0.72, 0, 1)
+Layer panel slide:  260ms ease-out
+Modal overlay:      200ms ease-out (fade)
+Map camera fly:     800ms ease-in-out (MapLibre flyTo)
 Toast notification: 180ms slide down, 3s hold, 180ms slide up
-Tab content switch: 150ms / ease crossfade
 Button press:       scale(0.97), 80ms
 ```
 
@@ -197,7 +206,7 @@ All animations respect `@media (prefers-reduced-motion: reduce)`.
 ### Design Rules (non-negotiable)
 
 1. The map is always visible. Nothing replaces it as the primary surface.
-2. Dark UI only in map context. No light mode for the map view.
+2. Dark UI only in map context. No light mode for the map canvas itself.
 3. All detail panels use bottom sheets — never full-screen modals when in map context.
 4. No traditional navigation bars. Category header + floating buttons only.
 5. Gold accent (#E8C96A) used sparingly — overuse kills its impact.
@@ -211,65 +220,54 @@ All animations respect `@media (prefers-reduced-motion: reduce)`.
 ### App Entry — First Open Flow
 
 ```
-1. Splash screen (1.5s max)
-   → GPS permission request fires here
-   
-2. Module dashboard — unauthenticated
+1. No splash screen yet (planned)
+   → GPS permission fires on map load
+
+2. Module dashboard — unauthenticated or authenticated
    → 5 module icons on #0A0A0A
-   → All locked with padlock
+   → Prospecting always unlocked (tap to enter map)
+   → All other modules locked — tap opens UpgradeSheet
    → "Choose your adventure" headline
-   → "Sign up free" CTA
-   
-3. Auth — sign up / sign in
-   → Email + Google OAuth
-   → Minimal form, no username required
-   
-4. Legal disclaimer (first login only)
+   → "Sign up free" CTA if !user; "Subscribe — Unlock all modules" if user && !isPro
+
+3. Auth — triggered by CTA or "Sign up free"
+   → Email + Google OAuth via Supabase
+   → AuthModal has Sign In / Sign Up tabs
+   → "Continue as guest" → isGuest=true, t6/t7 data only, no waypoints
+
+4. Legal disclaimer (first login only) — NOT YET BUILT
    → Full screen scroll-to-accept
-   → Covers: Two-Day Rule, Land Access, Protected Areas,
-     Archaeological Sites, Mineral Licences, Waterways,
-     Foreshore, Disclaimer
-   → Accept button activates only at bottom of scroll
-   → Stored: profiles.legal_accepted = true
-   
-5. Module dashboard — authenticated
-   → Unlocked modules show accent colour + active border
-   → Locked modules show padlock + greyed
-   → Tap unlocked → enters module map
-   → Tap locked → paywall / upgrade sheet
-   
-6. Map view — module context
-   → Full screen map
-   → Category header shows module tabs
-   → Layer panel pre-filtered to active module
+   → useAuth sets showLegalDisclaimer=true if profiles.legal_accepted = false
+   → LegalDisclaimerModal.jsx is currently a stub
+
+5. Map view — module context
+   → Full screen satellite basemap (default)
+   → CategoryHeader top strip
+   → DataSheet collapsed at bottom (60px, tap/drag to expand)
+   → LayerPanel accessible via Layers corner button (top right)
 ```
 
 ### Screen Inventory
 
-**Primary screens:**
+**Primary screens (built):**
 - Module dashboard — home base, always accessible
-- Map view — primary surface, full screen
-- Layer panel — right drawer, filtered by category
-- Settings panel — left drawer
-- Find / Discover — bottom sheet, nearby data
-- Plan / Waypoints list — bottom sheet
-- Go & Track mode — full screen tracking overlay
-- Offline maps manager — bottom sheet
+- Map view — primary surface, full screen satellite basemap
+- LayerPanel — right drawer, filtered by active module
+- SettingsPanel — left drawer, theme/account/legal
+- DataSheet — three-state bottom sheet (layer filters + nearest samples)
+- SampleSheet — detail sheet for gold sample tap
+- AuthModal — sign in / sign up / guest
+- BasemapPicker — 3 thumbnail basemap cards + 2D/3D toggle
+- UpgradeSheet — paywall (feature list, monthly/annual, CTA)
 
-**Detail sheets (bottom sheets):**
-- Sample detail (ppb, tier, IDs, arsenic, lead, coords)
-- Waypoint detail (name, icon, photos, GPS, edit/delete/share)
-- Add waypoint (camera → photo → GPS → name → icon → save)
-- Route detail (distance, elevation profile, navigate, export)
-- Basemap picker (3 visual thumbnails + 2D/3D toggle)
-- Upgrade / paywall (feature list + price + subscribe CTA)
-
-**Persistent UI (always on screen in map view):**
-- Category header strip (top)
-- Corner controls × 4 (floating glass buttons)
-- GPS blue dot (map layer)
-- Status toast (slides from top for system messages)
-- OFFLINE badge (persistent red when no signal)
+**Stubs (file exists, returns null):**
+- FindSheet — nearby discovery (DataSheet partially covers this for Prospecting)
+- WaypointSheet — waypoint detail / add waypoint flow
+- TrackOverlay — Go & Track mode full screen overlay
+- RouteBuilder — route planning tool
+- OfflineManager — offline map download manager
+- StatusToast — system message toast + persistent OFFLINE badge
+- LegalDisclaimerModal — first-login scroll-to-accept (useAuth triggers it but nothing renders it)
 
 ### Corner Controls Layout
 
@@ -286,6 +284,20 @@ All animations respect `@media (prefers-reduced-motion: reduce)`.
 └─────────────────────────────┘
 ```
 
+- **Settings** → opens SettingsPanel (left drawer)
+- **Layers** → opens LayerPanel (right drawer)
+- **Basemap** → opens BasemapPicker (bottom sheet)
+- **Camera** → opens UpgradeSheet for free/guest users; logs TODO for Pro users (waypoint flow not yet built)
+
+### Component Composition
+
+Map.jsx renders its own overlays internally:
+- `CategoryHeader`, `CornerControls`, `DataSheet`, `SampleSheet`, `LayerPanel`, `BasemapPicker`
+
+App.jsx renders:
+- `ModuleDashboard` (dashboard view) or `MapView` (map view)
+- `SettingsPanel`, `AuthModal`, `UpgradeSheet` (app-level, above map)
+
 ---
 
 ## Module Specifications
@@ -293,28 +305,35 @@ All animations respect `@media (prefers-reduced-motion: reduce)`.
 ### Prospecting (Gold & Minerals)
 
 **Data sources:**
-- GSI Stream Sediment Survey: 8,796 samples (Supabase)
-- GSI Lithogeochemistry SE Ireland: 517 rock samples (Supabase)
-- GSI WMS: Gold heatmap, Arsenic, Lead, Bedrock, Boreholes (via proxy)
+- GSI Stream Sediment Survey: 8,796 samples (Supabase `gold_samples` table)
+- GSI Lithogeochemistry SE Ireland: 517 rock samples (same table, `sample_type` contains "rock" or `survey` contains "litho")
+- GSI WMS: Gold heatmap, Arsenic, Lead, Bedrock, Geological Lines, Boreholes (via VPS proxy)
 - Mineral occurrences: PENDING DATA — do not build layer until data provided
+
+**Map layers (implemented):**
+- 7 separate MapLibre circle layers (`gold-t1` through `gold-t7`), rendered t7→t1 so higher tiers paint on top
+- Rock samples as a separate `rock-circles` layer with white stroke to distinguish
+- All 6 WMS raster layers added on map load with `visibility: none`, toggled via LayerPanel / DataSheet
+
+**Free tier gate (implemented):** Non-Pro users see only `gold-t6` (low, ≥2ppb) and `gold-t7` (background, <2ppb). All WMS layers hidden for non-Pro regardless of toggle state.
 
 **Layer panel sections:**
 ```
 GOLD OCCURRENCES
-  ├── Stream sediment samples (7 tier sub-toggles)
+  ├── Stream sediment samples (master toggle for all 7 tiers)
   └── Rock samples
 
-GSI GEOCHEMISTRY
-  ├── Gold heatmap (WMS — Pro only)
-  ├── Arsenic (WMS — Pro only)
-  └── Lead (WMS — Pro only)
+GSI GEOCHEMISTRY  [Pro only]
+  ├── Gold heatmap (WMS)
+  ├── Arsenic (WMS)
+  └── Lead (WMS)
 
-GSI GEOLOGY
-  ├── Bedrock geology (WMS — Pro only)
-  ├── Geological lines (WMS — Pro only)
-  └── Boreholes (WMS — Pro only)
+GSI GEOLOGY  [Pro only]
+  ├── Bedrock geology (WMS)
+  ├── Geological lines (WMS)
+  └── Boreholes (WMS)
 
-MINERALS (placeholder — no data)
+MINERALS (placeholder — no data yet)
   ├── Quartz / Crystal
   ├── Amethyst
   ├── Connemara marble
@@ -324,7 +343,7 @@ MINERALS (placeholder — no data)
 
 **Gold tier colour scale:**
 ```javascript
-const TIERS = [
+const GOLD_TIERS = [
   { id: 't1', label: 'Exceptional', range: '>500 ppb',  min: 500, max: 1e9,  color: '#67000d' },
   { id: 't2', label: 'Very high',   range: '>100 ppb',  min: 100, max: 500,  color: '#cb181d' },
   { id: 't3', label: 'High',        range: '>50 ppb',   min: 50,  max: 100,  color: '#fc4e2a' },
@@ -335,11 +354,13 @@ const TIERS = [
 ]
 ```
 
+**DataSheet tier filters:** "All" / "Exceptional (≥500)" / "High (≥50)" / "Significant (≥10)" — drives both MapLibre layer visibility and the sample list.
+
 ### Field Sports (Hunt & Fish)
 
-**Concept:** Combined hunting and angling module. Irish overlap between these communities is significant.
+**Status:** Layers defined in `layerCategories.js`, no data loaded yet. Module locked (`available: false`).
 
-**Planned layers (data sourcing required):**
+**Planned layers:**
 ```
 FISHING
   ├── Fishing rivers (IFI data)
@@ -356,12 +377,9 @@ REGULATIONS
   └── Seasons calendar (informational)
 ```
 
-**Data sources to investigate:**
-- Inland Fisheries Ireland (IFI) — river and lake data
-- NPWS — protected areas (no fishing/hunting zones)
-- OSi — land boundaries
-
 ### Hiking & Trails
+
+**Status:** Layers defined, no data, locked (`available: false`).
 
 **Planned layers:**
 ```
@@ -379,12 +397,11 @@ DIFFICULTY
   └── Trail slope angle (colour coded green/yellow/orange/red)
 ```
 
-**Data sources to investigate:**
-- Sport Ireland Trails database
-- Fáilte Ireland trail data
-- OSi for greenways
-
 ### Archaeology
+
+**Status:** Layers defined, no data, locked (`available: false`).
+
+**Important:** It is a criminal offence to disturb a Recorded Monument. This layer is INFORMATIONAL only. Legal disclaimer must reinforce this.
 
 **Planned layers:**
 ```
@@ -404,13 +421,9 @@ PROTECTED
   └── Architectural Conservation Areas
 ```
 
-**Data sources:**
-- National Monuments Service — maps.archaeology.ie (public data)
-- Historic Environment Viewer
-
-**Important:** It is a criminal offence to disturb a Recorded Monument. This layer is INFORMATIONAL only. Legal disclaimer must reinforce this.
-
 ### Coastal & Beach
+
+**Status:** Layers defined, no data, locked (`available: false`).
 
 **Planned layers:**
 ```
@@ -431,178 +444,73 @@ SAFETY
 
 ---
 
-## Core Platform Features (Phase 2 Priority Order)
+## Core Platform Features
 
-### 1. Offline Map Downloads
+### Status Overview
 
-**How it works:**
-- User draws bounding box on map
-- Chooses resolution: High (5 miles, ~100-400MB), Med (10 miles, ~30-100MB), Low (150 miles, ~5-30MB)
-- Estimated download size shown before confirming
-- Download on WiFi recommended
-- Named regions saved (e.g. "Wicklow Mountains August")
-- Green indicator = downloaded, red = not downloaded
-- Works for all basemaps (satellite, outdoor, topo)
+| Feature | Status |
+|---|---|
+| Full-screen MapLibre map (satellite default) | ✅ Built |
+| Module dashboard, 5 icons, lock/unlock | ✅ Built |
+| Auth — email + Google OAuth + guest mode | ✅ Built |
+| Prospecting gold layers (7 tiers + rock circles) | ✅ Built |
+| WMS proxy layers (geochemistry + geology) | ✅ Built |
+| LayerPanel right drawer | ✅ Built |
+| DataSheet bottom sheet (filters + sample list) | ✅ Built |
+| SampleSheet detail (ppb, coords, waypoint save) | ✅ Built |
+| BasemapPicker (outdoor / satellite / topo + 3D toggle) | ✅ Built |
+| Basemap switching (setStyle + re-add layers) | ✅ Built |
+| 3D terrain (MapTiler terrain-rgb-v2) | ✅ Built |
+| UpgradeSheet paywall (feature list, monthly/annual) | ✅ Built |
+| SettingsPanel (theme, account, sign out) | ✅ Built |
+| Session trail on map (blue dots) | ✅ Built (mapStore + Map.jsx) |
+| Session waypoints on map (gold dots) | ✅ Built (mapStore + Map.jsx) |
+| Legal disclaimer | ⚠️ Stub — useAuth sets flag, LegalDisclaimerModal not built |
+| Stripe checkout | ⚠️ Stub — returns 501 |
+| Stripe webhook | ⚠️ Stub — returns 501 |
+| GPS Go & Track (TrackOverlay) | ⚠️ Stub |
+| Waypoints full flow (WaypointSheet) | ⚠️ Stub |
+| Offline map downloads (OfflineManager) | ⚠️ Stub |
+| Find / Discover nearby (FindSheet) | ⚠️ Stub |
+| Route builder | ⚠️ Stub |
+| Weather layer | ⚠️ Stub |
+| StatusToast + OFFLINE badge | ⚠️ Stub |
+| Capacitor native wrapper | ❌ Not started |
+| Plausible analytics | ❌ Not started |
 
-**Implementation:**
-- MapLibre offline tile cache via `maplibre-gl-offline` or custom IndexedDB tile store
-- Supabase stores region metadata (`offline_regions` table)
-- Tiles stored in device storage, not Supabase
+### 3D Terrain
 
-### 2. GPS Tracking — Go & Track
+**Implemented.** Toggle in BasemapPicker. MapTiler terrain-rgb-v2 source.
 
-**How it works:**
-- Tap track button → begins recording
-- Red dot trail draws on map as user moves
-- Live stats overlay: distance (km), time (h:mm), elevation gain (m)
-- Pause / Resume / Stop controls
-- On stop: name the track → saves to `tracks` table as GeoJSON LineString
-- View elevation profile after saving
-- Export as GPX file
-- Tracks visible on map as saved layer
-
-**Data stored per track:**
-```
-geojson LineString with timestamps
-distance_m, duration_s
-elevation_gain_m, elevation_loss_m
-module context
-```
-
-### 3. 3D Terrain
-
-**How it works:**
-- MapLibre v3+ globe/3D using terrain-rgb tiles from MapTiler
-- 2D/3D toggle lives in the basemap picker sheet
-- Mobile: two-finger tilt and rotate, pinch zoom
-- Desktop: Ctrl+drag to tilt, right-click+drag to pan
-- North-up reset: tap compass
-- Returns to 2D: tap 3D button
-
-**MapLibre terrain config:**
 ```javascript
-map.addSource('terrain', {
+// mapConfig.js
+export const TERRAIN_SOURCE = {
   type: 'raster-dem',
   url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${MAPTILER_KEY}`,
   tileSize: 256,
-})
-map.setTerrain({ source: 'terrain', exaggeration: 1.5 })
+}
+export const TERRAIN_CONFIG = { source: 'terrain', exaggeration: 1.5 }
 ```
 
-### 4. Route Builder
+`mapStore.is3D` gates terrain on/off. Map.jsx `useEffect` watches `is3D` and calls `map.setTerrain(TERRAIN_CONFIG)` / `map.setTerrain(null)`. Terrain source is also re-added after basemap style switches if `is3D` was active.
 
-**How it works:**
-- Tap route builder tool → enters route mode
-- Tap map points → snaps to trails where available
-- Straight line option for off-trail routes
-- Shows: total distance, estimated elevation change
-- Save with name → stored as `routes` table
-- Navigate along saved route
-- Export as GPX
+### Basemap Switching
 
-### 5. Find — Nearby Discovery
+**Implemented.** Three basemaps defined in `mapConfig.js`:
 
-**How it works:**
-- Accessible from floating button or bottom nav
-- Bottom sheet shows nearest data points for active module
-- Prospecting: nearest high-ppb samples sorted by distance
-- Hiking: nearest trailheads
-- Sorted by GPS proximity
-- Tap any result → map flies to location + shows detail sheet
-
-### 6. Weather Layer
-
-**How it works:**
-- Persistent weather chip in top-right corner of map
-- Shows: temperature, wind speed, condition icon
-- Tap → expands to 5-day forecast sheet
-- Data source: Met Éireann API (Irish government, free, relevant)
-- Falls back to OpenWeatherMap if Met Éireann unavailable
-
----
-
-## Waypoints — Full Specification
-
-**Add waypoint flow:**
-```
-Option A (camera): Tap camera button → camera opens →
-  take photo → confirmation sheet shows:
-    - Photo thumbnail
-    - Current GPS coords (from device API, NOT EXIF)
-    - Name field
-    - Icon picker (prospect | find | camp | hazard | note | custom)
-    - Colour picker
-  → Save → photo uploads to Supabase Storage
-
-Option B (long press): Long press on map →
-  "Add waypoint here?" sheet →
-  Same confirmation sheet as above (no photo option)
-
-Option C (detail sheet): On any data point detail →
-  "+ Add waypoint" button → same flow
+```javascript
+export const BASEMAPS = {
+  satellite: { id: 'satellite', label: 'Satellite', styleUrl: `...maptiler.com/maps/satellite/...` },
+  outdoor:   { id: 'outdoor',   label: 'Outdoor',   styleUrl: `...maptiler.com/maps/outdoor-v2/...` },
+  topo:      { id: 'topo',      label: 'Topo',      styleUrl: `...maptiler.com/maps/topo-v2/...` },
+}
 ```
 
-**DO NOT attempt EXIF GPS extraction — iOS strips location from photos.**
+**Default: `satellite`.** Stored in `mapStore.basemap`.
 
-**GPS comes from device `navigator.geolocation.getCurrentPosition()` only.**
+On style change: `map.setStyle(styleUrl)` → `map.once('style.load', ...)` → `addDataLayers(map)` re-adds all sources/layers (WMS rasters, gold tiers, rock circles, session trail, session waypoints) → `syncLayerVisibility(map)` re-applies current visibility state → terrain re-added if `is3D`.
 
-**Photo storage:** `waypoint-photos/{user_id}/{timestamp}.jpg` in Supabase Storage
-
----
-
-## Subscription & Paywall
-
-### Tier Structure
-
-**Free:**
-- Map view — Ireland only
-- Gold occurrences — background + low tier only (t6, t7)
-- 3 waypoints maximum
-- No offline maps
-- No GSI WMS layers
-- No GPS tracking
-- 1 module only (Prospecting, limited)
-
-**Explorer — €9.99/month:**
-- All 5 modules fully unlocked
-- Full gold occurrence data (all 7 tiers)
-- All GSI WMS layers
-- Unlimited waypoints + photos
-- Offline map downloads
-- GPS route tracking
-- 3D terrain
-- Weather layer
-- Route builder
-
-**Annual — €79/year:**
-- Everything in Explorer
-- ~33% saving vs monthly
-- Priority support
-- Early access to new modules
-
-### Paywall Implementation
-
-- Free users see PRO badge on locked layers/features
-- Tapping a locked feature opens the upgrade sheet
-- Upgrade sheet: feature list + price + "Subscribe" CTA → Stripe checkout
-- On successful subscription: `subscriptions` table updated, `module_access` rows created
-- `useSubscription` hook checks status on app load and after payment
-- `isPro` boolean gates all premium features throughout app
-
-### Stripe Setup (required in Vercel env vars)
-
-```
-STRIPE_PRICE_ID_MONTHLY=price_...
-STRIPE_PRICE_ID_ANNUAL=price_...
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-SUPABASE_SERVICE_ROLE_KEY=eyJ...
-APP_URL=https://exploreeire.ie
-```
-
----
-
-## WMS Proxy — Hostinger VPS
+### WMS Proxy
 
 **Server:** `187.124.212.83` — Ubuntu 24.04 LTS
 **Hostname:** `srv1566939.hstgr.cloud`
@@ -615,8 +523,6 @@ APP_URL=https://exploreeire.ie
 /wms/bed  → GSI Bedrock WMS server
 /wms/bore → GSI Boreholes WMS server
 ```
-
-**Why this exists:** GSI WMS servers don't include CORS headers for external domains. The proxy sits between the browser and GSI, bypassing CORS. Vercel (HTTPS) → Proxy (HTTPS via Traefik) → GSI (HTTPS). Mixed content is not an issue.
 
 **PM2 process:** `wms-proxy` — auto-restarts on crash, survives server reboots.
 
@@ -633,26 +539,107 @@ Geo lines:       IE_GSI_Geological_Lines_100K_IE26_ITM
 Boreholes:       IE_GSI_Mineral_Exploration_Boreholes_50K_IE26_ITM
 ```
 
-**CRITICAL:** Layer names must be `encodeURIComponent()` encoded in all WMS URLs. The µ ¯ ¹ characters corrupt if not encoded.
+**CRITICAL:** Layer names use `\u00b5` `\u00af` `\u00b9` Unicode escapes in `mapConfig.js` (NOT literal characters — PowerShell and some editors corrupt them). Always `encodeURIComponent()` in tile URLs. Never use `URLSearchParams` for WMS tile URL construction — it re-encodes `{bbox-epsg-3857}`.
+
+---
+
+## Subscription & Paywall
+
+### Tier Structure
+
+**Free / Guest:**
+- Prospecting module only
+- Gold occurrences — low + background tiers only (t6 ≥2ppb, t7 <2ppb)
+- No GSI WMS layers
+- No waypoints (guest) / 3 waypoints (free account — not yet enforced)
+- No offline maps, no GPS tracking
+- Guest mode: `isGuest=true` in userStore, set via "Continue as guest" in AuthModal
+
+**Explorer — €9.99/month:**
+- All 5 modules fully unlocked
+- Full gold occurrence data (all 7 tiers)
+- All GSI WMS layers
+- Unlimited waypoints + photos
+- Offline map downloads
+- GPS route tracking
+- 3D terrain
+- Weather layer (not yet built)
+- Route builder (not yet built)
+
+**Annual — €79/year:**
+- Everything in Explorer
+- ~34% saving vs monthly
+
+### Paywall Implementation
+
+- `userStore.showUpgradeSheet` boolean drives UpgradeSheet visibility
+- UpgradeSheet is mounted in App.jsx (renders in both dashboard and map views)
+- Triggered from: ModuleDashboard locked module tap, ModuleDashboard CTA if !user, CornerControls camera button for free/guest users
+- `isPro` boolean in userStore gates all premium features; set by `useAuth` on subscription fetch
+- Stripe checkout and webhook are stubs returning 501 — wire up before launch
+
+### Stripe Setup (required in Vercel env vars)
+
+```
+STRIPE_PRICE_ID_MONTHLY=price_...
+STRIPE_PRICE_ID_ANNUAL=price_...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+APP_URL=https://exploreeire.ie
+```
+
+---
+
+## Waypoints — Full Specification
+
+**Add waypoint flow (not yet built — WaypointSheet is a stub):**
+```
+Option A (camera): Tap camera button → for Pro users → camera opens →
+  take photo → confirmation sheet:
+    - Photo thumbnail
+    - Current GPS coords (from navigator.geolocation ONLY — never EXIF)
+    - Name field
+    - Icon picker (prospect | find | camp | hazard | note | custom)
+    - Colour picker
+  → Save → photo uploads to Supabase Storage
+
+Option B (long press): Long press on map →
+  "Add waypoint here?" sheet →
+  Same confirmation sheet (no photo option)
+
+Option C (detail sheet): On any SampleSheet →
+  "Save Waypoint" button → currently saves to mapStore.sessionWaypoints only
+  (Supabase persistence requires WaypointSheet to be built)
+```
+
+**DO NOT attempt EXIF GPS extraction — iOS strips location from photos.**
+
+**GPS comes from `navigator.geolocation.getCurrentPosition()` only.**
+
+**Photo storage:** `waypoint-photos/{user_id}/{timestamp}.jpg` in Supabase Storage
+
+**Current state:** SampleSheet "Save Waypoint" button calls `mapStore.addSessionWaypoint()` which pins a gold circle on the map for the current session. Persistent save to Supabase is not yet implemented.
 
 ---
 
 ## Technical Stack
 
-| Component | Decision | Notes |
+| Component | Decision | Version / Notes |
 |---|---|---|
-| Frontend | React + Vite | Keep from phase 1 |
-| Maps | MapLibre GL JS v4+ | Upgrade for 3D terrain |
-| Basemap tiles | MapTiler | Keep — add terrain-rgb |
-| Database | Supabase | Keep — add new tables |
-| Auth | Supabase Auth | Add Google OAuth |
-| Payments | Stripe | Keep — fix webhook |
-| State management | Zustand | Replace useState sprawl |
-| WMS Proxy | Hostinger VPS + Node | Keep — add caching |
-| Offline tiles | MapLibre + IndexedDB | New in phase 2 |
-| Native wrapper | Capacitor | New in phase 2 |
-| Analytics | Plausible | New — GDPR native |
-| Hosting | Vercel | Keep — add custom domain |
+| Frontend | React + Vite | React 19, Vite 8 |
+| Maps | MapLibre GL JS | **v5.22** (package.json) |
+| Basemap tiles | MapTiler | satellite (default), outdoor, topo + terrain-rgb-v2 |
+| Database | Supabase | `@supabase/supabase-js` v2 |
+| Auth | Supabase Auth | Email + Google OAuth implemented |
+| Payments | Stripe | `@stripe/stripe-js` v9 — serverless stubs, not yet wired |
+| State management | Zustand | v5 — mapStore, moduleStore, userStore |
+| Font | Plus Jakarta Sans | Google Fonts — 400/500/600/700 |
+| WMS Proxy | Hostinger VPS + Node | PM2 `wms-proxy` process |
+| Offline tiles | MapLibre + IndexedDB | Not yet implemented |
+| Native wrapper | Capacitor | Not yet started |
+| Analytics | Plausible | Not yet started |
+| Hosting | Vercel | Auto-deploy on push to main |
 
 ---
 
@@ -660,12 +647,13 @@ Boreholes:       IE_GSI_Mineral_Exploration_Boreholes_50K_IE26_ITM
 
 ### Existing tables (from phase 1)
 
-**gold_samples** (9,313 rows)
+**gold_samples** (9,313 rows — 8,796 stream sediment + 517 rock)
 ```sql
 id, sample_id, lat, lng, au_ppb, as_mgkg, pb_mgkg, cu_mgkg,
 easting_ing, northing_ing, sample_type, survey, survey_year,
 rock_type, rock_desc, rock_age, created_at
 ```
+*Note: `useGoldSamples` selects: id, sample_id, lat, lng, au_ppb, as_mgkg, pb_mgkg, sample_type, survey, easting_ing, northing_ing, rock_type, rock_desc (not cu_mgkg, survey_year, rock_age)*
 
 **waypoints**
 ```sql
@@ -687,14 +675,14 @@ id, display_name, avatar_url,
 legal_accepted (boolean), legal_accepted_at, created_at
 ```
 
-### New tables (phase 2)
+### New tables (phase 2 — create in Supabase)
 
 **tracks**
 ```sql
 id              uuid PK
 user_id         uuid FK → auth.users
 name            text
-module          text    -- 'prospecting' | 'field_sports' | etc.
+module          text
 geojson         jsonb   -- GeoJSON LineString with timestamps
 distance_m      float
 duration_s      integer
@@ -760,66 +748,77 @@ create policy "Users own tracks"
 
 ---
 
-## Project Structure (Phase 2)
+## Project Structure (actual current state)
 
 ```
 explore-eire/
-├── index.html
-├── vite.config.js
+├── index.html                   ← viewport-fit=cover, Plus Jakarta Sans, theme-color
+├── vite.config.js               ← React plugin only
 ├── package.json
 ├── CLAUDE.md
-├── capacitor.config.ts          ← Capacitor native config
+├── .env                         ← never commit — in .gitignore
+├── .gitignore                   ← UTF-8, covers node_modules + .env + dist
 └── src/
-    ├── main.jsx
-    ├── App.jsx                  ← Root, module routing, global state
+    ├── main.jsx                 ← imports maplibre-gl CSS + global.css, renders App
+    ├── App.jsx                  ← dashboard↔map routing, mounts SettingsPanel/AuthModal/UpgradeSheet
     ├── store/
-    │   ├── mapStore.js          ← Zustand: map state, layers, basemap
-    │   ├── moduleStore.js       ← Zustand: active module, access
-    │   └── userStore.js         ← Zustand: auth, subscription, legal
+    │   ├── mapStore.js          ← map instance, basemap(satellite), layers, 3D, DataSheet state,
+    │   │                           LayerPanel/Settings/BasemapPicker open states, selectedSample,
+    │   │                           tierFilter, sessionTrail, sessionWaypoints
+    │   ├── moduleStore.js       ← activeModule, accessibleModules, activeCategoryTab
+    │   └── userStore.js         ← user, isGuest, isPro, subscriptionStatus, legalAccepted,
+    │                               showLegalDisclaimer, showAuthModal, showUpgradeSheet, theme
     ├── components/
-    │   ├── Map.jsx              ← MapLibre map, all layers
-    │   ├── ModuleDashboard.jsx  ← 5 icons, home screen
-    │   ├── CategoryHeader.jsx   ← Top strip, module tabs
-    │   ├── LayerPanel.jsx       ← Right drawer, filtered by module
-    │   ├── SettingsPanel.jsx    ← Left drawer
-    │   ├── CornerControls.jsx   ← 4 floating glass buttons
-    │   ├── BottomSheet.jsx      ← Reusable sheet component
-    │   ├── FindSheet.jsx        ← Nearby discovery
-    │   ├── WaypointSheet.jsx    ← Waypoint detail / add
-    │   ├── SampleSheet.jsx      ← Data point detail
-    │   ├── BasemapPicker.jsx    ← Thumbnail basemap selector
-    │   ├── TrackOverlay.jsx     ← Go & Track mode
-    │   ├── OfflineManager.jsx   ← Download regions
-    │   ├── RouteBuilder.jsx     ← Route planning
-    │   ├── UpgradeSheet.jsx     ← Paywall
-    │   ├── AuthModal.jsx        ← Sign in / sign up
-    │   ├── LegalDisclaimerModal.jsx
-    │   └── StatusToast.jsx
+    │   ├── Map.jsx              ← MapLibre map + overlay UI host. Renders: CategoryHeader,
+    │   │                           CornerControls, DataSheet, SampleSheet, LayerPanel, BasemapPicker.
+    │   │                           Handles basemap switching, 3D terrain, WMS layers, gold tiers.
+    │   ├── ModuleDashboard.jsx  ← 5 module icons, lock/unlock, CTA, renders AuthModal inline
+    │   ├── CategoryHeader.jsx   ← Fixed top strip: home button + module name + accent dot. No tabs.
+    │   ├── LayerPanel.jsx       ← Right drawer (260ms slide). Layer toggles with Pro badges.
+    │   │                           Opened by Layers corner button. Filtered by activeModule.
+    │   ├── SettingsPanel.jsx    ← Left drawer. Theme (Dark/Light/Eire), account, sign out.
+    │   ├── CornerControls.jsx   ← 4 glass buttons. Settings→SettingsPanel, Layers→LayerPanel,
+    │   │                           Basemap→BasemapPicker, Camera→UpgradeSheet(free)/TODO(Pro)
+    │   ├── DataSheet.jsx        ← 3-state bottom sheet (60px/46vh/85vh). Tier filter pills,
+    │   │                           WMS toggle pills (Heatmap/Geology), nearest sample list.
+    │   ├── SampleSheet.jsx      ← Sample detail: ppb hero, data rows, upstream tip, Save Waypoint.
+    │   ├── BasemapPicker.jsx    ← Bottom sheet. 3 thumbnail cards + 2D/3D terrain toggle.
+    │   ├── UpgradeSheet.jsx     ← Paywall. Feature list, monthly/annual pills, CTA (Stripe TODO).
+    │   ├── AuthModal.jsx        ← Sign In/Up modal. Google OAuth + email/password + Continue as guest.
+    │   ├── BottomSheet.jsx      ← Minimal reusable shell (no spring/drag yet)
+    │   ├── FindSheet.jsx        ← STUB
+    │   ├── WaypointSheet.jsx    ← STUB
+    │   ├── TrackOverlay.jsx     ← STUB
+    │   ├── OfflineManager.jsx   ← STUB
+    │   ├── RouteBuilder.jsx     ← STUB
+    │   ├── StatusToast.jsx      ← STUB
+    │   └── LegalDisclaimerModal.jsx  ← STUB (useAuth sets flag, nothing renders it)
     ├── hooks/
-    │   ├── useAuth.js
-    │   ├── useSubscription.js
-    │   ├── useGoldSamples.js    ← Batched Supabase load
-    │   ├── useWaypoints.js      ← CRUD + offline queue
-    │   ├── useTracks.js         ← GPS recording + save
-    │   ├── useOffline.js        ← Tile download management
-    │   └── useGeolocation.js    ← Device GPS
+    │   ├── useAuth.js           ← Auth state listener, legalFetchedFor ref, profile + sub fetch
+    │   ├── useGoldSamples.js    ← Batched Supabase load (1000/batch, loop until exhausted)
+    │   ├── useGeolocation.js    ← Device GPS: getCurrentPosition, watchPosition, stopWatching
+    │   ├── useSubscription.js   ← STUB (subscription fetch handled by useAuth currently)
+    │   ├── useTracks.js         ← Skeleton (state structure, all methods are TODO)
+    │   ├── useWaypoints.js      ← Skeleton (state structure, all CRUD methods are TODO)
+    │   └── useOffline.js        ← Partial (online/offline detection works; download TODO)
     ├── lib/
-    │   ├── supabase.js
-    │   ├── mapConfig.js         ← WMS URLs, tier colours, basemaps
-    │   ├── layerCategories.js   ← Module → layer mapping
-    │   └── moduleConfig.js      ← Module definitions, colours, icons
+    │   ├── supabase.js          ← createClient with VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
+    │   ├── mapConfig.js         ← BASEMAPS, TERRAIN_SOURCE, TERRAIN_CONFIG, DEFAULT_CENTER/ZOOM,
+    │   │                           GOLD_TIERS, GSI_LAYERS (Unicode-escaped), buildWmsUrl
+    │   ├── layerCategories.js   ← LAYER_CATEGORIES: module → [{id, label, layers:[{id,label,pro}]}]
+    │   └── moduleConfig.js      ← MODULES array (5 entries), getModule(id)
     ├── api/
-    │   ├── create-checkout-session.js  ← Vercel serverless
-    │   └── stripe-webhook.js           ← Vercel serverless
+    │   ├── create-checkout-session.js  ← Vercel serverless — STUB returns 501
+    │   └── stripe-webhook.js           ← Vercel serverless — STUB returns 501
     └── styles/
-        └── global.css           ← CSS variables, base, animations
+        └── global.css           ← CSS vars (all 3 themes), reset, animations, MapLibre overrides
 ```
 
 ---
 
 ## Environment Variables
 
-**Vercel (production):**
+**Vercel (production — set in Vercel dashboard):**
 ```
 VITE_MAPTILER_KEY
 VITE_SUPABASE_URL
@@ -832,7 +831,7 @@ SUPABASE_SERVICE_ROLE_KEY
 APP_URL
 ```
 
-**Local `.env` (never commit):**
+**Local `.env` (never commit — confirmed in .gitignore):**
 ```
 VITE_MAPTILER_KEY=HPJlwqR1pNmrR3Eyirrv
 VITE_SUPABASE_URL=https://dozgrffjwxdzixpfnica.supabase.co
@@ -843,7 +842,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 
 ## Legal Disclaimer Content
 
-Must cover exactly these 8 topics:
+Must cover exactly these 8 topics (to implement in LegalDisclaimerModal.jsx):
 
 1. **The Two-Day Rule** — Section 8 Minerals Development Act 2017. Up to 2 consecutive days at one location without a licence.
 2. **Land Access** — Majority of Irish land is private. Must have landowner permission. No right to roam.
@@ -854,15 +853,16 @@ Must cover exactly these 8 topics:
 7. **Foreshore** — Intertidal zone (beaches) is State property. Removing material may require foreshore licence.
 8. **Disclaimer** — Explore Eire provides geological data for informational purposes only. User is responsible for verifying permissions. Explore Eire accepts no liability for trespass, environmental damage, or breach of any statutory provision.
 
-Footer line: "This is a summary for informational purposes only and does not constitute legal advice."
+Footer: "This is a summary for informational purposes only and does not constitute legal advice."
 
-**Implementation:**
+**Implementation requirements:**
 - Full screen on first login, after email verification
 - User must scroll to bottom before accept button activates
 - Single checkbox: "I understand and accept my legal responsibilities"
 - Stored: `profiles.legal_accepted = true`, `legal_accepted_at = now()`
 - Permanent Legal page accessible from Settings panel at any time
-- Once accepted: never shown again. Not on tab switch, not on refresh. Use `legalFetchedFor` ref pattern to prevent re-fetch loops.
+- Once accepted: never shown again. Use `legalFetchedFor` ref pattern (already in useAuth.js) to prevent re-trigger on tab focus.
+- `useAuth` already sets `showLegalDisclaimer = true` when `profiles.legal_accepted = false` — just need the component built and rendered.
 
 ---
 
@@ -873,11 +873,15 @@ Footer line: "This is a summary for informational purposes only and does not con
 3. **GeoJSON** must not be embedded inline in HTML/JS — load from Supabase
 4. **encodeURIComponent()** required on all GSI WMS layer names (µ ¯ ¹ corrupt otherwise)
 5. **useGoldSamples** loads in batches of 1000 — do not change to single query
-6. **Legal disclaimer re-trigger** — use `legalFetchedFor` ref. `onAuthStateChange` fires on tab focus — must not re-run profile fetch if user ID unchanged
-7. **GSI layer names** — use `\u00b5` `\u00af` `\u00b9` Unicode escapes, not literal characters (PowerShell corrupts literal special chars when editing)
+6. **Legal disclaimer re-trigger** — use `legalFetchedFor` ref (implemented in useAuth.js). `onAuthStateChange` fires on tab focus — must not re-run profile fetch if user ID unchanged
+7. **GSI layer names** — use `\u00b5` `\u00af` `\u00b9` Unicode escapes in mapConfig.js, not literal characters
 8. **WMS proxy** — use `req._parsedUrl.query` not `URLSearchParams(req.query)` to pass query params. URLSearchParams re-encodes and corrupts layer names.
-9. **node_modules** must be in `.gitignore` — do not commit. Vercel build fails with wrong file permissions.
-10. **viewport-fit=cover** required in HTML meta viewport tag for iOS safe area insets to work
+9. **node_modules** must be in `.gitignore` — do not commit
+10. **viewport-fit=cover** required in HTML meta viewport tag for iOS safe area insets
+11. **WMS tile URL builder** — must NOT use URLSearchParams for tile URL construction. The `{bbox-epsg-3857}` MapLibre placeholder must reach the template string unencoded. Build URL manually with string concatenation.
+12. **Basemap style switch** — after `map.setStyle()`, all sources and layers are removed. Must call `addDataLayers(map)` inside `map.once('style.load', ...)` to re-add everything. Use `map.getSource(id)` guards to avoid double-add errors.
+13. **syncLayerVisibility** — must read store state via `useMapStore.getState()` and `useUserStore.getState()` (not React props/closures) when called from `style.load` callbacks, otherwise reads stale values.
+14. **`.gitignore` encoding** — was UTF-16 (git silently couldn't parse it, .env was not being ignored). Fixed to UTF-8. Verify encoding if recreating.
 
 ---
 
@@ -893,39 +897,41 @@ Two-day rule applies for recreational prospecting without a licence.
 
 ## Parked Ideas (revisit post-launch)
 
-- **Explore Eire Realty** — separate platform. Consolidates BIDx1 auction properties, recent foreclosures, full rentals, current sales, room rentals. Map-first property browsing. Uses same map engine. Separate codebase, separate brand, separate subscription. Bank repossessions going to public auction are public record. BIDx1 publishes catalogue openly. Courts Service publishes repossession orders.
-
-- **Interactive globe view** — GPS-centred 3D globe that transitions into flat Ireland map on click. MapLibre v3 globe projection. Parked — non-trivial, not core to MVP.
-
+- **Explore Eire Realty** — separate platform. Map-first property browsing: BIDx1 auctions, foreclosures, rentals, current sales. Same map engine. Separate codebase, brand, subscription.
+- **Interactive globe view** — GPS-centred 3D globe transitioning to flat Ireland map. MapLibre globe projection. Non-trivial, not core to MVP.
 - **Community finds** — user-submitted waypoints visible to all (with privacy controls). Requires moderation. Phase 3+.
-
-- **CarPlay / Android Auto** — vehicle navigation integration. Phase 3+.
-
-- **Trail reports** — user-submitted condition reports on trails. Phase 3+.
+- **CarPlay / Android Auto** — Phase 3+.
+- **Trail reports** — user-submitted condition reports. Phase 3+.
 
 ---
 
-## Phase 2 Build Priority Order
+## Phase 2 Build Priority — Remaining Work
 
-1. New repo setup — Explore Eire brand, clean architecture
-2. Core map view — full screen, category header, corner controls
-3. Module dashboard — 5 icons, lock/unlock logic
-4. Auth — Supabase + Google OAuth
-5. Legal disclaimer — scroll-to-accept, stored in profiles
-6. Prospecting module — migrate all phase 1 gold data and layers
-7. Subscription — Stripe, two tiers, paywall gates
-8. Waypoints — full flow, camera + GPS + photos
-9. GPS tracking — Go & Track
-10. 3D terrain — MapLibre terrain-rgb
-11. Offline maps — tile download + IndexedDB
-12. Find / Discover — nearby data points
-13. Basemap picker — visual thumbnails
-14. Field Sports module — data sourcing required first
-15. Hiking module — data sourcing required first
-16. Archaeology module — NMS data integration
-17. Coastal module — data sourcing required first
-18. Route builder
-19. Weather layer
-20. Capacitor — native iOS/Android wrapper
-21. App Store submission
-22. Custom domain — exploreeire.ie
+**Done:**
+1. ✅ Repo setup — Explore Eire brand, clean architecture
+2. ✅ Core map view — MapLibre, satellite basemap, category header, corner controls
+3. ✅ Module dashboard — 5 icons, lock/unlock, CTA
+4. ✅ Auth — Supabase + Google OAuth + guest mode
+5. ✅ Prospecting module — 7 tier layers, rock circles, WMS proxy layers
+6. ✅ Subscription store + paywall UI (UpgradeSheet)
+7. ✅ Basemap picker — 3 thumbnails, 2D/3D toggle
+8. ✅ 3D terrain — MapTiler terrain-rgb-v2
+9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out
+
+**Next (in order):**
+10. Legal disclaimer — build LegalDisclaimerModal.jsx (useAuth already triggers it)
+11. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
+12. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
+13. GPS tracking — build TrackOverlay.jsx (useTracks hook scaffolded)
+14. StatusToast — persistent OFFLINE badge + system messages
+15. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
+16. Find / Discover — build FindSheet.jsx
+17. Field Sports module — data sourcing required first
+18. Hiking module — data sourcing required first
+19. Archaeology module — NMS data integration
+20. Coastal module — data sourcing required first
+21. Route builder — build RouteBuilder.jsx
+22. Weather layer — Met Éireann API
+23. Capacitor — native iOS/Android wrapper
+24. App Store submission
+25. Custom domain — exploreeire.ie

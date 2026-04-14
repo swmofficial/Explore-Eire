@@ -62,6 +62,10 @@ const useMapStore = create((set) => ({
   sessionWaypoints: [],
   addSessionWaypoint: (wp) =>
     set((state) => ({ sessionWaypoints: [...state.sessionWaypoints, wp] })),
+
+  // WaypointSheet — null = closed, { mode: 'add' | 'view', waypoint?: object }
+  waypointSheet: null,
+  setWaypointSheet: (v) => set({ waypointSheet: v }),
 }))
 
 export default useMapStore
