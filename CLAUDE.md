@@ -677,7 +677,9 @@ current_period_end, created_at
 **profiles**
 ```sql
 id, display_name, avatar_url,
-legal_accepted (boolean), legal_accepted_at, created_at
+legal_accepted (boolean), legal_accepted_at,
+is_pro (boolean),   ← set true by stripe-webhook on checkout.session.completed
+created_at
 ```
 
 ### New tables (phase 2 — create in Supabase)
@@ -890,6 +892,7 @@ Footer: "This is a summary for informational purposes only and does not constitu
 15. **Stripe HTML response** — serverless functions were placed in `src/api/`. Vercel only recognises serverless functions in a top-level `/api` directory at the project root. Moved to `api/create-checkout-session.js` and `api/stripe-webhook.js`. Any future serverless functions must go in root `/api/`, not `src/api/`.
 16. **Google OAuth localhost redirect** — Supabase Site URL was unset (defaulted to localhost), causing OAuth to redirect to localhost after sign-in on Vercel. Fixed by setting Supabase Site URL and redirect URLs to the Vercel production domain in the Supabase dashboard.
 17. **Stripe price ID not found** — `process.env` does not exist in the browser. Price IDs must use the `VITE_` prefix and be accessed via `import.meta.env` in the frontend. UpgradeSheet.jsx now resolves the price ID client-side (`import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL/MONTHLY`) and sends it in the POST body. The serverless function reads `priceId` directly from `req.body` and returns 400 if missing. Env vars in Vercel must be named `VITE_STRIPE_PRICE_ID_MONTHLY` and `VITE_STRIPE_PRICE_ID_ANNUAL`.
+18. **isPro not set after Stripe checkout** — webhook was not updating `profiles.is_pro`. Fixed: `stripe-webhook.js` now updates `profiles` to set `is_pro = true` after a successful `checkout.session.completed` upsert to `subscriptions`. `useAuth.js` now selects `is_pro` from the profile on sign-in and calls `setIsPro(true)` if true. Requires `is_pro boolean` column in the `profiles` table in Supabase.
 
 ---
 

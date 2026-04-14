@@ -76,6 +76,17 @@ export default async function handler(req, res) {
         console.error('Supabase upsert error (checkout.session.completed):', error.message)
         return res.status(500).json({ error: error.message })
       }
+
+      // Mark user as pro in profiles table
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ is_pro: true })
+        .eq('id', userId)
+
+      if (profileError) {
+        console.error('Supabase profile update error (checkout.session.completed):', profileError.message)
+        return res.status(500).json({ error: profileError.message })
+      }
     } else if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object
 

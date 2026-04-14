@@ -44,7 +44,7 @@ export function useAuth() {
     // never sees user=set + legalAccepted=false at the same time.
     const { data: profile } = await supabase
       .from('profiles')
-      .select('legal_accepted')
+      .select('legal_accepted, is_pro')
       .eq('id', user.id)
       .single()
 
@@ -53,6 +53,9 @@ export function useAuth() {
     }
     if (profile && !profile.legal_accepted) {
       setShowLegalDisclaimer(true)
+    }
+    if (profile?.is_pro) {
+      setIsPro(true)
     }
 
     // Now safe to expose the user — legal state is already hydrated
