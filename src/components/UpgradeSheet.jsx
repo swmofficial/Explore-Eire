@@ -7,7 +7,13 @@ async function startCheckout(plan, userId) {
   const res = await fetch('/api/create-checkout-session', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ plan, userId }),
+    body: JSON.stringify({
+      plan,
+      userId,
+      priceId: plan === 'annual'
+        ? import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL
+        : import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY,
+    }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Checkout failed')

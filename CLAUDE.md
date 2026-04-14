@@ -584,13 +584,15 @@ Boreholes:       IE_GSI_Mineral_Exploration_Boreholes_50K_IE26_ITM
 ### Stripe Setup (required in Vercel env vars)
 
 ```
-STRIPE_PRICE_ID_MONTHLY=price_...
-STRIPE_PRICE_ID_ANNUAL=price_...
+VITE_STRIPE_PRICE_ID_MONTHLY=price_...
+VITE_STRIPE_PRICE_ID_ANNUAL=price_...
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
 APP_URL=https://exploreeire.ie
 ```
+Note: price IDs use the `VITE_` prefix so Vite exposes them to the browser via `import.meta.env`.
+The frontend resolves the price ID and sends it in the POST body — the serverless function uses it directly.
 
 ---
 
@@ -826,8 +828,8 @@ explore-eire/
 VITE_MAPTILER_KEY
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
-STRIPE_PRICE_ID_MONTHLY
-STRIPE_PRICE_ID_ANNUAL
+VITE_STRIPE_PRICE_ID_MONTHLY
+VITE_STRIPE_PRICE_ID_ANNUAL
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 SUPABASE_SERVICE_ROLE_KEY
@@ -887,6 +889,7 @@ Footer: "This is a summary for informational purposes only and does not constitu
 14. **`.gitignore` encoding** — was UTF-16 (git silently couldn't parse it, .env was not being ignored). Fixed to UTF-8. Verify encoding if recreating.
 15. **Stripe HTML response** — serverless functions were placed in `src/api/`. Vercel only recognises serverless functions in a top-level `/api` directory at the project root. Moved to `api/create-checkout-session.js` and `api/stripe-webhook.js`. Any future serverless functions must go in root `/api/`, not `src/api/`.
 16. **Google OAuth localhost redirect** — Supabase Site URL was unset (defaulted to localhost), causing OAuth to redirect to localhost after sign-in on Vercel. Fixed by setting Supabase Site URL and redirect URLs to the Vercel production domain in the Supabase dashboard.
+17. **Stripe price ID not found** — `process.env` does not exist in the browser. Price IDs must use the `VITE_` prefix and be accessed via `import.meta.env` in the frontend. UpgradeSheet.jsx now resolves the price ID client-side (`import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL/MONTHLY`) and sends it in the POST body. The serverless function reads `priceId` directly from `req.body` and returns 400 if missing. Env vars in Vercel must be named `VITE_STRIPE_PRICE_ID_MONTHLY` and `VITE_STRIPE_PRICE_ID_ANNUAL`.
 
 ---
 
