@@ -31,25 +31,32 @@ export function useAuth() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSignedIn(user) {
-    setUser(user)
-
-    // Avoid re-fetching profile on tab refocus when user ID unchanged
-    if (legalFetchedFor.current === user.id) return
+    // If we've already fetched for this user ID, just sync user into the store.
+    // legalAccepted is already correct from the first fetch — no flash risk.
+    if (legalFetchedFor.current === user.id) {
+      setUser(user)
+      return
+    }
     legalFetchedFor.current = user.id
 
-    // Fetch profile for legal_accepted
+    // Fetch profile BEFORE calling setUser so that when user becomes non-null
+    // in the store, legalAccepted is already set correctly and the modal gate
+    // never sees user=set + legalAccepted=false at the same time.
     const { data: profile } = await supabase
       .from('profiles')
       .select('legal_accepted')
       .eq('id', user.id)
       .single()
 
-    if (profile && !profile.legal_accepted) {
-      setShowLegalDisclaimer(true)
-    }
     if (profile?.legal_accepted) {
       setLegalAccepted(true)
     }
+    if (profile && !profile.legal_accepted) {
+      setShowLegalDisclaimer(true)
+    }
+
+    // Now safe to expose the user — legal state is already hydrated
+    setUser(user)
 
     // Fetch subscription status
     const { data: sub } = await supabase

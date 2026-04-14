@@ -88,146 +88,161 @@ export default function LegalDisclaimerModal() {
   }
 
   return (
+    // Backdrop — full-screen dimmed overlay, centres the modal box via padding
     <div
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 100,
-        background: '#0A0A0A',
-        overflowY: 'scroll',
-        WebkitOverflowScrolling: 'touch',
+        background: 'rgba(0,0,0,0.75)',
+        // 20vh top/bottom, 30vw left/right — falls back to 24px on narrow screens
+        padding: '20vh max(24px, 30vw)',
+        boxSizing: 'border-box',
       }}
     >
-      {/* Sticky top section */}
+      {/* Modal box — fills the space left by the backdrop padding */}
       <div
         style={{
-          position: 'sticky',
-          top: 0,
           background: '#0A0A0A',
-          zIndex: 1,
-          padding: '20px 24px 16px',
-          borderBottom: '1px solid var(--color-border)',
+          borderRadius: 16,
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflow: 'hidden',
+          border: '1px solid var(--color-border)',
         }}
       >
+        {/* Header — fixed inside the modal, does not scroll */}
         <div
           style={{
-            fontSize: 20,
-            fontWeight: 600,
-            color: '#E8C96A',
-            marginBottom: 6,
+            flexShrink: 0,
+            padding: '20px 24px 16px',
+            borderBottom: '1px solid var(--color-border)',
           }}
         >
-          Explore Eire
-        </div>
-        <div style={{ fontSize: 14, color: 'var(--color-muted)' }}>
-          Before you explore, please read this carefully.
-        </div>
-      </div>
-
-      {/* Scrollable body */}
-      <div style={{ padding: 24, paddingBottom: 120 }}>
-        {LEGAL_SECTIONS.map((section, i) => (
-          <div key={section.id} style={{ marginBottom: 28 }}>
-            <h2
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#E8EAF0',
-                margin: '0 0 8px',
-              }}
-            >
-              {i + 1}. {section.title}
-            </h2>
-            <p
-              style={{
-                fontSize: 14,
-                fontWeight: 400,
-                color: 'var(--color-muted)',
-                margin: 0,
-                lineHeight: 1.65,
-              }}
-            >
-              {section.body}
-            </p>
-          </div>
-        ))}
-
-        {/* Footer note */}
-        <p
-          style={{
-            fontSize: 12,
-            color: 'var(--color-muted)',
-            fontStyle: 'italic',
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          This is a summary for informational purposes only and does not constitute legal advice.
-        </p>
-      </div>
-
-      {/* Fixed bottom bar */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: '#0A0A0A',
-          borderTop: '1px solid var(--color-border)',
-          padding: '16px 24px',
-          paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-        }}
-      >
-        {/* Checkbox row */}
-        <label
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 12,
-            cursor: 'pointer',
-            marginBottom: 14,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={checked}
-            onChange={(e) => setChecked(e.target.checked)}
+          <div
             style={{
-              width: 18,
-              height: 18,
-              marginTop: 1,
-              flexShrink: 0,
-              accentColor: '#E8C96A',
-              cursor: 'pointer',
+              fontSize: 20,
+              fontWeight: 600,
+              color: '#E8C96A',
+              marginBottom: 6,
             }}
-          />
-          <span style={{ fontSize: 14, color: 'var(--color-primary)', lineHeight: 1.4 }}>
-            I understand and accept my legal responsibilities
-          </span>
-        </label>
+          >
+            Explore Eire
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--color-muted)' }}>
+            Before you explore, please read this carefully.
+          </div>
+        </div>
 
-        {/* Accept button */}
-        <button
-          onClick={handleAccept}
-          disabled={!checked || saving}
+        {/* Scrollable body — only this section scrolls */}
+        <div
           style={{
-            width: '100%',
-            height: 52,
-            borderRadius: 12,
-            border: 'none',
-            fontSize: 16,
-            fontWeight: 600,
-            cursor: checked && !saving ? 'pointer' : 'not-allowed',
-            background: checked ? '#E8C96A' : 'var(--color-raised)',
-            color: checked ? '#0A0A0A' : 'var(--color-muted)',
-            transition: 'background 200ms ease, color 200ms ease',
-            WebkitTapHighlightColor: 'transparent',
+            flex: 1,
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            padding: 24,
           }}
         >
-          {saving ? 'Saving…' : 'Enter Explore Eire'}
-        </button>
+          {LEGAL_SECTIONS.map((section, i) => (
+            <div key={section.id} style={{ marginBottom: 28 }}>
+              <h2
+                style={{
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#E8EAF0',
+                  margin: '0 0 8px',
+                }}
+              >
+                {i + 1}. {section.title}
+              </h2>
+              <p
+                style={{
+                  fontSize: 14,
+                  fontWeight: 400,
+                  color: 'var(--color-muted)',
+                  margin: 0,
+                  lineHeight: 1.65,
+                }}
+              >
+                {section.body}
+              </p>
+            </div>
+          ))}
+
+          {/* Footer note */}
+          <p
+            style={{
+              fontSize: 12,
+              color: 'var(--color-muted)',
+              fontStyle: 'italic',
+              margin: 0,
+              lineHeight: 1.5,
+            }}
+          >
+            This is a summary for informational purposes only and does not constitute legal advice.
+          </p>
+        </div>
+
+        {/* Bottom bar — inside the modal box, does not scroll */}
+        <div
+          style={{
+            flexShrink: 0,
+            background: '#0A0A0A',
+            borderTop: '1px solid var(--color-border)',
+            padding: '16px 24px',
+          }}
+        >
+          {/* Checkbox row */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 12,
+              cursor: 'pointer',
+              marginBottom: 14,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={(e) => setChecked(e.target.checked)}
+              style={{
+                width: 18,
+                height: 18,
+                marginTop: 1,
+                flexShrink: 0,
+                accentColor: '#E8C96A',
+                cursor: 'pointer',
+              }}
+            />
+            <span style={{ fontSize: 14, color: 'var(--color-primary)', lineHeight: 1.4 }}>
+              I understand and accept my legal responsibilities
+            </span>
+          </label>
+
+          {/* Accept button */}
+          <button
+            onClick={handleAccept}
+            disabled={!checked || saving}
+            style={{
+              width: '100%',
+              height: 52,
+              borderRadius: 12,
+              border: 'none',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: checked && !saving ? 'pointer' : 'not-allowed',
+              background: checked ? '#E8C96A' : 'var(--color-raised)',
+              color: checked ? '#0A0A0A' : 'var(--color-muted)',
+              transition: 'background 200ms ease, color 200ms ease',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {saving ? 'Saving…' : 'Enter Explore Eire'}
+          </button>
+        </div>
       </div>
     </div>
   )
