@@ -1,71 +1,77 @@
 // useWaypoints.js — Waypoint CRUD for the current user.
-// Loads all waypoints on mount (when user changes), exposes
-// addWaypoint and deleteWaypoint that update both Supabase and local state.
+// Fetches persisted waypoints from Supabase on mount (authenticated users).
+// Guest users get in-memory state only — nothing is persisted.
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 
 export function useWaypoints() {
-  const { user } = useUserStore()
-  const [waypoints, setWaypoints] = useState([])
+  const { user, isGuest } = useUserStore()
+  const [savedWaypoints, setSavedWaypoints] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // ── READ — fetch on mount / user change ───────────────────────────
   useEffect(() => {
-    if (!user) {
-      setWaypoints([])
+    if (!user || isGuest) {
+      setSavedWaypoints([])
       return
     }
     setLoading(true)
     supabase
       .from('waypoints')
-      .select('id, name, description, lat, lng, icon, photos')
+      .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .then(({ data, error }) => {
         if (error) console.error('useWaypoints fetch error:', error.message)
-        setWaypoints(data ?? [])
+        setSavedWaypoints(data ?? [])
         setLoading(false)
       })
-  }, [user])
+  }, [user?.id, isGuest]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // addWaypoint({ lat, lng, title, note, photo_url })
+  // ── ADD ───────────────────────────────────────────────────────────
   const addWaypoint = useCallback(
-    async ({ lat, lng, title, note, photo_url }) => {
-      if (!user) return null
-      const row = {
-        user_id: user.id,
-        name: title ?? 'Waypoint',
-        description: note ?? null,
-        lat,
-        lng,
-        photos: photo_url ? [photo_url] : [],
+    async (waypointObj) => {
+      if (!user || isGuest) {
+        // Guest: keep in local state only
+        const localWp = { ...waypointObj, id: crypto.randomUUID() }
+        setSavedWaypoints((prev) => [localWp, ...prev])
+        return localWp
       }
       const { data, error } = await supabase
         .from('waypoints')
-        .insert(row)
-        .select('id, name, description, lat, lng, icon, photos')
+        .insert([{ ...waypointObj, user_id: user.id }])
+        .select()
         .single()
       if (error) {
         console.error('addWaypoint error:', error.message)
         return null
       }
-      setWaypoints((prev) => [data, ...prev])
+      setSavedWaypoints((prev) => [data, ...prev])
       return data
     },
-    [user],
+    [user, isGuest],
   )
 
-  const deleteWaypoint = useCallback(async (id) => {
-    const { error } = await supabase
-      .from('waypoints')
-      .delete()
-      .eq('id', id)
-    if (error) {
-      console.error('deleteWaypoint error:', error.message)
-      return
-    }
-    setWaypoints((prev) => prev.filter((w) => w.id !== id))
-  }, [])
+  // ── DELETE ────────────────────────────────────────────────────────
+  const deleteWaypoint = useCallback(
+    async (id) => {
+      if (!user || isGuest) {
+        setSavedWaypoints((prev) => prev.filter((w) => w.id !== id))
+        return
+      }
+      const { error } = await supabase
+        .from('waypoints')
+        .delete()
+        .eq('id', id)
+      if (error) {
+        console.error('deleteWaypoint error:', error.message)
+        return
+      }
+      setSavedWaypoints((prev) => prev.filter((w) => w.id !== id))
+    },
+    [user, isGuest],
+  )
 
-  return { waypoints, loading, addWaypoint, deleteWaypoint }
+  return { savedWaypoints, addWaypoint, deleteWaypoint, loading }
 }

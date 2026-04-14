@@ -444,7 +444,7 @@ export default function Map({ onHome }) {
   const { isPro } = useUserStore()
 
   const { samples } = useGoldSamples()
-  const { waypoints: savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
+  const { savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
 
   // Keep refs in sync for use in style.load callbacks
   samplesRef.current = samples
