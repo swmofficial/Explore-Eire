@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: April 2026
+> Last updated: 14 April 2026
 > For use with Claude Code, Cline, or any AI coding assistant
 > DO NOT write a single line of code until you have read this file in full
 
@@ -465,9 +465,12 @@ SAFETY
 | SettingsPanel (theme, account, sign out) | ✅ Built |
 | Session trail on map (blue dots) | ✅ Built (mapStore + Map.jsx) |
 | Session waypoints on map (gold dots) | ✅ Built (mapStore + Map.jsx) |
-| Legal disclaimer | ⚠️ Stub — useAuth sets flag, LegalDisclaimerModal not built |
-| Stripe checkout | ⚠️ Stub — returns 501 |
-| Stripe webhook | ⚠️ Stub — returns 501 |
+| Legal disclaimer | ✅ Built — centred popup, checkbox accept, Supabase upsert, no reappear on refresh |
+| Stripe serverless functions | ✅ In correct /api root directory — checkout session + webhook handler |
+| Google OAuth | ✅ Working with Vercel redirect — Supabase Site URL + redirect URLs set to Vercel domain |
+| Supabase configuration | ✅ Site URL and redirect URLs set to Vercel production domain |
+| Stripe checkout (wired) | ⚠️ Env vars required in Vercel — STRIPE_SECRET_KEY, STRIPE_PRICE_ID_MONTHLY/ANNUAL |
+| Stripe webhook (wired) | ⚠️ Env vars required in Vercel — STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY |
 | GPS Go & Track (TrackOverlay) | ⚠️ Stub |
 | Waypoints full flow (WaypointSheet) | ⚠️ Stub |
 | Offline map downloads (OfflineManager) | ⚠️ Stub |
@@ -752,6 +755,9 @@ create policy "Users own tracks"
 
 ```
 explore-eire/
+├── api/                         ← Vercel serverless functions — must be at root, not src/api/
+│   ├── create-checkout-session.js  ← POST {plan, userId} → {url} Stripe Checkout session
+│   └── stripe-webhook.js           ← Vercel webhook handler — updates Supabase subscriptions
 ├── index.html                   ← viewport-fit=cover, Plus Jakarta Sans, theme-color
 ├── vite.config.js               ← React plugin only
 ├── package.json
@@ -792,7 +798,7 @@ explore-eire/
     │   ├── OfflineManager.jsx   ← STUB
     │   ├── RouteBuilder.jsx     ← STUB
     │   ├── StatusToast.jsx      ← STUB
-    │   └── LegalDisclaimerModal.jsx  ← STUB (useAuth sets flag, nothing renders it)
+    │   └── LegalDisclaimerModal.jsx  ← Centred popup, 8 legal sections, checkbox accept, Supabase upsert
     ├── hooks/
     │   ├── useAuth.js           ← Auth state listener, legalFetchedFor ref, profile + sub fetch
     │   ├── useGoldSamples.js    ← Batched Supabase load (1000/batch, loop until exhausted)
@@ -807,9 +813,6 @@ explore-eire/
     │   │                           GOLD_TIERS, GSI_LAYERS (Unicode-escaped), buildWmsUrl
     │   ├── layerCategories.js   ← LAYER_CATEGORIES: module → [{id, label, layers:[{id,label,pro}]}]
     │   └── moduleConfig.js      ← MODULES array (5 entries), getModule(id)
-    ├── api/
-    │   ├── create-checkout-session.js  ← Vercel serverless — STUB returns 501
-    │   └── stripe-webhook.js           ← Vercel serverless — STUB returns 501
     └── styles/
         └── global.css           ← CSS vars (all 3 themes), reset, animations, MapLibre overrides
 ```
@@ -882,6 +885,8 @@ Footer: "This is a summary for informational purposes only and does not constitu
 12. **Basemap style switch** — after `map.setStyle()`, all sources and layers are removed. Must call `addDataLayers(map)` inside `map.once('style.load', ...)` to re-add everything. Use `map.getSource(id)` guards to avoid double-add errors.
 13. **syncLayerVisibility** — must read store state via `useMapStore.getState()` and `useUserStore.getState()` (not React props/closures) when called from `style.load` callbacks, otherwise reads stale values.
 14. **`.gitignore` encoding** — was UTF-16 (git silently couldn't parse it, .env was not being ignored). Fixed to UTF-8. Verify encoding if recreating.
+15. **Stripe HTML response** — serverless functions were placed in `src/api/`. Vercel only recognises serverless functions in a top-level `/api` directory at the project root. Moved to `api/create-checkout-session.js` and `api/stripe-webhook.js`. Any future serverless functions must go in root `/api/`, not `src/api/`.
+16. **Google OAuth localhost redirect** — Supabase Site URL was unset (defaulted to localhost), causing OAuth to redirect to localhost after sign-in on Vercel. Fixed by setting Supabase Site URL and redirect URLs to the Vercel production domain in the Supabase dashboard.
 
 ---
 
