@@ -9,6 +9,7 @@ import maplibregl from 'maplibre-gl'
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
 import { useGoldSamples } from '../hooks/useGoldSamples'
+import { useWaypoints } from '../hooks/useWaypoints'
 import {
   BASEMAPS,
   DEFAULT_CENTER,
@@ -24,6 +25,7 @@ import DataSheet from './DataSheet'
 import SampleSheet from './SampleSheet'
 import LayerPanel from './LayerPanel'
 import BasemapPicker from './BasemapPicker'
+import WaypointSheet from './WaypointSheet'
 
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
@@ -183,11 +185,29 @@ function buildWaypointGeoJSON(waypoints) {
   }
 }
 
+function buildSavedWaypointGeoJSON(waypoints) {
+  return {
+    type: 'FeatureCollection',
+    features: waypoints.map((wp) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [wp.lng, wp.lat] },
+      properties: {
+        id: wp.id,
+        name: wp.name ?? '',
+        description: wp.description ?? '',
+        lat: wp.lat,
+        lng: wp.lng,
+        photos_json: JSON.stringify(wp.photos ?? []),
+      },
+    })),
+  }
+}
+
 // ── addDataLayers ──────────────────────────────────────────────────
 // Adds all sources + layers to the map. Safe to call after setStyle()
 // because style.load clears all sources/layers, so getSource checks
 // will always pass through after a style change.
-function addDataLayers(map, initialSamples = []) {
+function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
   // WMS raster sources + layers (all initially hidden)
   for (const [key, cfg] of Object.entries(WMS_SOURCES)) {
     const { sourceId, endpoint, layerName, opacity } = cfg
@@ -319,6 +339,31 @@ function addDataLayers(map, initialSamples = []) {
       },
     })
   }
+
+  // Saved (persisted) waypoints — tappable, distinct from session dots
+  if (!map.getSource('saved-waypoints-src')) {
+    map.addSource('saved-waypoints-src', {
+      type: 'geojson',
+      data: buildSavedWaypointGeoJSON(initialSavedWaypoints),
+    })
+  }
+  if (!map.getLayer('saved-waypoints-circles')) {
+    map.addLayer({
+      id: 'saved-waypoints-circles',
+      type: 'circle',
+      source: 'saved-waypoints-src',
+      paint: {
+        'circle-radius': [
+          'interpolate', ['linear'], ['zoom'],
+          5, 6, 10, 10, 14, 14,
+        ],
+        'circle-color': '#E8C96A',
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 2.5,
+        'circle-opacity': 1,
+      },
+    })
+  }
 }
 
 // ── syncLayerVisibility ────────────────────────────────────────────
@@ -380,9 +425,10 @@ export default function Map({ onHome }) {
   const mapRef        = useRef(null)
   const geolocateRef  = useRef(null)
   const mapLoadedRef  = useRef(false)
-  const samplesRef    = useRef([])
+  const samplesRef          = useRef([])
   const sessionTrailRef     = useRef([])
   const sessionWaypointsRef = useRef([])
+  const savedWaypointsRef   = useRef([])
   const is3DRef       = useRef(false)
 
   const {
@@ -398,11 +444,13 @@ export default function Map({ onHome }) {
   const { isPro } = useUserStore()
 
   const { samples } = useGoldSamples()
+  const { waypoints: savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
 
   // Keep refs in sync for use in style.load callbacks
   samplesRef.current = samples
   sessionTrailRef.current = sessionTrail
   sessionWaypointsRef.current = sessionWaypoints
+  savedWaypointsRef.current = savedWaypoints
   is3DRef.current = is3D
 
   // ── Map initialisation (runs once) ────────────────────────────
@@ -440,10 +488,31 @@ export default function Map({ onHome }) {
       setMapInstance(map)
       syncLayerVisibility(map)
 
-      // ── Click handler — opens SampleSheet ─────────────────────
+      // ── Click handler ─────────────────────────────────────────
       const clickableLayers = [...TIER_LAYERS.map((t) => t.id), 'rock-circles']
 
       map.on('click', (e) => {
+        // Saved waypoints take priority (rendered on top of sample circles)
+        if (map.getLayer('saved-waypoints-circles')) {
+          const wpFeatures = map.queryRenderedFeatures(e.point, { layers: ['saved-waypoints-circles'] })
+          if (wpFeatures.length) {
+            const p = wpFeatures[0].properties
+            useMapStore.getState().setWaypointSheet({
+              mode: 'view',
+              waypoint: {
+                id: p.id,
+                name: p.name,
+                description: p.description,
+                lat: p.lat,
+                lng: p.lng,
+                photos: JSON.parse(p.photos_json || '[]'),
+              },
+            })
+            return
+          }
+        }
+
+        // Gold sample layers
         const existing = clickableLayers.filter((id) => map.getLayer(id))
         if (!existing.length) return
         const features = map.queryRenderedFeatures(e.point, { layers: existing })
@@ -466,7 +535,7 @@ export default function Map({ onHome }) {
         })
       })
 
-      for (const id of clickableLayers) {
+      for (const id of [...clickableLayers, 'saved-waypoints-circles']) {
         map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', id, () => { map.getCanvas().style.cursor = '' })
       }
@@ -495,13 +564,14 @@ export default function Map({ onHome }) {
     map.setStyle(styleUrl)
 
     map.once('style.load', () => {
-      addDataLayers(map, samplesRef.current)
+      addDataLayers(map, samplesRef.current, savedWaypointsRef.current)
 
       // Restore current data into sources
       map.getSource('stream-samples')?.setData(buildStreamGeoJSON(samplesRef.current))
       map.getSource('rock-samples')?.setData(buildRockGeoJSON(samplesRef.current))
       map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrailRef.current))
       map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypointsRef.current))
+      map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypointsRef.current))
 
       syncLayerVisibility(map)
 
@@ -560,6 +630,13 @@ export default function Map({ onHome }) {
     map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypoints))
   }, [sessionWaypoints])
 
+  // ── Sync saved (persisted) waypoints to map source ─────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapLoadedRef.current) return
+    map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypoints))
+  }, [savedWaypoints])
+
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <div
@@ -572,6 +649,7 @@ export default function Map({ onHome }) {
       <SampleSheet />
       <LayerPanel />
       <BasemapPicker />
+      <WaypointSheet addWaypoint={addWaypoint} deleteWaypoint={deleteWaypoint} />
     </div>
   )
 }

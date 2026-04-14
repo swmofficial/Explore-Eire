@@ -144,6 +144,7 @@ export default function CornerControls() {
     setSettingsPanelOpen,
     setBasemapPickerOpen,
     setLayerPanelOpen,
+    setWaypointSheet,
   } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
 
@@ -155,7 +156,7 @@ export default function CornerControls() {
     if (!isPro || isGuest) {
       setShowUpgradeSheet(true)
     } else {
-      console.log('Camera TODO — waypoint flow coming')
+      setWaypointSheet({ mode: 'add' })
     }
   }
 
