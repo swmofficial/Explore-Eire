@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 14 April 2026
+> Last updated: 15 April 2026
 > For use with Claude Code, Cline, or any AI coding assistant
 > DO NOT write a single line of code until you have read this file in full
 
@@ -148,8 +148,8 @@ Backdrop:  blur(12px), -webkit-backdrop-filter: blur(12px)
 
 **Bottom sheets:**
 ```
-Min height:    30% viewport
-Max height:    85% viewport
+Snap points:   collapsed (peek 80px) → half (45vh) → full (92vh)
+Gesture:       transform: translateY — 1:1 drag, 350ms cubic-bezier(0.32,0.72,0,1) snap
 Corner radius: 16px top only (border-radius: 16px 16px 0 0)
 Handle:        32×4px, #2E3035, centered, margin-bottom: 12px
 Background:    #111214 (var(--color-base))
@@ -456,7 +456,7 @@ SAFETY
 | Prospecting gold layers (7 tiers + rock circles) | ✅ Built |
 | WMS proxy layers (geochemistry + geology) | ✅ Built |
 | LayerPanel right drawer | ✅ Built |
-| DataSheet bottom sheet (filters + sample list) | ✅ Built |
+| DataSheet bottom sheet (filters + sample list + spring gesture) | ✅ Built |
 | SampleSheet detail (ppb, coords, waypoint save) | ✅ Built |
 | BasemapPicker (outdoor / satellite / topo + 3D toggle) | ✅ Built |
 | Basemap switching (setStyle + re-add layers) | ✅ Built |
@@ -894,6 +894,9 @@ Footer: "This is a summary for informational purposes only and does not constitu
 17. **Stripe price ID not found** — `process.env` does not exist in the browser. Price IDs must use the `VITE_` prefix and be accessed via `import.meta.env` in the frontend. UpgradeSheet.jsx now resolves the price ID client-side (`import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL/MONTHLY`) and sends it in the POST body. The serverless function reads `priceId` directly from `req.body` and returns 400 if missing. Env vars in Vercel must be named `VITE_STRIPE_PRICE_ID_MONTHLY` and `VITE_STRIPE_PRICE_ID_ANNUAL`.
 18. **isPro not set after Stripe checkout** — webhook was not updating `profiles.is_pro`. Fixed: `stripe-webhook.js` now updates `profiles` to set `is_pro = true` after a successful `checkout.session.completed` upsert to `subscriptions`. `useAuth.js` now selects `is_pro` from the profile on sign-in and calls `setIsPro(true)` if true. Requires `is_pro boolean` column in the `profiles` table in Supabase.
 19. **Stripe webhook 'plan' column error** — old webhook code attempted to upsert a `plan` column that does not exist in the `subscriptions` table. Rewrote `api/stripe-webhook.js` from scratch: no `plan` column, no Stripe subscription retrieval call. Upsert contains only `user_id`, `stripe_subscription_id`, `stripe_customer_id`, `status`. Also added `invoice.payment_failed` handler setting `status: 'past_due'`. Uses `SUPABASE_URL` env var (not `VITE_SUPABASE_URL` — serverless functions have no Vite context). Added `/api` proxy to `vite.config.js` so local dev `/api` calls are not intercepted by Vite.
+20. **WMS pills no Pro gate** — DataSheet WMS filter pills (`gold_heatmap`, `bedrock`) had zero `isPro` check. Free users could tap them, the store updated, the pill appeared active (blue), but `syncLayerVisibility` forced all WMS to `none` for non-Pro users — silent false feedback. Fixed: pills now gate on `isPro`. Non-Pro users see a PRO badge on the pill and tapping opens UpgradeSheet. The Map.jsx `syncLayerVisibility` logic for Pro WMS toggles was already correct end-to-end.
+21. **Legal Disclaimer row in Settings not tappable** — `SettingsPanel` had `onPress={() => {}}` (empty no-op). Fixed: added `showLegal` local state. Row tap sets it true, rendering `LegalDisclaimerModal` with `forceShow=true`. `LegalDisclaimerModal` now accepts `forceShow` and `onClose` props — `forceShow` bypasses the `legalAccepted` early-return so the modal renders regardless of acceptance state. Already-accepted users see a Close button; users who haven't accepted see the normal checkbox flow, with `onClose` called after acceptance.
+22. **DataSheet gesture clunky** — DataSheet used `height` CSS transitions between three states (60px/46vh/85vh). Replaced with `transform: translateY` physics-based spring gesture. Snap points: collapsed (80px peek = `translateY(h-80)`), half (`translateY(h*0.55)`), full (`translateY(h*0.08)`). Touch events attached directly on handle element with `{ passive: false }` on `touchmove` so `e.preventDefault()` works. During drag: 1:1 finger tracking, no transition. On release: `350ms cubic-bezier(0.32,0.72,0,1)` transition snaps to nearest point; release velocity (px/ms) influences target (fast flick up → full, fast flick down → collapsed). Handle bar is 32×4px `#2E3035`. External `dataSheetState` changes (e.g. from CornerControls) sync `translateY` via `useEffect`.
 
 ---
 
@@ -931,7 +934,7 @@ Two-day rule applies for recreational prospecting without a licence.
 9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out
 
 **Next (in order):**
-10. Legal disclaimer — build LegalDisclaimerModal.jsx (useAuth already triggers it)
+10. ✅ Legal disclaimer — built, tappable from Settings, forceShow prop added
 11. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
 12. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
 13. GPS tracking — build TrackOverlay.jsx (useTracks hook scaffolded)
