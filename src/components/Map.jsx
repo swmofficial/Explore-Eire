@@ -8,7 +8,9 @@ import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
+import useModuleStore from '../store/moduleStore'
 import { useGoldSamples } from '../hooks/useGoldSamples'
+import { useMineralLocalities } from '../hooks/useMineralLocalities'
 import { useWaypoints } from '../hooks/useWaypoints'
 import {
   BASEMAPS,
@@ -23,6 +25,7 @@ import CategoryHeader from './CategoryHeader'
 import CornerControls from './CornerControls'
 import DataSheet from './DataSheet'
 import SampleSheet from './SampleSheet'
+import MineralSheet from './MineralSheet'
 import LayerPanel from './LayerPanel'
 import BasemapPicker from './BasemapPicker'
 import WaypointSheet from './WaypointSheet'
@@ -112,6 +115,21 @@ const WMS_SOURCES = {
   boreholes:    { sourceId: 'src-boreholes',     endpoint: '/wms/bore', layerName: GSI_LAYERS.boreholes, opacity: 0.85 },
 }
 
+// ── Mineral locality layers — one per category ─────────────────────
+const MINERAL_LAYERS = [
+  { id: 'mineral-gold',      category: 'gold',      color: '#E8C96A' },
+  { id: 'mineral-copper',    category: 'copper',    color: '#E8844A' },
+  { id: 'mineral-lead',      category: 'lead',      color: '#9B9B9B' },
+  { id: 'mineral-uranium',   category: 'uranium',   color: '#7FBA00' },
+  { id: 'mineral-quartz',    category: 'quartz',    color: '#E8EAF0' },
+  { id: 'mineral-silver',    category: 'silver',    color: '#C0C0C0' },
+  { id: 'mineral-marble',    category: 'marble',    color: '#4AC0A0' },
+  { id: 'mineral-fluorspar', category: 'fluorspar', color: '#A06BE8' },
+  { id: 'mineral-other',     category: null,        color: '#6B7280' },
+]
+
+const MINERAL_KNOWN_CATEGORIES = ['gold', 'copper', 'lead', 'uranium', 'quartz', 'silver', 'marble', 'fluorspar']
+
 // ── GeoJSON helpers ────────────────────────────────────────────────
 
 function isRockSample(s) {
@@ -184,6 +202,30 @@ function buildWaypointGeoJSON(waypoints) {
       geometry: { type: 'Point', coordinates: [wp.lng, wp.lat] },
       properties: { name: wp.name ?? '' },
     })),
+  }
+}
+
+function buildMineralGeoJSON(localities) {
+  return {
+    type: 'FeatureCollection',
+    features: localities
+      .filter((loc) => loc.lat != null && loc.lng != null)
+      .map((loc) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] },
+        properties: {
+          id: loc.id,
+          minlocno: loc.minlocno ?? null,
+          mineral: loc.mineral ?? null,
+          mineral_category: loc.mineral_category ?? null,
+          townland: loc.townland ?? null,
+          county: loc.county ?? null,
+          description: loc.description ?? null,
+          notes: loc.notes ?? null,
+          lat: loc.lat,
+          lng: loc.lng,
+        },
+      })),
   }
 }
 
@@ -366,6 +408,40 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       },
     })
   }
+
+  // Mineral locality source + one circle layer per category
+  if (!map.getSource('mineral-localities')) {
+    map.addSource('mineral-localities', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+  for (const layer of MINERAL_LAYERS) {
+    if (!map.getLayer(layer.id)) {
+      const filter = layer.category
+        ? ['==', ['downcase', ['coalesce', ['get', 'mineral_category'], '']], layer.category]
+        : ['!', ['in', ['downcase', ['coalesce', ['get', 'mineral_category'], '']], ['literal', MINERAL_KNOWN_CATEGORIES]]]
+      map.addLayer({
+        id: layer.id,
+        type: 'circle',
+        source: 'mineral-localities',
+        filter,
+        paint: {
+          'circle-radius': [
+            'interpolate', ['linear'], ['zoom'],
+            5, 3,
+            10, 5,
+            14, 8,
+          ],
+          'circle-color': layer.color,
+          'circle-stroke-color': 'rgba(0,0,0,0.35)',
+          'circle-stroke-width': 0.75,
+          'circle-opacity': 0.8,
+        },
+        layout: { visibility: 'none' },
+      })
+    }
+  }
 }
 
 // ── syncLayerVisibility ────────────────────────────────────────────
@@ -418,6 +494,15 @@ function syncLayerVisibility(map) {
       layerVisibility.rock_samples === true ? 'visible' : 'none'
     )
   }
+
+  // Mineral locality layers — only visible when activeModule === 'prospecting'
+  const { activeModule } = useModuleStore.getState()
+  const mineralVisible = activeModule === 'prospecting'
+  for (const layer of MINERAL_LAYERS) {
+    if (map.getLayer(layer.id)) {
+      map.setLayoutProperty(layer.id, 'visibility', mineralVisible ? 'visible' : 'none')
+    }
+  }
 }
 
 // ── Component ──────────────────────────────────────────────────────
@@ -427,10 +512,11 @@ export default function Map({ onHome }) {
   const mapRef        = useRef(null)
   const geolocateRef  = useRef(null)
   const mapLoadedRef  = useRef(false)
-  const samplesRef          = useRef([])
-  const sessionTrailRef     = useRef([])
-  const sessionWaypointsRef = useRef([])
-  const savedWaypointsRef   = useRef([])
+  const samplesRef             = useRef([])
+  const sessionTrailRef        = useRef([])
+  const sessionWaypointsRef    = useRef([])
+  const savedWaypointsRef      = useRef([])
+  const mineralLocalitiesRef   = useRef([])
   const is3DRef       = useRef(false)
 
   const {
@@ -440,12 +526,15 @@ export default function Map({ onHome }) {
     sessionTrail,
     sessionWaypoints,
     setSelectedSample,
+    setSelectedMineral,
     basemap,
     is3D,
   } = useMapStore()
   const { isPro } = useUserStore()
+  const { activeModule } = useModuleStore()
 
   const { samples } = useGoldSamples()
+  const { localities } = useMineralLocalities()
   const { savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
 
   // Keep refs in sync for use in style.load callbacks
@@ -453,6 +542,7 @@ export default function Map({ onHome }) {
   sessionTrailRef.current = sessionTrail
   sessionWaypointsRef.current = sessionWaypoints
   savedWaypointsRef.current = savedWaypoints
+  mineralLocalitiesRef.current = localities
   is3DRef.current = is3D
 
   // ── Map initialisation (runs once) ────────────────────────────
@@ -492,6 +582,7 @@ export default function Map({ onHome }) {
 
       // ── Click handler ─────────────────────────────────────────
       const clickableLayers = [...TIER_LAYERS.map((t) => t.id), 'rock-circles']
+      const mineralLayerIds = MINERAL_LAYERS.map((l) => l.id)
 
       map.on('click', (e) => {
         // Saved waypoints take priority (rendered on top of sample circles)
@@ -509,6 +600,28 @@ export default function Map({ onHome }) {
                 lng: p.lng,
                 photos: JSON.parse(p.photos_json || '[]'),
               },
+            })
+            return
+          }
+        }
+
+        // Mineral locality layers
+        const existingMineralLayers = mineralLayerIds.filter((id) => map.getLayer(id))
+        if (existingMineralLayers.length) {
+          const mineralFeatures = map.queryRenderedFeatures(e.point, { layers: existingMineralLayers })
+          if (mineralFeatures.length) {
+            const p = mineralFeatures[0].properties
+            useMapStore.getState().setSelectedMineral({
+              id: p.id,
+              minlocno: p.minlocno,
+              mineral: p.mineral,
+              mineral_category: p.mineral_category,
+              townland: p.townland,
+              county: p.county,
+              description: p.description,
+              notes: p.notes,
+              lat: p.lat,
+              lng: p.lng,
             })
             return
           }
@@ -537,7 +650,7 @@ export default function Map({ onHome }) {
         })
       })
 
-      for (const id of [...clickableLayers, 'saved-waypoints-circles']) {
+      for (const id of [...clickableLayers, 'saved-waypoints-circles', ...mineralLayerIds]) {
         map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer' })
         map.on('mouseleave', id, () => { map.getCanvas().style.cursor = '' })
       }
@@ -574,6 +687,7 @@ export default function Map({ onHome }) {
       map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrailRef.current))
       map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypointsRef.current))
       map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypointsRef.current))
+      map.getSource('mineral-localities')?.setData(buildMineralGeoJSON(mineralLocalitiesRef.current))
 
       syncLayerVisibility(map)
 
@@ -611,12 +725,19 @@ export default function Map({ onHome }) {
     map.getSource('rock-samples')?.setData(buildRockGeoJSON(samples))
   }, [samples])
 
+  // ── Update mineral locality source when data loads ─────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapLoadedRef.current) return
+    map.getSource('mineral-localities')?.setData(buildMineralGeoJSON(localities))
+  }, [localities])
+
   // ── Sync all layer visibility ──────────────────────────────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
     syncLayerVisibility(map)
-  }, [layerVisibility, tierFilter, isPro])
+  }, [layerVisibility, tierFilter, isPro, activeModule])
 
   // ── Update session trail ───────────────────────────────────────
   useEffect(() => {
@@ -649,6 +770,7 @@ export default function Map({ onHome }) {
       <CornerControls />
       <DataSheet />
       <SampleSheet />
+      <MineralSheet />
       <LayerPanel />
       <BasemapPicker />
       <WaypointSheet addWaypoint={addWaypoint} deleteWaypoint={deleteWaypoint} />

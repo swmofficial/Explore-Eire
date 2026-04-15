@@ -1,11 +1,15 @@
-// DataSheet.jsx — Three-state bottom sheet replacing the right-side layer panel.
+// DataSheet.jsx — Three-state bottom sheet for the Prospecting module.
 //
-// State 1 — collapsed (60px):  drag handle + sample count context line
-// State 2 — half (~46vh):      filter pills + nearest samples list
-// State 3 — full (~85vh):      same as half, full height, complete list
+// State 1 — collapsed (80px peek):  drag handle + context line
+// State 2 — half (~45vh visible):   tab bar + list
+// State 3 — full (~92vh visible):   tab bar + full list
 //
-// Swipe up on handle → advance state. Swipe down → collapse state.
-// Layers button in CornerControls opens to 'half'.
+// Tab bar: Gold | Copper | Lead | Uranium | Quartz | Silver | More
+// More expands to: Fluorspar | Marble | Amethyst | Jasper
+//
+// Gold tab:    gold_samples sorted by au_ppb desc. Pro gate on ≥100ppb rows.
+// Other tabs:  mineral_localities filtered by mineral_category, sorted by minlocno asc.
+// WMS pills shown below tab bar on Gold tab only.
 
 import { useState, useRef, useEffect } from 'react'
 import useMapStore from '../store/mapStore'
@@ -35,6 +39,50 @@ function tierLabel(ppb) {
   return 'Background'
 }
 
+// ── Mineral category colours ─────────────────────────────────────
+
+const MINERAL_COLORS = {
+  gold:      '#E8C96A',
+  copper:    '#E8844A',
+  lead:      '#9B9B9B',
+  uranium:   '#7FBA00',
+  quartz:    '#E8EAF0',
+  silver:    '#C0C0C0',
+  marble:    '#4AC0A0',
+  fluorspar: '#A06BE8',
+}
+
+function getMineralColor(category) {
+  return MINERAL_COLORS[category?.toLowerCase()] ?? '#6B7280'
+}
+
+// ── Tab configuration ────────────────────────────────────────────
+
+const MAIN_TABS = [
+  { id: 'gold',    label: 'Gold' },
+  { id: 'copper',  label: 'Copper' },
+  { id: 'lead',    label: 'Lead' },
+  { id: 'uranium', label: 'Uranium' },
+  { id: 'quartz',  label: 'Quartz' },
+  { id: 'silver',  label: 'Silver' },
+]
+
+const MORE_TABS = [
+  { id: 'fluorspar', label: 'Fluorspar' },
+  { id: 'marble',    label: 'Marble' },
+  { id: 'amethyst',  label: 'Amethyst' },
+  { id: 'jasper',    label: 'Jasper' },
+]
+
+const MORE_TAB_IDS = new Set(MORE_TABS.map((t) => t.id))
+
+// ── WMS toggle config ─────────────────────────────────────────────
+
+const WMS_FILTERS = [
+  { id: 'gold_heatmap', label: 'Heatmap' },
+  { id: 'bedrock',      label: 'Geology' },
+]
+
 // ── Haversine distance (km) ──────────────────────────────────────
 
 function haversine(lat1, lng1, lat2, lng2) {
@@ -53,44 +101,39 @@ function formatDist(km) {
   return `${km.toFixed(1)} km`
 }
 
-// ── Filter pill config ──────────────────────────────────────────
-// Data filters (mutually exclusive): all / exceptional / high / significant
-// WMS toggles (independent): heatmap / geology
+// ── Snap helpers ────────────────────────────────────────────────
 
-const DATA_FILTERS = [
-  { id: 'all',         label: 'All',         minPpb: 0 },
-  { id: 'exceptional', label: 'Exceptional',  minPpb: 500 },
-  { id: 'high',        label: 'High',         minPpb: 50 },
-  { id: 'significant', label: 'Significant',  minPpb: 10 },
-]
+function getSnap() {
+  const h = typeof window !== 'undefined' ? window.innerHeight : 800
+  return {
+    collapsed: h - 80,
+    half:      Math.round(h * 0.55),
+    full:      Math.round(h * 0.08),
+  }
+}
 
-const WMS_FILTERS = [
-  { id: 'gold_heatmap', label: 'Heatmap' },
-  { id: 'bedrock',      label: 'Geology' },
-]
+// ── Gold row (with Pro gate) ─────────────────────────────────────
 
-// ── Sample row ──────────────────────────────────────────────────
-
-function SampleRow({ sample, userPos, onTap }) {
+function GoldRow({ sample, userPos, isPro, onTap }) {
+  const isProGated = !isPro && sample.au_ppb >= 100
   const dist = userPos
     ? haversine(userPos.lat, userPos.lng, sample.lat, sample.lng)
     : null
 
   return (
-    <button
-      onClick={() => onTap(sample)}
+    <div
+      onClick={isProGated ? undefined : () => onTap(sample)}
       style={{
         display: 'flex',
         alignItems: 'center',
         width: '100%',
         padding: '10px 16px',
-        background: 'none',
-        border: 'none',
         borderBottom: '1px solid var(--color-surface)',
-        cursor: 'pointer',
         gap: 12,
+        cursor: isProGated ? 'default' : 'pointer',
         WebkitTapHighlightColor: 'transparent',
-        textAlign: 'left',
+        opacity: isProGated ? 0.65 : 1,
+        boxSizing: 'border-box',
       }}
     >
       {/* Tier colour dot */}
@@ -106,11 +149,16 @@ function SampleRow({ sample, userPos, onTap }) {
 
       {/* Sample info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-primary)', marginBottom: 2 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-primary)', marginBottom: 2, display: 'flex', alignItems: 'center', gap: 6 }}>
           {tierLabel(sample.au_ppb)}
-          <span style={{ fontWeight: 400, color: 'var(--color-muted)', marginLeft: 6 }}>
+          <span style={{ fontWeight: 400, color: 'var(--color-muted)' }}>
             {sample.au_ppb} ppb
           </span>
+          {isProGated && (
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', letterSpacing: '0.05em', background: 'rgba(232,201,106,0.15)', border: '1px solid rgba(232,201,106,0.3)', borderRadius: 4, padding: '1px 5px' }}>
+              PRO
+            </span>
+          )}
         </div>
         <div style={{ fontSize: 11, color: 'var(--color-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {sample.sample_type ?? 'Stream sediment'} · {sample.survey ?? 'GSI'}
@@ -123,23 +171,74 @@ function SampleRow({ sample, userPos, onTap }) {
           {formatDist(dist)}
         </span>
       )}
-    </button>
+    </div>
   )
 }
 
-// ── Snap helpers ────────────────────────────────────────────────
+// ── Mineral row ──────────────────────────────────────────────────
 
-// Compute pixel translateY values for each snap state.
-// collapsed: peek 80px from bottom → translateY = viewportH - 80
-// half:      45vh visible           → translateY = viewportH * 0.55
-// full:      92vh visible           → translateY = viewportH * 0.08
-function getSnap() {
-  const h = typeof window !== 'undefined' ? window.innerHeight : 800
-  return {
-    collapsed: h - 80,
-    half:      Math.round(h * 0.55),
-    full:      Math.round(h * 0.08),
-  }
+function MineralRow({ locality, onTap }) {
+  const color = getMineralColor(locality.mineral_category)
+
+  return (
+    <button
+      onClick={() => onTap(locality)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        width: '100%',
+        padding: '10px 16px',
+        background: 'none',
+        border: 'none',
+        borderBottom: '1px solid var(--color-surface)',
+        cursor: 'pointer',
+        gap: 12,
+        WebkitTapHighlightColor: 'transparent',
+        textAlign: 'left',
+      }}
+    >
+      {/* Category colour dot */}
+      <div
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: '50%',
+          background: color,
+          flexShrink: 0,
+        }}
+      />
+
+      {/* Locality info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--color-primary)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {locality.mineral ?? locality.mineral_category ?? 'Mineral locality'}
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--color-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {[locality.townland, locality.county].filter(Boolean).join(', ') || 'Ireland'}
+        </div>
+      </div>
+
+      {/* Category badge */}
+      {locality.mineral_category && (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color,
+            background: `${color}22`,
+            border: `1px solid ${color}44`,
+            borderRadius: 6,
+            padding: '2px 7px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            flexShrink: 0,
+          }}
+        >
+          {locality.mineral_category}
+        </span>
+      )}
+    </button>
+  )
 }
 
 // ── Main component ──────────────────────────────────────────────
@@ -148,13 +247,15 @@ export default function DataSheet() {
   const {
     dataSheetState, setDataSheetState,
     mapInstance, layerVisibility, setLayerVisibility,
-    setTierFilter, setSelectedSample,
+    setTierFilter, setSelectedSample, setSelectedMineral,
   } = useMapStore()
   const { activeModule } = useModuleStore()
   const { isPro, setShowUpgradeSheet } = useUserStore()
 
-  const [activeDataFilter, setActiveDataFilter] = useState('all')
-  const [samples, setSamples] = useState([])
+  const [activeTab, setActiveTab] = useState('gold')
+  const [moreExpanded, setMoreExpanded] = useState(false)
+  const [goldSamples, setGoldSamples] = useState([])
+  const [mineralLocalities, setMineralLocalities] = useState([])
   const [loading, setLoading] = useState(false)
   const [userPos, setUserPos] = useState(null)
 
@@ -163,14 +264,13 @@ export default function DataSheet() {
   const [isDragging, setIsDragging] = useState(false)
   const currentTranslateRef = useRef(getSnap().collapsed)
   const handleRef = useRef(null)
-  // Drag tracking — all in a single ref to avoid stale closures in event listeners
   const drag = useRef({
     active: false,
     startY: 0,
     startTranslate: 0,
     lastY: 0,
     lastTime: 0,
-    velocity: 0, // px/ms, positive = moving down
+    velocity: 0,
   })
 
   const isCollapsed = dataSheetState === 'collapsed'
@@ -230,17 +330,14 @@ export default function DataSheet() {
 
       const snap = getSnap()
       const curY = currentTranslateRef.current
-      const vel = drag.current.velocity // px/ms
+      const vel = drag.current.velocity
 
       let targetName
       if (vel > 0.5) {
-        // Fast flick down → collapse or go to half
         targetName = curY < snap.half ? 'half' : 'collapsed'
       } else if (vel < -0.5) {
-        // Fast flick up → full or go to half
         targetName = curY > snap.half ? 'half' : 'full'
       } else {
-        // Snap to nearest point
         const dists = [
           { name: 'collapsed', d: Math.abs(curY - snap.collapsed) },
           { name: 'half',      d: Math.abs(curY - snap.half) },
@@ -267,7 +364,7 @@ export default function DataSheet() {
       el.removeEventListener('touchend', onEnd)
       el.removeEventListener('touchcancel', onEnd)
     }
-  }, [setDataSheetState]) // setDataSheetState is stable
+  }, [setDataSheetState])
 
   // ── GPS ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -277,36 +374,40 @@ export default function DataSheet() {
     )
   }, [])
 
-  // ── Load samples ───────────────────────────────────────────────
+  // ── Load data when tab changes ────────────────────────────────
   useEffect(() => {
     if (activeModule !== 'prospecting') return
-    loadSamples()
-  }, [activeModule, activeDataFilter]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (activeTab === 'gold') {
+      loadGoldSamples()
+    } else {
+      loadMineralLocalities(activeTab)
+    }
+  }, [activeTab, activeModule]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function loadSamples() {
+  async function loadGoldSamples() {
     setLoading(true)
-    let query = supabase
+    setTierFilter('all') // reset map tier visibility to show all layers
+    const { data, error } = await supabase
       .from('gold_samples')
-      .select('id, sample_id, lat, lng, au_ppb, as_mgkg, pb_mgkg, sample_type, survey, easting_ing, northing_ing')
+      .select('id, sample_id, lat, lng, au_ppb, sample_type, survey')
+      .order('au_ppb', { ascending: false })
       .limit(300)
-
-    const minPpb = DATA_FILTERS.find((f) => f.id === activeDataFilter)?.minPpb ?? 0
-    if (minPpb > 0) query = query.gte('au_ppb', minPpb)
-
-    const { data, error } = await query.order('au_ppb', { ascending: false })
-
-    if (!error && data) setSamples(data)
+    if (!error && data) setGoldSamples(data)
     setLoading(false)
   }
 
-  // ── Sorted samples ─────────────────────────────────────────────
-  const sortedSamples = userPos
-    ? [...samples].sort(
-        (a, b) =>
-          haversine(userPos.lat, userPos.lng, a.lat, a.lng) -
-          haversine(userPos.lat, userPos.lng, b.lat, b.lng)
-      )
-    : samples
+  async function loadMineralLocalities(category) {
+    setLoading(true)
+    setMineralLocalities([])
+    const { data, error } = await supabase
+      .from('mineral_localities')
+      .select('id, minlocno, mineral, mineral_category, lat, lng, townland, county, description, notes')
+      .ilike('mineral_category', category)
+      .order('minlocno', { ascending: true })
+      .limit(300)
+    if (!error && data) setMineralLocalities(data)
+    setLoading(false)
+  }
 
   // ── Handle click (desktop / tap without drag) ──────────────────
   function onHandleClick() {
@@ -320,8 +421,8 @@ export default function DataSheet() {
     setDataSheetState(targetName)
   }
 
-  // ── Fly to sample + open detail sheet ─────────────────────────
-  function onSampleTap(sample) {
+  // ── Fly to location + open detail sheet ───────────────────────
+  function onGoldTap(sample) {
     if (mapInstance) {
       mapInstance.flyTo({ center: [sample.lng, sample.lat], zoom: 14, duration: 800 })
     }
@@ -329,17 +430,36 @@ export default function DataSheet() {
     setSelectedSample(sample)
   }
 
+  function onMineralTap(locality) {
+    if (mapInstance) {
+      mapInstance.flyTo({ center: [locality.lng, locality.lat], zoom: 14, duration: 800 })
+    }
+    setDataSheetState('collapsed')
+    setSelectedMineral(locality)
+  }
+
   // ── WMS toggle ─────────────────────────────────────────────────
   function toggleWms(layerId) {
     setLayerVisibility(layerId, !layerVisibility[layerId])
   }
 
+  // ── Tab selection ──────────────────────────────────────────────
+  function selectTab(tabId) {
+    setActiveTab(tabId)
+    if (!MORE_TAB_IDS.has(tabId)) {
+      setMoreExpanded(false)
+    }
+  }
+
   // Context line for collapsed state
+  const isMoreTabActive = MORE_TAB_IDS.has(activeTab)
   const contextText = loading
-    ? 'Loading samples…'
-    : userPos
-      ? `${sortedSamples.length} samples — sorted by distance`
-      : `${samples.length} gold samples in Ireland`
+    ? 'Loading…'
+    : activeTab === 'gold'
+      ? `${goldSamples.length} gold samples`
+      : `${mineralLocalities.length} ${activeTab} localities`
+
+  if (activeModule !== 'prospecting') return null
 
   return (
     <div
@@ -379,7 +499,7 @@ export default function DataSheet() {
           touchAction: 'none',
         }}
       >
-        {/* Handle bar — 32×4px, #2E3035 */}
+        {/* Handle bar — 32×4px */}
         <div
           style={{
             width: 32,
@@ -409,85 +529,168 @@ export default function DataSheet() {
       {/* ── Half / Full content ── */}
       {!isCollapsed && (
         <>
-          {/* Filter pills */}
+          {/* Tab bar */}
           <div
             style={{
               display: 'flex',
-              gap: 8,
-              padding: '4px 16px 12px',
+              gap: 0,
+              padding: '0 16px 0',
               overflowX: 'auto',
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
               flexShrink: 0,
+              borderBottom: '1px solid var(--color-border)',
             }}
           >
-            {/* Data filter pills — mutually exclusive */}
-            {DATA_FILTERS.map((f) => {
-              const active = activeDataFilter === f.id
+            {MAIN_TABS.map((tab) => {
+              const active = activeTab === tab.id
+              const color = getMineralColor(tab.id)
               return (
                 <button
-                  key={f.id}
-                  onClick={() => { setActiveDataFilter(f.id); setTierFilter(f.id) }}
+                  key={tab.id}
+                  onClick={() => selectTab(tab.id)}
                   style={{
                     flexShrink: 0,
-                    padding: '5px 14px',
-                    borderRadius: 20,
-                    border: `1px solid ${active ? '#E8C96A' : 'var(--color-border)'}`,
-                    background: active ? 'rgba(232,201,106,0.15)' : 'var(--color-surface)',
-                    color: active ? '#E8C96A' : 'var(--color-muted)',
+                    padding: '10px 14px',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: `2px solid ${active ? color : 'transparent'}`,
+                    color: active ? color : 'var(--color-muted)',
                     fontSize: 13,
-                    fontWeight: 500,
+                    fontWeight: active ? 600 : 400,
                     cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
-                    transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
+                    transition: 'color 120ms ease, border-color 120ms ease',
+                    marginBottom: -1,
                   }}
                 >
-                  {f.label}
+                  {tab.label}
                 </button>
               )
             })}
 
-            {/* Divider between groups */}
-            <div style={{ width: 1, height: 28, background: 'var(--color-border)', alignSelf: 'center', flexShrink: 0 }} />
-
-            {/* WMS toggle pills — Pro only */}
-            {WMS_FILTERS.map((f) => {
-              const on = isPro && !!layerVisibility[f.id]
-              return (
-                <button
-                  key={f.id}
-                  onClick={() => {
-                    if (!isPro) { setShowUpgradeSheet(true); return }
-                    toggleWms(f.id)
-                  }}
-                  style={{
-                    flexShrink: 0,
-                    padding: '5px 14px',
-                    borderRadius: 20,
-                    border: `1px solid ${on ? 'rgba(91,143,212,0.6)' : 'var(--color-border)'}`,
-                    background: on ? 'rgba(91,143,212,0.15)' : 'var(--color-surface)',
-                    color: on ? '#5B8FD4' : 'var(--color-muted)',
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    WebkitTapHighlightColor: 'transparent',
-                    transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
-                    opacity: isPro ? 1 : 0.6,
-                  }}
-                >
-                  {f.label}
-                  {!isPro && (
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', marginLeft: 5, letterSpacing: '0.05em' }}>
-                      PRO
-                    </span>
-                  )}
-                </button>
-              )
-            })}
+            {/* More tab */}
+            <button
+              onClick={() => setMoreExpanded((v) => !v)}
+              style={{
+                flexShrink: 0,
+                padding: '10px 14px',
+                background: 'none',
+                border: 'none',
+                borderBottom: `2px solid ${isMoreTabActive ? getMineralColor(activeTab) : 'transparent'}`,
+                color: isMoreTabActive ? getMineralColor(activeTab) : 'var(--color-muted)',
+                fontSize: 13,
+                fontWeight: isMoreTabActive ? 600 : 400,
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+                transition: 'color 120ms ease, border-color 120ms ease',
+                marginBottom: -1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              More
+              <svg
+                width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden="true"
+                style={{ transform: moreExpanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 150ms ease' }}
+              >
+                <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
 
-          {/* Divider */}
-          <div style={{ height: 1, background: 'var(--color-border)', flexShrink: 0 }} />
+          {/* More expanded sub-tabs */}
+          {moreExpanded && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                padding: '8px 16px',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                flexShrink: 0,
+                background: 'var(--color-surface)',
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              {MORE_TABS.map((tab) => {
+                const active = activeTab === tab.id
+                const color = getMineralColor(tab.id)
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => selectTab(tab.id)}
+                    style={{
+                      flexShrink: 0,
+                      padding: '5px 14px',
+                      borderRadius: 20,
+                      border: `1px solid ${active ? color : 'var(--color-border)'}`,
+                      background: active ? `${color}22` : 'var(--color-raised)',
+                      color: active ? color : 'var(--color-muted)',
+                      fontSize: 12,
+                      fontWeight: active ? 600 : 400,
+                      cursor: 'pointer',
+                      WebkitTapHighlightColor: 'transparent',
+                      transition: 'border-color 120ms ease, color 120ms ease, background 120ms ease',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* WMS pills — Gold tab only */}
+          {activeTab === 'gold' && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                padding: '8px 16px',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                flexShrink: 0,
+                borderBottom: '1px solid var(--color-border)',
+              }}
+            >
+              {WMS_FILTERS.map((f) => {
+                const on = isPro && !!layerVisibility[f.id]
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      if (!isPro) { setShowUpgradeSheet(true); return }
+                      toggleWms(f.id)
+                    }}
+                    style={{
+                      flexShrink: 0,
+                      padding: '4px 12px',
+                      borderRadius: 20,
+                      border: `1px solid ${on ? 'rgba(91,143,212,0.6)' : 'var(--color-border)'}`,
+                      background: on ? 'rgba(91,143,212,0.15)' : 'var(--color-surface)',
+                      color: on ? '#5B8FD4' : 'var(--color-muted)',
+                      fontSize: 12,
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      WebkitTapHighlightColor: 'transparent',
+                      opacity: isPro ? 1 : 0.6,
+                    }}
+                  >
+                    {f.label}
+                    {!isPro && (
+                      <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', marginLeft: 5, letterSpacing: '0.05em' }}>
+                        PRO
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
           {/* Section header */}
           <div
@@ -501,28 +704,47 @@ export default function DataSheet() {
               flexShrink: 0,
             }}
           >
-            {userPos ? 'Nearest Samples' : 'Top Samples'}
+            {activeTab === 'gold'
+              ? (userPos ? 'Nearest Gold Samples' : 'Top Gold Samples')
+              : `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Localities`}
           </div>
 
-          {/* Sample list — scrollable */}
+          {/* List — scrollable */}
           <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             {loading ? (
               <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
                 Loading…
               </div>
-            ) : sortedSamples.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
-                No samples match this filter.
-              </div>
+            ) : activeTab === 'gold' ? (
+              goldSamples.length === 0 ? (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+                  No samples found.
+                </div>
+              ) : (
+                goldSamples.map((s) => (
+                  <GoldRow
+                    key={s.id}
+                    sample={s}
+                    userPos={userPos}
+                    isPro={isPro}
+                    onTap={onGoldTap}
+                  />
+                ))
+              )
             ) : (
-              sortedSamples.map((s) => (
-                <SampleRow
-                  key={s.id}
-                  sample={s}
-                  userPos={userPos}
-                  onTap={onSampleTap}
-                />
-              ))
+              mineralLocalities.length === 0 ? (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
+                  No localities found.
+                </div>
+              ) : (
+                mineralLocalities.map((loc) => (
+                  <MineralRow
+                    key={loc.id}
+                    locality={loc}
+                    onTap={onMineralTap}
+                  />
+                ))
+              )
             )}
           </div>
         </>

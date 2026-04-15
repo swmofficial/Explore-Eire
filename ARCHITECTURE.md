@@ -81,6 +81,19 @@ Offline: #FF4444  — persistent badge when no signal
 Online:  #44DD88
 ```
 
+**Mineral category colours (map dots + MineralSheet badge + DataSheet tab underline):**
+```
+gold:      #E8C96A
+copper:    #E8844A
+lead:      #9B9B9B
+uranium:   #7FBA00
+quartz:    #E8EAF0
+silver:    #C0C0C0
+marble:    #4AC0A0
+fluorspar: #A06BE8
+default:   #6B7280  (amethyst, jasper, unknown)
+```
+
 ### Themes
 
 Three themes are implemented in `global.css` via `[data-theme]` on `<html>`. Map canvas stays dark regardless of theme.
@@ -279,7 +292,7 @@ App.jsx renders:
 - GSI Stream Sediment Survey: 8,796 samples (Supabase `gold_samples` table)
 - GSI Lithogeochemistry SE Ireland: 517 rock samples (same table, `sample_type` contains "rock" or `survey` contains "litho")
 - GSI WMS: Gold heatmap, Arsenic, Lead, Bedrock, Geological Lines, Boreholes (via VPS proxy)
-- Mineral occurrences: PENDING DATA — do not build layer until data provided
+- Mineral localities: `mineral_localities` table — per-category circle layers built, MineralSheet built
 
 **Map layers (implemented):**
 - 7 separate MapLibre circle layers (`gold-t1` through `gold-t7`), rendered t7→t1 so higher tiers paint on top
@@ -545,12 +558,32 @@ granted_at      timestamp
 source          text    -- 'subscription' | 'promo' | 'free_tier'
 ```
 
+**mineral_localities**
+```sql
+id                uuid PK
+minlocno          text    -- locality reference number
+mineral           text    -- common mineral name
+mineral_category  text    -- 'gold' | 'copper' | 'lead' | 'uranium' | 'quartz' | 'silver' | 'marble' | 'fluorspar' | 'amethyst' | 'jasper' | ...
+lat               float
+lng               float
+townland          text
+county            text
+description       text
+notes             text
+```
+*RLS: public read (anon + authenticated) — same pattern as gold_samples*
+
 ### RLS Policies
 
 ```sql
 -- gold_samples: public read (anon + authenticated)
 create policy "Public read gold_samples"
   on gold_samples for select
+  to anon, authenticated using (true);
+
+-- mineral_localities: public read (anon + authenticated)
+create policy "Public read mineral_localities"
+  on mineral_localities for select
   to anon, authenticated using (true);
 
 -- waypoints: user owns their own

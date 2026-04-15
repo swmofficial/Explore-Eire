@@ -108,6 +108,7 @@ explore-eire/
     │   ├── DataSheet.jsx        ← 3-state bottom sheet (60px/46vh/85vh). Tier filter pills,
     │   │                           WMS toggle pills (Heatmap/Geology), nearest sample list.
     │   ├── SampleSheet.jsx      ← Sample detail: ppb hero, data rows, upstream tip, Save Waypoint.
+    │   ├── MineralSheet.jsx     ← Mineral locality detail: name H1, category badge, townland, county, description, notes, coords.
     │   ├── BasemapPicker.jsx    ← Bottom sheet. 3 thumbnail cards + 2D/3D terrain toggle.
     │   ├── UpgradeSheet.jsx     ← Paywall. Feature list, monthly/annual pills, CTA (Stripe TODO).
     │   ├── AuthModal.jsx        ← Sign In/Up modal. Google OAuth + email/password + Continue as guest.
@@ -122,6 +123,7 @@ explore-eire/
     ├── hooks/
     │   ├── useAuth.js           ← Auth state listener, legalFetchedFor ref, profile + sub fetch
     │   ├── useGoldSamples.js    ← Batched Supabase load (1000/batch, loop until exhausted)
+    │   ├── useMineralLocalities.js ← Batched Supabase load of mineral_localities (1000/batch)
     │   ├── useGeolocation.js    ← Device GPS: getCurrentPosition, watchPosition, stopWatching
     │   ├── useSubscription.js   ← STUB (subscription fetch handled by useAuth currently)
     │   ├── useTracks.js         ← Skeleton (state structure, all methods are TODO)
@@ -149,8 +151,10 @@ explore-eire/
 | Prospecting gold layers (7 tiers + rock circles) | ✅ Built |
 | WMS proxy layers (geochemistry + geology) | ✅ Built |
 | LayerPanel right drawer | ✅ Built |
-| DataSheet bottom sheet (filters + sample list + spring gesture) | ✅ Built |
+| DataSheet bottom sheet (tab bar + gold/mineral lists + spring gesture) | ✅ Built |
 | SampleSheet detail (ppb, coords, waypoint save) | ✅ Built |
+| MineralSheet detail (mineral name, category badge, townland, county, coords) | ✅ Built |
+| Mineral localities layer (per-category circle layers, click → MineralSheet) | ✅ Built |
 | BasemapPicker (outdoor / satellite / topo + 3D toggle) | ✅ Built |
 | Basemap switching (setStyle + re-add layers) | ✅ Built |
 | 3D terrain (MapTiler terrain-rgb-v2) | ✅ Built |
@@ -217,9 +221,10 @@ explore-eire/
 8. ✅ 3D terrain — MapTiler terrain-rgb-v2
 9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out
 10. ✅ Legal disclaimer — built, tappable from Settings, forceShow prop added
+11. ✅ Mineral localities layer + MineralSheet + DataSheet tab bar (Gold | Copper | Lead | Uranium | Quartz | Silver | More)
 
 **Next (in order):**
-11. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
+12. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
 12. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
 13. GPS tracking — build TrackOverlay.jsx (useTracks hook scaffolded)
 14. StatusToast — persistent OFFLINE badge + system messages

@@ -66,6 +66,10 @@ const useMapStore = create((set) => ({
   // WaypointSheet — null = closed, { mode: 'add' | 'view', waypoint?: object }
   waypointSheet: null,
   setWaypointSheet: (v) => set({ waypointSheet: v }),
+
+  // Selected mineral locality — drives MineralSheet detail view (null = closed)
+  selectedMineral: null,
+  setSelectedMineral: (mineral) => set({ selectedMineral: mineral }),
 }))
 
 export default useMapStore
