@@ -30,14 +30,16 @@ import WaypointSheet from './WaypointSheet'
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
 // ── WMS tile URL builder ───────────────────────────────────────────
-// Must NOT use URLSearchParams — it would encode {bbox-epsg-3857}
+// Must NOT use URLSearchParams — it would encode {bbox-epsg-3857}.
+// STYLES= must be present (even empty) — WMS 1.3.0 requires it; omitting it
+// causes GSI to return a ServiceException XML document instead of a PNG tile.
 function wmsRasterTileUrl(endpoint, layerName) {
   const L = encodeURIComponent(layerName)
   return (
     `${WMS_PROXY}${endpoint}` +
     `?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
     `&FORMAT=image%2Fpng&TRANSPARENT=true` +
-    `&LAYERS=${L}` +
+    `&LAYERS=${L}&STYLES=` +
     `&WIDTH=256&HEIGHT=256` +
     `&CRS=EPSG%3A3857` +
     `&BBOX={bbox-epsg-3857}`

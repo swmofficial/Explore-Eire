@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 15 April 2026
+> Last updated: 15 April 2026 (2)
 > For use with Claude Code, Cline, or any AI coding assistant
 > DO NOT write a single line of code until you have read this file in full
 
@@ -897,6 +897,7 @@ Footer: "This is a summary for informational purposes only and does not constitu
 20. **WMS pills no Pro gate** — DataSheet WMS filter pills (`gold_heatmap`, `bedrock`) had zero `isPro` check. Free users could tap them, the store updated, the pill appeared active (blue), but `syncLayerVisibility` forced all WMS to `none` for non-Pro users — silent false feedback. Fixed: pills now gate on `isPro`. Non-Pro users see a PRO badge on the pill and tapping opens UpgradeSheet. The Map.jsx `syncLayerVisibility` logic for Pro WMS toggles was already correct end-to-end.
 21. **Legal Disclaimer row in Settings not tappable** — `SettingsPanel` had `onPress={() => {}}` (empty no-op). Fixed: added `showLegal` local state. Row tap sets it true, rendering `LegalDisclaimerModal` with `forceShow=true`. `LegalDisclaimerModal` now accepts `forceShow` and `onClose` props — `forceShow` bypasses the `legalAccepted` early-return so the modal renders regardless of acceptance state. Already-accepted users see a Close button; users who haven't accepted see the normal checkbox flow, with `onClose` called after acceptance.
 22. **DataSheet gesture clunky** — DataSheet used `height` CSS transitions between three states (60px/46vh/85vh). Replaced with `transform: translateY` physics-based spring gesture. Snap points: collapsed (80px peek = `translateY(h-80)`), half (`translateY(h*0.55)`), full (`translateY(h*0.08)`). Touch events attached directly on handle element with `{ passive: false }` on `touchmove` so `e.preventDefault()` works. During drag: 1:1 finger tracking, no transition. On release: `350ms cubic-bezier(0.32,0.72,0,1)` transition snaps to nearest point; release velocity (px/ms) influences target (fast flick up → full, fast flick down → collapsed). Handle bar is 32×4px `#2E3035`. External `dataSheetState` changes (e.g. from CornerControls) sync `translateY` via `useEffect`.
+23. **WMS tiles returning XML instead of PNG** — Two causes: (a) `wmsRasterTileUrl` in `Map.jsx` did not include `STYLES=` in the URL. WMS 1.3.0 requires this parameter even when empty; omitting it causes GSI to return a `ServiceExceptionReport` XML document (`StylesNotDefined`) instead of a PNG tile. Fixed: `&STYLES=` added to `wmsRasterTileUrl`. (b) `index.js` in `~/wms-proxy/` used `new URLSearchParams(req.query).toString()` to forward the query string — Express decodes `req.query` values first, then URLSearchParams re-encodes them, which can corrupt Unicode characters in GSI layer names. Fixed: proxy now uses `req.originalUrl` to extract and pass the raw query string verbatim. Both fixes together ensure GSI returns `image/png` for all six WMS layers.
 
 ---
 
