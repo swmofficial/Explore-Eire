@@ -49,7 +49,9 @@ const LEGAL_SECTIONS = [
   },
 ]
 
-export default function LegalDisclaimerModal() {
+// forceShow — bypass the legalAccepted gate (used from SettingsPanel)
+// onClose  — called when user closes in forceShow mode
+export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
   const { user, isGuest, legalAccepted, setLegalAccepted } = useUserStore()
   const [checked, setChecked] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -74,8 +76,9 @@ export default function LegalDisclaimerModal() {
     fetchProfile()
   }, [user, isGuest, setLegalAccepted])
 
-  // Only render for authenticated non-guest users who haven't accepted
-  if (!user || isGuest || legalAccepted) return null
+  // Only render for authenticated non-guest users who haven't accepted,
+  // OR when forceShow=true (opened from Settings — shown regardless of acceptance state)
+  if (!forceShow && (!user || isGuest || legalAccepted)) return null
 
   async function handleAccept() {
     if (!checked || saving) return
@@ -193,55 +196,81 @@ export default function LegalDisclaimerModal() {
             padding: '16px 24px',
           }}
         >
-          {/* Checkbox row */}
-          <label
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 12,
-              cursor: 'pointer',
-              marginBottom: 14,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={(e) => setChecked(e.target.checked)}
+          {/* forceShow + already accepted → just a close button */}
+          {forceShow && legalAccepted ? (
+            <button
+              onClick={onClose}
               style={{
-                width: 18,
-                height: 18,
-                marginTop: 1,
-                flexShrink: 0,
-                accentColor: '#E8C96A',
+                width: '100%',
+                height: 52,
+                borderRadius: 12,
+                border: 'none',
+                fontSize: 16,
+                fontWeight: 600,
                 cursor: 'pointer',
+                background: 'var(--color-raised)',
+                color: 'var(--color-primary)',
+                WebkitTapHighlightColor: 'transparent',
               }}
-            />
-            <span style={{ fontSize: 14, color: 'var(--color-primary)', lineHeight: 1.4 }}>
-              I understand and accept my legal responsibilities
-            </span>
-          </label>
+            >
+              Close
+            </button>
+          ) : (
+            <>
+              {/* Checkbox row */}
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  cursor: 'pointer',
+                  marginBottom: 14,
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(e) => setChecked(e.target.checked)}
+                  style={{
+                    width: 18,
+                    height: 18,
+                    marginTop: 1,
+                    flexShrink: 0,
+                    accentColor: '#E8C96A',
+                    cursor: 'pointer',
+                  }}
+                />
+                <span style={{ fontSize: 14, color: 'var(--color-primary)', lineHeight: 1.4 }}>
+                  I understand and accept my legal responsibilities
+                </span>
+              </label>
 
-          {/* Accept button */}
-          <button
-            onClick={handleAccept}
-            disabled={!checked || saving}
-            style={{
-              width: '100%',
-              height: 52,
-              borderRadius: 12,
-              border: 'none',
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: checked && !saving ? 'pointer' : 'not-allowed',
-              background: checked ? '#E8C96A' : 'var(--color-raised)',
-              color: checked ? '#0A0A0A' : 'var(--color-muted)',
-              transition: 'background 200ms ease, color 200ms ease',
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            {saving ? 'Saving…' : 'Enter Explore Eire'}
-          </button>
+              {/* Accept button */}
+              <button
+                onClick={async () => {
+                  await handleAccept()
+                  if (forceShow && onClose) onClose()
+                }}
+                disabled={!checked || saving}
+                style={{
+                  width: '100%',
+                  height: 52,
+                  borderRadius: 12,
+                  border: 'none',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: checked && !saving ? 'pointer' : 'not-allowed',
+                  background: checked ? '#E8C96A' : 'var(--color-raised)',
+                  color: checked ? '#0A0A0A' : 'var(--color-muted)',
+                  transition: 'background 200ms ease, color 200ms ease',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                {saving ? 'Saving…' : 'Enter Explore Eire'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect } from 'react'
 import useMapStore from '../store/mapStore'
 import useModuleStore from '../store/moduleStore'
+import useUserStore from '../store/userStore'
 import { supabase } from '../lib/supabase'
 
 // ── Tier helpers ────────────────────────────────────────────────
@@ -126,9 +127,22 @@ function SampleRow({ sample, userPos, onTap }) {
   )
 }
 
-// ── Main component ──────────────────────────────────────────────
+// ── Snap helpers ────────────────────────────────────────────────
 
-const SWIPE_THRESHOLD = 40
+// Compute pixel translateY values for each snap state.
+// collapsed: peek 80px from bottom → translateY = viewportH - 80
+// half:      45vh visible           → translateY = viewportH * 0.55
+// full:      92vh visible           → translateY = viewportH * 0.08
+function getSnap() {
+  const h = typeof window !== 'undefined' ? window.innerHeight : 800
+  return {
+    collapsed: h - 80,
+    half:      Math.round(h * 0.55),
+    full:      Math.round(h * 0.08),
+  }
+}
+
+// ── Main component ──────────────────────────────────────────────
 
 export default function DataSheet() {
   const {
@@ -137,16 +151,123 @@ export default function DataSheet() {
     setTierFilter, setSelectedSample,
   } = useMapStore()
   const { activeModule } = useModuleStore()
+  const { isPro, setShowUpgradeSheet } = useUserStore()
 
   const [activeDataFilter, setActiveDataFilter] = useState('all')
   const [samples, setSamples] = useState([])
   const [loading, setLoading] = useState(false)
   const [userPos, setUserPos] = useState(null)
 
-  const touchStartY = useRef(null)
+  // ── Spring gesture state ─────────────────────────────────────
+  const [currentTranslate, setCurrentTranslate] = useState(() => getSnap().collapsed)
+  const [isDragging, setIsDragging] = useState(false)
+  const currentTranslateRef = useRef(getSnap().collapsed)
+  const handleRef = useRef(null)
+  // Drag tracking — all in a single ref to avoid stale closures in event listeners
+  const drag = useRef({
+    active: false,
+    startY: 0,
+    startTranslate: 0,
+    lastY: 0,
+    lastTime: 0,
+    velocity: 0, // px/ms, positive = moving down
+  })
+
   const isCollapsed = dataSheetState === 'collapsed'
-  const isHalf     = dataSheetState === 'half'
-  const isFull     = dataSheetState === 'full'
+
+  // ── Sync translateY when dataSheetState changes externally ───
+  useEffect(() => {
+    const snap = getSnap()
+    const y = snap[dataSheetState]
+    if (y !== undefined) {
+      currentTranslateRef.current = y
+      setCurrentTranslate(y)
+    }
+  }, [dataSheetState])
+
+  // ── Attach touch handlers on handle element ───────────────────
+  useEffect(() => {
+    const el = handleRef.current
+    if (!el) return
+
+    function onStart(e) {
+      const touch = e.touches[0]
+      drag.current = {
+        active: true,
+        startY: touch.clientY,
+        startTranslate: currentTranslateRef.current,
+        lastY: touch.clientY,
+        lastTime: performance.now(),
+        velocity: 0,
+      }
+      setIsDragging(true)
+    }
+
+    function onMove(e) {
+      if (!drag.current.active) return
+      e.preventDefault()
+      const touch = e.touches[0]
+      const snap = getSnap()
+      const dy = touch.clientY - drag.current.startY
+      const newY = Math.max(snap.full, Math.min(drag.current.startTranslate + dy, snap.collapsed))
+
+      const now = performance.now()
+      const dt = now - drag.current.lastTime
+      if (dt > 0) {
+        drag.current.velocity = (touch.clientY - drag.current.lastY) / dt
+      }
+      drag.current.lastY = touch.clientY
+      drag.current.lastTime = now
+
+      currentTranslateRef.current = newY
+      setCurrentTranslate(newY)
+    }
+
+    function onEnd() {
+      if (!drag.current.active) return
+      drag.current.active = false
+      setIsDragging(false)
+
+      const snap = getSnap()
+      const curY = currentTranslateRef.current
+      const vel = drag.current.velocity // px/ms
+
+      let targetName
+      if (vel > 0.5) {
+        // Fast flick down → collapse or go to half
+        targetName = curY < snap.half ? 'half' : 'collapsed'
+      } else if (vel < -0.5) {
+        // Fast flick up → full or go to half
+        targetName = curY > snap.half ? 'half' : 'full'
+      } else {
+        // Snap to nearest point
+        const dists = [
+          { name: 'collapsed', d: Math.abs(curY - snap.collapsed) },
+          { name: 'half',      d: Math.abs(curY - snap.half) },
+          { name: 'full',      d: Math.abs(curY - snap.full) },
+        ]
+        dists.sort((a, b) => a.d - b.d)
+        targetName = dists[0].name
+      }
+
+      const targetY = snap[targetName]
+      currentTranslateRef.current = targetY
+      setCurrentTranslate(targetY)
+      setDataSheetState(targetName)
+    }
+
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd, { passive: true })
+    el.addEventListener('touchcancel', onEnd, { passive: true })
+
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+      el.removeEventListener('touchcancel', onEnd)
+    }
+  }, [setDataSheetState]) // setDataSheetState is stable
 
   // ── GPS ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -187,31 +308,16 @@ export default function DataSheet() {
       )
     : samples
 
-  // ── Swipe handlers ─────────────────────────────────────────────
-  function onTouchStart(e) {
-    touchStartY.current = e.touches[0].clientY
-  }
-
-  function onTouchEnd(e) {
-    if (touchStartY.current === null) return
-    const delta = touchStartY.current - e.changedTouches[0].clientY
-    touchStartY.current = null
-
-    if (delta > SWIPE_THRESHOLD) {
-      // Swipe up → advance
-      if (isCollapsed) setDataSheetState('half')
-      else if (isHalf)  setDataSheetState('full')
-    } else if (delta < -SWIPE_THRESHOLD) {
-      // Swipe down → retreat
-      if (isFull)  setDataSheetState('half')
-      else if (isHalf) setDataSheetState('collapsed')
-    }
-  }
-
+  // ── Handle click (desktop / tap without drag) ──────────────────
   function onHandleClick() {
-    if (isCollapsed)      setDataSheetState('half')
-    else if (isHalf)      setDataSheetState('full')
-    else                  setDataSheetState('collapsed')
+    const snap = getSnap()
+    let targetName
+    if (dataSheetState === 'collapsed')   targetName = 'half'
+    else if (dataSheetState === 'half')   targetName = 'full'
+    else                                  targetName = 'collapsed'
+    currentTranslateRef.current = snap[targetName]
+    setCurrentTranslate(snap[targetName])
+    setDataSheetState(targetName)
   }
 
   // ── Fly to sample + open detail sheet ─────────────────────────
@@ -228,14 +334,6 @@ export default function DataSheet() {
     setLayerVisibility(layerId, !layerVisibility[layerId])
   }
 
-  // ── Heights ────────────────────────────────────────────────────
-  const heightMap = {
-    collapsed: '60px',
-    half: '46vh',
-    full: '85vh',
-  }
-  const sheetHeight = heightMap[dataSheetState] ?? '60px'
-
   // Context line for collapsed state
   const contextText = loading
     ? 'Loading samples…'
@@ -247,25 +345,26 @@ export default function DataSheet() {
     <div
       style={{
         position: 'fixed',
-        bottom: 0,
+        top: 0,
         left: 0,
         right: 0,
-        height: sheetHeight,
+        height: '100vh',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
         borderRadius: '16px 16px 0 0',
         zIndex: 22,
-        transition: 'height 320ms cubic-bezier(0.32, 0.72, 0, 1)',
+        transform: `translateY(${currentTranslate}px)`,
+        transition: isDragging ? 'none' : 'transform 350ms cubic-bezier(0.32, 0.72, 0, 1)',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        willChange: 'transform',
       }}
     >
-      {/* ── Handle zone — touch target and tap-to-cycle ── */}
+      {/* ── Handle zone — drag target and tap-to-cycle ── */}
       <div
-        onTouchStart={onTouchStart}
-        onTouchEnd={onTouchEnd}
+        ref={handleRef}
         onClick={onHandleClick}
         style={{
           display: 'flex',
@@ -277,15 +376,16 @@ export default function DataSheet() {
           cursor: 'pointer',
           WebkitTapHighlightColor: 'transparent',
           userSelect: 'none',
+          touchAction: 'none',
         }}
       >
-        {/* Pill */}
+        {/* Handle bar — 32×4px, #2E3035 */}
         <div
           style={{
             width: 32,
             height: 4,
             borderRadius: 2,
-            background: 'var(--color-border)',
+            background: '#2E3035',
             marginBottom: isCollapsed ? 8 : 4,
             flexShrink: 0,
           }}
@@ -350,13 +450,16 @@ export default function DataSheet() {
             {/* Divider between groups */}
             <div style={{ width: 1, height: 28, background: 'var(--color-border)', alignSelf: 'center', flexShrink: 0 }} />
 
-            {/* WMS toggle pills — independent on/off */}
+            {/* WMS toggle pills — Pro only */}
             {WMS_FILTERS.map((f) => {
-              const on = !!layerVisibility[f.id]
+              const on = isPro && !!layerVisibility[f.id]
               return (
                 <button
                   key={f.id}
-                  onClick={() => toggleWms(f.id)}
+                  onClick={() => {
+                    if (!isPro) { setShowUpgradeSheet(true); return }
+                    toggleWms(f.id)
+                  }}
                   style={{
                     flexShrink: 0,
                     padding: '5px 14px',
@@ -369,9 +472,15 @@ export default function DataSheet() {
                     cursor: 'pointer',
                     WebkitTapHighlightColor: 'transparent',
                     transition: 'border-color 150ms ease, color 150ms ease, background 150ms ease',
+                    opacity: isPro ? 1 : 0.6,
                   }}
                 >
                   {f.label}
+                  {!isPro && (
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', marginLeft: 5, letterSpacing: '0.05em' }}>
+                      PRO
+                    </span>
+                  )}
                 </button>
               )
             })}

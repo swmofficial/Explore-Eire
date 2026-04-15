@@ -1,7 +1,9 @@
 // SettingsPanel.jsx — Left drawer. User profile, theme selector, sign out, legal.
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
+import LegalDisclaimerModal from './LegalDisclaimerModal'
 
 // ── Theme swatch ───────────────────────────────────────────────────
 const THEMES = [
@@ -127,6 +129,7 @@ function SectionLabel({ children }) {
 export default function SettingsPanel() {
   const { settingsPanelOpen, setSettingsPanelOpen } = useMapStore()
   const { user, isGuest, isPro, theme, setTheme, setShowAuthModal, setUser, setIsPro } = useUserStore()
+  const [showLegal, setShowLegal] = useState(false)
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -295,7 +298,7 @@ export default function SettingsPanel() {
 
           {/* ── Legal ── */}
           <SectionLabel>Legal</SectionLabel>
-          <Row label="Legal Disclaimer" onPress={() => {}} />
+          <Row label="Legal Disclaimer" onPress={() => setShowLegal(true)} />
           <div style={{ padding: '10px 16px' }}>
             <p style={{ fontSize: 11, color: 'var(--color-muted)', margin: 0, lineHeight: 1.5 }}>
               Contains Irish Public Sector Data (Geological Survey Ireland) licensed under CC BY 4.0
@@ -317,6 +320,11 @@ export default function SettingsPanel() {
           </p>
         </div>
       </div>
+
+      {/* Legal disclaimer — shown on demand regardless of acceptance state */}
+      {showLegal && (
+        <LegalDisclaimerModal forceShow onClose={() => setShowLegal(false)} />
+      )}
     </>
   )
 }
