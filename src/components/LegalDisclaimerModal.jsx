@@ -91,26 +91,31 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
   }
 
   return (
-    // Backdrop — full-screen dimmed overlay, centres the modal box via padding
+    // Backdrop — flex-centred overlay with 16px padding so modal never touches screen edges
     <div
       style={{
         position: 'fixed',
         inset: 0,
         zIndex: 100,
         background: 'rgba(0,0,0,0.75)',
-        // 20vh top/bottom, 30vw left/right — falls back to 24px on narrow screens
-        padding: '20vh max(24px, 30vw)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 16,
         boxSizing: 'border-box',
       }}
     >
-      {/* Modal box — fills the space left by the backdrop padding */}
+      {/* Modal box — responsive, never taller than 85dvh */}
       <div
         style={{
-          background: '#0A0A0A',
+          width: '100%',
+          maxWidth: 560,
+          height: '85dvh',
+          maxHeight: '85dvh',
+          background: '#1A1C20',
           borderRadius: 16,
           display: 'flex',
           flexDirection: 'column',
-          height: '100%',
           overflow: 'hidden',
           border: '1px solid var(--color-border)',
         }}
@@ -119,8 +124,8 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
         <div
           style={{
             flexShrink: 0,
-            padding: '20px 24px 16px',
-            borderBottom: '1px solid var(--color-border)',
+            padding: '20px 20px 12px',
+            borderBottom: '1px solid #2E3035',
           }}
         >
           <div
@@ -144,14 +149,14 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
             flex: 1,
             overflowY: 'auto',
             WebkitOverflowScrolling: 'touch',
-            padding: 24,
+            padding: '16px 20px',
           }}
         >
           {LEGAL_SECTIONS.map((section, i) => (
             <div key={section.id} style={{ marginBottom: 28 }}>
               <h2
                 style={{
-                  fontSize: 14,
+                  fontSize: 'clamp(13px, 3.5vw, 14px)',
                   fontWeight: 600,
                   color: '#E8EAF0',
                   margin: '0 0 8px',
@@ -161,11 +166,11 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
               </h2>
               <p
                 style={{
-                  fontSize: 14,
+                  fontSize: 'clamp(13px, 3.5vw, 15px)',
                   fontWeight: 400,
                   color: 'var(--color-muted)',
                   margin: 0,
-                  lineHeight: 1.65,
+                  lineHeight: 1.6,
                 }}
               >
                 {section.body}
@@ -191,9 +196,9 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
         <div
           style={{
             flexShrink: 0,
-            background: '#0A0A0A',
-            borderTop: '1px solid var(--color-border)',
-            padding: '16px 24px',
+            background: '#1A1C20',
+            borderTop: '1px solid #2E3035',
+            padding: '16px 20px',
           }}
         >
           {/* forceShow + already accepted → just a close button */}

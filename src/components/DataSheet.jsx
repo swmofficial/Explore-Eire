@@ -105,14 +105,12 @@ function formatDist(km) {
 
 function getSnap() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
-  // Sheet container is bounded at bottom by camera button area (64px + 24px gap).
-  // Effective height is the space the sheet can occupy.
-  const bottomOffset = 88 // 64px camera + 24px margin (safe-area handled in CSS)
-  const effectiveH = h - bottomOffset
+  // Container is full 100dvh. Collapsed peek (80px) sits above camera button (64px) with 32px clearance.
+  // safe-area-inset-bottom handled in CSS via env(); JS uses 0 approximation.
   return {
-    collapsed: effectiveH - 80,
-    half:      Math.round(effectiveH * 0.55),
-    full:      Math.round(effectiveH * 0.08),
+    collapsed: h - 80 - 64 - 32,
+    half:      Math.round(h * 0.55),
+    full:      Math.round(h * 0.08),
   }
 }
 
@@ -476,10 +474,10 @@ export default function DataSheet() {
     <div
       style={{
         position: 'fixed',
-        top: 0,
         left: 0,
         right: 0,
-        bottom: 'calc(64px + 24px + env(safe-area-inset-bottom, 0px))',
+        bottom: 0,
+        height: '100dvh',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
         borderRadius: '16px 16px 0 0',
