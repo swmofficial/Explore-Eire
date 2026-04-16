@@ -31,13 +31,17 @@ export const LAYER_CATEGORIES = {
     {
       id: 'minerals',
       label: 'Minerals',
-      placeholder: true, // no data yet
       layers: [
-        { id: 'quartz',     label: 'Quartz / Crystal',    pro: false },
-        { id: 'amethyst',   label: 'Amethyst',            pro: false },
-        { id: 'connemara',  label: 'Connemara marble',    pro: false },
-        { id: 'agate',      label: 'Agate / Bloodstone',  pro: false },
-        { id: 'fluorite',   label: 'Fluorite',            pro: false },
+        { id: 'gold',      label: 'Gold localities',      pro: false, mineralCategory: true },
+        { id: 'copper',    label: 'Copper localities',    pro: false, mineralCategory: true },
+        { id: 'lead',      label: 'Lead localities',      pro: false, mineralCategory: true },
+        { id: 'uranium',   label: 'Uranium localities',   pro: false, mineralCategory: true },
+        { id: 'quartz',    label: 'Quartz localities',    pro: false, mineralCategory: true },
+        { id: 'silver',    label: 'Silver localities',    pro: false, mineralCategory: true },
+        { id: 'marble',    label: 'Marble localities',    pro: false, mineralCategory: true },
+        { id: 'fluorspar', label: 'Fluorspar localities', pro: false, mineralCategory: true },
+        { id: 'amethyst',  label: 'Amethyst localities',  pro: false, mineralCategory: true },
+        { id: 'jasper',    label: 'Jasper localities',    pro: false, mineralCategory: true },
       ],
     },
   ],

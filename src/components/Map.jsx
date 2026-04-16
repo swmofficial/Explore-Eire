@@ -20,6 +20,7 @@ import {
   GSI_LAYERS,
   TERRAIN_SOURCE,
   TERRAIN_CONFIG,
+  MAP_BOUNDS,
 } from '../lib/mapConfig'
 import CategoryHeader from './CategoryHeader'
 import CornerControls from './CornerControls'
@@ -495,13 +496,21 @@ function syncLayerVisibility(map) {
     )
   }
 
-  // Mineral locality layers — only visible when activeModule === 'prospecting'
+  // Mineral locality layers — only show the active category, and only in prospecting module
   const { activeModule } = useModuleStore.getState()
-  const mineralVisible = activeModule === 'prospecting'
+  const { activeMineralCategory } = useMapStore.getState()
   for (const layer of MINERAL_LAYERS) {
-    if (map.getLayer(layer.id)) {
-      map.setLayoutProperty(layer.id, 'visibility', mineralVisible ? 'visible' : 'none')
+    if (!map.getLayer(layer.id)) continue
+    let visible = false
+    if (activeModule === 'prospecting' && activeMineralCategory !== null) {
+      if (layer.category === null) {
+        // 'other' catches categories not in the known list
+        visible = !MINERAL_KNOWN_CATEGORIES.includes(activeMineralCategory)
+      } else {
+        visible = layer.category === activeMineralCategory
+      }
     }
+    map.setLayoutProperty(layer.id, 'visibility', visible ? 'visible' : 'none')
   }
 }
 
@@ -529,6 +538,7 @@ export default function Map({ onHome }) {
     setSelectedMineral,
     basemap,
     is3D,
+    activeMineralCategory,
   } = useMapStore()
   const { isPro } = useUserStore()
   const { activeModule } = useModuleStore()
@@ -558,6 +568,7 @@ export default function Map({ onHome }) {
       center: DEFAULT_CENTER,
       zoom: DEFAULT_ZOOM,
       attributionControl: false,
+      ...MAP_BOUNDS,
     })
 
     map.on('error', (e) => {
@@ -737,7 +748,7 @@ export default function Map({ onHome }) {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
     syncLayerVisibility(map)
-  }, [layerVisibility, tierFilter, isPro, activeModule])
+  }, [layerVisibility, tierFilter, isPro, activeModule, activeMineralCategory])
 
   // ── Update session trail ───────────────────────────────────────
   useEffect(() => {

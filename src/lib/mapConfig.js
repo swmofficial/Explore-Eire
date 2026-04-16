@@ -41,6 +41,13 @@ export const TERRAIN_CONFIG = {
 export const DEFAULT_CENTER = [-8.2, 53.4] // lon, lat
 export const DEFAULT_ZOOM   = 7
 
+// ── Map bounds — constrain to Ireland / British Isles area ─────
+export const MAP_BOUNDS = {
+  maxBounds: [[-12.0, 49.5], [2.5, 61.5]],
+  minZoom: 5,
+  maxZoom: 18,
+}
+
 // ── Gold tier colour scale ─────────────────────────────────────
 export const GOLD_TIERS = [
   { id: 't1', label: 'Exceptional', range: '>500 ppb',  min: 500, max: 1e9,  color: '#67000d' },

@@ -110,7 +110,7 @@ function LayerRow({ layer, visible, onToggle, isPro }) {
         {layer.pro && <ProBadge />}
         <Toggle
           checked={!disabled && (visible ?? false)}
-          onChange={() => onToggle(layer.id)}
+          onChange={() => onToggle(layer.id, layer)}
           disabled={disabled}
         />
       </div>
@@ -119,7 +119,7 @@ function LayerRow({ layer, visible, onToggle, isPro }) {
 }
 
 // ── Section ────────────────────────────────────────────────────
-function LayerSection({ section, layerVisibility, onToggle, isPro }) {
+function LayerSection({ section, layerVisibility, onToggle, isPro, activeMineralCategory }) {
   return (
     <div style={{ marginBottom: 8 }}>
       {/* Section header */}
@@ -152,7 +152,11 @@ function LayerSection({ section, layerVisibility, onToggle, isPro }) {
         <LayerRow
           key={layer.id}
           layer={layer}
-          visible={layerVisibility[layer.id] ?? false}
+          visible={
+            layer.mineralCategory
+              ? activeMineralCategory === layer.id
+              : (layerVisibility[layer.id] ?? false)
+          }
           onToggle={onToggle}
           isPro={isPro}
         />
@@ -163,15 +167,24 @@ function LayerSection({ section, layerVisibility, onToggle, isPro }) {
 
 // ── Main component ─────────────────────────────────────────────
 export default function LayerPanel() {
-  const { layerPanelOpen, setLayerPanelOpen, layerVisibility, setLayerVisibility } = useMapStore()
+  const {
+    layerPanelOpen, setLayerPanelOpen,
+    layerVisibility, setLayerVisibility,
+    activeMineralCategory, setActiveMineralCategory,
+  } = useMapStore()
   const { activeModule } = useModuleStore()
   const { isPro } = useUserStore()
 
   const categories = LAYER_CATEGORIES[activeModule] || []
   const module = getModule(activeModule)
 
-  function handleToggle(layerId) {
-    setLayerVisibility(layerId, !layerVisibility[layerId])
+  function handleToggle(layerId, layer) {
+    if (layer?.mineralCategory) {
+      // Exclusive selection — toggling an active category turns it off; toggling a new one switches
+      setActiveMineralCategory(activeMineralCategory === layerId ? null : layerId)
+    } else {
+      setLayerVisibility(layerId, !layerVisibility[layerId])
+    }
   }
 
   return (
@@ -287,6 +300,7 @@ export default function LayerPanel() {
                 layerVisibility={layerVisibility}
                 onToggle={handleToggle}
                 isPro={isPro}
+                activeMineralCategory={activeMineralCategory}
               />
             ))
           )}

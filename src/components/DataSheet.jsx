@@ -248,6 +248,7 @@ export default function DataSheet() {
     dataSheetState, setDataSheetState,
     mapInstance, layerVisibility, setLayerVisibility,
     setTierFilter, setSelectedSample, setSelectedMineral,
+    setActiveMineralCategory,
   } = useMapStore()
   const { activeModule } = useModuleStore()
   const { isPro, setShowUpgradeSheet } = useUserStore()
@@ -448,6 +449,12 @@ export default function DataSheet() {
     setActiveTab(tabId)
     if (!MORE_TAB_IDS.has(tabId)) {
       setMoreExpanded(false)
+    }
+    // Sync map mineral layer visibility with the selected tab
+    if (tabId === 'gold') {
+      setActiveMineralCategory(null)
+    } else {
+      setActiveMineralCategory(tabId)
     }
   }
 

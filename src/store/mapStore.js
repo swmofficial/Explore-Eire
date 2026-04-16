@@ -70,6 +70,12 @@ const useMapStore = create((set) => ({
   // Selected mineral locality — drives MineralSheet detail view (null = closed)
   selectedMineral: null,
   setSelectedMineral: (mineral) => set({ selectedMineral: mineral }),
+
+  // Active mineral category — controls which mineral circle layer is visible on the map.
+  // null  = no mineral layer shown (Gold tab active or no mineral selected)
+  // string = only the layer matching this category is shown
+  activeMineralCategory: null,
+  setActiveMineralCategory: (cat) => set({ activeMineralCategory: cat }),
 }))
 
 export default useMapStore
