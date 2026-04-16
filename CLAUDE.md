@@ -113,12 +113,20 @@ explore-eire/
     │   ├── UpgradeSheet.jsx     ← Paywall. Feature list, monthly/annual pills, CTA (Stripe TODO).
     │   ├── AuthModal.jsx        ← Sign In/Up modal. Google OAuth + email/password + Continue as guest.
     │   ├── BottomSheet.jsx      ← Minimal reusable shell (no spring/drag yet)
-    │   ├── FindSheet.jsx        ← STUB
-    │   ├── WaypointSheet.jsx    ← STUB
-    │   ├── TrackOverlay.jsx     ← STUB
+    │   ├── FindSheet.jsx        ← GPS bounding-box query → Haversine sort → nearest 50 gold/minerals.
+    │   │                           Gold tab free (t6/t7) / Pro (t1-t5). Minerals tab full Pro. Tab bar,
+    │   │                           loading/error/empty states. Tap row → flyTo + open SampleSheet/MineralSheet.
+    │   ├── WaypointSheet.jsx    ← Add/view/delete waypoints. Description, photo upload to Supabase Storage,
+    │   │                           two-step confirm delete, photo display in view mode.
+    │   ├── TrackOverlay.jsx     ← Floating pill (duration + distance) while tracking. Completion summary sheet.
+    │   │                           Reads isTracking + sessionTrail from mapStore. Saves track to Supabase.
     │   ├── OfflineManager.jsx   ← STUB
-    │   ├── RouteBuilder.jsx     ← STUB
-    │   ├── StatusToast.jsx      ← STUB
+    │   ├── RouteBuilder.jsx     ← Long-press (contextmenu) drops route points on map. Dashed gold polyline +
+    │   │                           numbered dots. Panel: distance, point list, Clear + Save to Supabase routes.
+    │   │                           Pro gate. Route sources: route-builder-src, route-points-src in Map.jsx.
+    │   ├── SplashScreen.jsx     ← 1.8s branded hold + 300ms fade. Gold wordmark + grey tagline. Calls onDone.
+    │   │                           Mounted in App.jsx with splashDone local state.
+    │   ├── StatusToast.jsx      ← Animated toast stack. Persistent OFFLINE badge. Monitors navigator.onLine.
     │   └── LegalDisclaimerModal.jsx  ← Centred popup, 8 legal sections, checkbox accept, Supabase upsert
     ├── hooks/
     │   ├── useAuth.js           ← Auth state listener, legalFetchedFor ref, profile + sub fetch
@@ -126,8 +134,9 @@ explore-eire/
     │   ├── useMineralLocalities.js ← Batched Supabase load of mineral_localities (1000/batch)
     │   ├── useGeolocation.js    ← Device GPS: getCurrentPosition, watchPosition, stopWatching
     │   ├── useSubscription.js   ← STUB (subscription fetch handled by useAuth currently)
-    │   ├── useTracks.js         ← Skeleton (state structure, all methods are TODO)
-    │   ├── useWaypoints.js      ← Skeleton (state structure, all CRUD methods are TODO)
+    │   ├── useTracks.js         ← Full GPS tracking. startTracking/stopTracking. Exports calcTrailDistanceM.
+    │   │                           Saves completed track to Supabase tracks table. Uses watchPosition directly.
+    │   ├── useWaypoints.js      ← Full CRUD. Photo upload to Supabase Storage waypoint-photos/{userId}/{ts}.ext.
     │   └── useOffline.js        ← Partial (online/offline detection works; download TODO)
     ├── lib/
     │   ├── supabase.js          ← createClient with VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
@@ -168,13 +177,14 @@ explore-eire/
 | Supabase configuration | ✅ Site URL and redirect URLs set to Vercel production domain |
 | Stripe checkout (wired) | ⚠️ Env vars required in Vercel — STRIPE_SECRET_KEY, STRIPE_PRICE_ID_MONTHLY/ANNUAL |
 | Stripe webhook (wired) | ⚠️ Env vars required in Vercel — STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY |
-| GPS Go & Track (TrackOverlay) | ⚠️ Stub |
-| Waypoints full flow (WaypointSheet) | ⚠️ Stub |
+| Splash screen (SplashScreen) | ✅ Built — 1.8s hold + 300ms fade, gold wordmark + tagline |
+| GPS Go & Track (TrackOverlay) | ✅ Built — floating pill, completion summary, saves to Supabase |
+| Waypoints full flow (WaypointSheet) | ✅ Built — add/view/delete, photo upload, two-step delete |
+| StatusToast + OFFLINE badge | ✅ Built — animated stack, persistent offline detection |
+| Find / Discover nearby (FindSheet) | ✅ Built — GPS + bounding-box query, Haversine sort, Pro gate |
+| Route builder (basic) | ✅ Built — contextmenu long-press, gold polyline, save to Supabase routes |
 | Offline map downloads (OfflineManager) | ⚠️ Stub |
-| Find / Discover nearby (FindSheet) | ⚠️ Stub |
-| Route builder | ⚠️ Stub |
 | Weather layer | ⚠️ Stub |
-| StatusToast + OFFLINE badge | ⚠️ Stub |
 | Capacitor native wrapper | ❌ Not started |
 | Plausible analytics | ❌ Not started |
 
@@ -236,12 +246,14 @@ explore-eire/
 16. ✅ StatusToast — animated toast system (success/error/warning/info/offline), persistent offline badge, online/offline auto-detection
 17. ✅ 3D terrain — verified correct, no changes needed
 
+18. ✅ FindSheet — GPS + bounding-box query, Haversine sort, nearest 50 gold/minerals, Pro gate
+19. ✅ RouteBuilder — contextmenu long-press, dashed gold polyline, numbered dots, save to Supabase routes
+20. ✅ SplashScreen — 1.8s hold + 300ms fade, gold wordmark + tagline, mounted in App.jsx
+
 **Next (in order):**
-18. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
-19. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
-20. Find / Discover — build FindSheet.jsx
-16. Find / Discover — build FindSheet.jsx
-17. Field Sports module — data sourcing required first
+21. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
+22. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
+23. Field Sports module — data sourcing required first
 18. Hiking module — data sourcing required first
 19. Archaeology module — NMS data integration
 20. Coastal module — data sourcing required first
