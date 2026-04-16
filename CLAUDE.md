@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026 (session 2)
+> Last updated: 16 April 2026 (session 3)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -222,6 +222,12 @@ explore-eire/
 28. **WaypointSheet description + photo** — `addWaypoint` now accepts `{ description, photo }`. Photo is a File object; `useWaypoints` uploads it to Supabase Storage `waypoint-photos/{userId}/{ts}.ext` before insert. If upload fails, waypoint is saved without photo (graceful). ViewMode now shows `description` and first photo; has two-step confirm before delete. `icon` field added to `buildSavedWaypointGeoJSON` properties so ViewMode displays correct emoji.
 29. **StatusToast offline detection** — `window.addEventListener('offline/online')` fires persistent toast (duration=0) when offline; dismisses it and fires 'Back online' on reconnect. `addToast` is called with `duration: 0` for persistent toasts — never auto-dismissed. Persistent offline toast is tappable to dismiss on desktop.
 30. **Toast action dispatch from hooks** — `useWaypoints` and `useTracks` call `useMapStore.getState().addToast(...)` inside async callbacks. This is the correct pattern for dispatching actions from outside the React render tree (same as `syncLayerVisibility`). Do not use `useMapStore()` directly in async code.
+31. **Basemap switch — terrain must be added FIRST** — In the `style.load` callback after `map.setStyle()`, the terrain source must be added (and `map.setTerrain()` called) BEFORE `addDataLayers()`. If terrain is added after data layers, MapLibre may fail to apply 3D terrain correctly. Order: (1) terrain source + setTerrain if is3DRef.current, (2) addDataLayers, (3) restore source data, (4) syncLayerVisibility.
+32. **DataSheet bottom constraint** — DataSheet container uses `bottom: calc(64px + 24px + env(safe-area-inset-bottom))` to prevent overlap with the camera button. `getSnap()` uses `effectiveH = window.innerHeight - 88` so snap points align with the bounded container.
+33. **useTracks split: stopTracking / saveTrack** — `stopTracking()` is now synchronous — it stops the GPS watch, computes stats, and returns the summary object without saving. `saveTrack(summary)` is a separate async function that persists to Supabase and fires the toast. TrackOverlay shows a Save/Discard choice before persisting. Map.jsx must pass both `onStop={stopTracking}` and `onSave={saveTrack}` to TrackOverlay.
+34. **Elevation profile in mapStore** — `elevationProfile: [{elevation, distanceM}]` accumulates during tracking. Written by `useTracks` every 5th GPS point via MapTiler terrain-rgb-v2 tile + canvas pixel decode. Cleared by `startTracking`. Read by `TrackOverlay` for live graph and summary stats. `clearElevationProfile` must be called in `startTracking`.
+35. **TrackOverlay full-screen overlay** — wrapper `div` has `pointer-events: none` so the map remains interactive during tracking. Only the top bar and bottom panel have `pointer-events: auto`. Top bar overlays CategoryHeader (same position, higher zIndex=45). Bottom panel is 220px high, contains 4 stat cells + SVG elevation graph + Stop button.
+36. **showWaypoints toggle** — `mapStore.showWaypoints` (default true) gates `saved-waypoints-circles` layer visibility. `syncLayerVisibility` reads it via `useMapStore.getState()`. Must be in `useEffect` dependency array in Map.jsx alongside other visibility deps. LayerPanel exposes it under a "MY DATA" section at the top of the scrollable list.
 
 ---
 
@@ -249,6 +255,12 @@ explore-eire/
 18. ✅ FindSheet — GPS + bounding-box query, Haversine sort, nearest 50 gold/minerals, Pro gate
 19. ✅ RouteBuilder — contextmenu long-press, dashed gold polyline, numbered dots, save to Supabase routes
 20. ✅ SplashScreen — 1.8s hold + 300ms fade, gold wordmark + tagline, mounted in App.jsx
+21. ✅ Basemap switch bugfix — terrain source added first in style.load callback
+22. ✅ DataSheet bottom — container bounded by camera button area (bottom: calc(64px+24px+safeArea)); snap points use effectiveH
+23. ✅ CategoryHeader — Go & Track icon changed to stopwatch SVG
+24. ✅ LayerPanel — MY DATA section added at top with "Saved waypoints" toggle (showWaypoints in mapStore)
+25. ✅ TrackOverlay rebuild — full-screen overlay mode; top bar (accent dot, Tracking label, REC dot, time); bottom panel (4 stats, SVG elevation graph, Stop); completion summary with Save/Discard; trail gold dotted polyline
+26. ✅ useTracks — elevation fetching from MapTiler terrain-rgb-v2 tiles (every 5th point); stopTracking now synchronous/non-saving; saveTrack() separate async function
 
 **Next (in order):**
 21. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)

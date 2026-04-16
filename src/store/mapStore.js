@@ -77,9 +77,31 @@ const useMapStore = create((set) => ({
   activeMineralCategory: null,
   setActiveMineralCategory: (cat) => set({ activeMineralCategory: cat }),
 
+  // FindSheet open state
+  findSheetOpen: false,
+  setFindSheetOpen: (open) => set({ findSheetOpen: open }),
+
+  // Route builder state
+  routeBuilderOpen: false,
+  setRouteBuilderOpen: (open) => set({ routeBuilderOpen: open }),
+  routePoints: [],  // [{lat, lng, id}]
+  addRoutePoint: (pt) =>
+    set((state) => ({ routePoints: [...state.routePoints, pt] })),
+  clearRoutePoints: () => set({ routePoints: [] }),
+
   // GPS tracking state
   isTracking: false,
   setIsTracking: (v) => set({ isTracking: v }),
+
+  // Elevation profile during tracking — [{elevation, distanceM}]
+  elevationProfile: [],
+  appendElevationPoint: (pt) =>
+    set((state) => ({ elevationProfile: [...state.elevationProfile, pt] })),
+  clearElevationProfile: () => set({ elevationProfile: [] }),
+
+  // Waypoints layer visibility toggle
+  showWaypoints: true,
+  setShowWaypoints: (v) => set({ showWaypoints: v }),
 
   // Toast notifications — { id, message, type, duration }
   // type: 'success' | 'error' | 'warning' | 'info' | 'offline'

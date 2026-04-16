@@ -176,11 +176,13 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
               }}
             />
           ) : (
-            /* Track / route icon */
+            /* Stopwatch icon */
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <circle cx="9" cy="9" r="3" stroke="var(--color-muted)" strokeWidth="1.5"/>
-              <path d="M9 1v2M9 15v2M1 9h2M15 9h2" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M3.5 3.5l1.4 1.4M13.1 13.1l1.4 1.4M3.5 14.5l1.4-1.4M13.1 4.9l1.4-1.4" stroke="var(--color-muted)" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="9" cy="11" r="5.5" stroke="var(--color-muted)" strokeWidth="1.5"/>
+              <path d="M7 1.5h4" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 1.5v3" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 11V8.5" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M9 11l2 1.2" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           )}
         </button>

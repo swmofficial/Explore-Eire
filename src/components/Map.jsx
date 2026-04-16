@@ -369,9 +369,10 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       type: 'line',
       source: 'session-line-src',
       paint: {
-        'line-color': '#4B8BE8',
-        'line-width': 2.5,
-        'line-opacity': 0.85,
+        'line-color': '#E8C96A',
+        'line-width': 3,
+        'line-opacity': 0.9,
+        'line-dasharray': [2, 3],
       },
       layout: { 'line-cap': 'round', 'line-join': 'round' },
     })
@@ -391,8 +392,8 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'session-trail',
       paint: {
         'circle-radius': 4,
-        'circle-color': '#4B8BE8',
-        'circle-stroke-color': 'rgba(255,255,255,0.45)',
+        'circle-color': '#E8C96A',
+        'circle-stroke-color': 'rgba(0,0,0,0.3)',
         'circle-stroke-width': 1,
         'circle-opacity': 0.88,
       },
@@ -574,6 +575,12 @@ function syncLayerVisibility(map) {
     )
   }
 
+  // Saved waypoints visibility toggle
+  const { showWaypoints } = useMapStore.getState()
+  if (map.getLayer('saved-waypoints-circles')) {
+    map.setLayoutProperty('saved-waypoints-circles', 'visibility', showWaypoints ? 'visible' : 'none')
+  }
+
   // Mineral locality layers — only show the active category, and only in prospecting module
   const { activeModule } = useModuleStore.getState()
   const { activeMineralCategory } = useMapStore.getState()
@@ -620,6 +627,7 @@ export default function Map({ onHome }) {
     activeMineralCategory,
     routePoints,
     routeBuilderOpen,
+    showWaypoints,
   } = useMapStore()
   const { isPro } = useUserStore()
   const { activeModule } = useModuleStore()
@@ -627,7 +635,7 @@ export default function Map({ onHome }) {
   const { samples } = useGoldSamples()
   const { localities } = useMineralLocalities()
   const { savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
-  const { startTracking, stopTracking } = useTracks()
+  const { startTracking, stopTracking, saveTrack } = useTracks()
 
   // Keep refs in sync for use in style.load callbacks
   samplesRef.current = samples
@@ -783,6 +791,14 @@ export default function Map({ onHome }) {
     map.setStyle(styleUrl)
 
     map.once('style.load', () => {
+      // Re-add terrain source FIRST if 3D was active (must precede data layers)
+      if (is3DRef.current) {
+        if (!map.getSource('terrain')) {
+          map.addSource('terrain', TERRAIN_SOURCE)
+        }
+        map.setTerrain(TERRAIN_CONFIG)
+      }
+
       addDataLayers(map, samplesRef.current, savedWaypointsRef.current)
 
       // Restore current data into sources
@@ -812,15 +828,6 @@ export default function Map({ onHome }) {
       })
 
       syncLayerVisibility(map)
-
-      // Re-apply terrain if 3D was active
-      if (is3DRef.current) {
-        if (!map.getSource('terrain')) {
-          map.addSource('terrain', TERRAIN_SOURCE)
-        }
-        map.setTerrain(TERRAIN_CONFIG)
-      }
-
       mapLoadedRef.current = true
     })
   }, [basemap]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -859,7 +866,7 @@ export default function Map({ onHome }) {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
     syncLayerVisibility(map)
-  }, [layerVisibility, tierFilter, isPro, activeModule, activeMineralCategory])
+  }, [layerVisibility, tierFilter, isPro, activeModule, activeMineralCategory, showWaypoints])
 
   // ── Update session trail (dots + connecting polyline) ─────────
   useEffect(() => {
@@ -912,7 +919,7 @@ export default function Map({ onHome }) {
       />
       <CategoryHeader onHome={onHome} onStartTracking={startTracking} />
       <CornerControls />
-      <TrackOverlay onStop={stopTracking} />
+      <TrackOverlay onStop={stopTracking} onSave={saveTrack} />
       <DataSheet />
       <SampleSheet />
       <MineralSheet />

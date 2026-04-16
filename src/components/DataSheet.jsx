@@ -105,10 +105,14 @@ function formatDist(km) {
 
 function getSnap() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
+  // Sheet container is bounded at bottom by camera button area (64px + 24px gap).
+  // Effective height is the space the sheet can occupy.
+  const bottomOffset = 88 // 64px camera + 24px margin (safe-area handled in CSS)
+  const effectiveH = h - bottomOffset
   return {
-    collapsed: h - 80,
-    half:      Math.round(h * 0.55),
-    full:      Math.round(h * 0.08),
+    collapsed: effectiveH - 80,
+    half:      Math.round(effectiveH * 0.55),
+    full:      Math.round(effectiveH * 0.08),
   }
 }
 
@@ -475,7 +479,7 @@ export default function DataSheet() {
         top: 0,
         left: 0,
         right: 0,
-        height: '100vh',
+        bottom: 'calc(64px + 24px + env(safe-area-inset-bottom, 0px))',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
         borderRadius: '16px 16px 0 0',
@@ -485,7 +489,6 @@ export default function DataSheet() {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         willChange: 'transform',
       }}
     >

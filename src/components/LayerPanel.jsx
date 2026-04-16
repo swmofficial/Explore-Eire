@@ -171,6 +171,7 @@ export default function LayerPanel() {
     layerPanelOpen, setLayerPanelOpen,
     layerVisibility, setLayerVisibility,
     activeMineralCategory, setActiveMineralCategory,
+    showWaypoints, setShowWaypoints,
   } = useMapStore()
   const { activeModule } = useModuleStore()
   const { isPro } = useUserStore()
@@ -288,6 +289,41 @@ export default function LayerPanel() {
             paddingBottom: 24,
           }}
         >
+          {/* MY DATA — always shown, top of list */}
+          <div style={{ marginBottom: 8 }}>
+            <div
+              style={{
+                padding: '10px 16px 6px',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--color-muted)',
+              }}
+            >
+              My Data
+            </div>
+            <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 2 }} />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 14, color: 'var(--color-primary)', fontWeight: 400, flex: 1 }}>
+                Saved waypoints
+              </span>
+              <Toggle
+                checked={showWaypoints}
+                onChange={() => setShowWaypoints(!showWaypoints)}
+                disabled={false}
+              />
+            </div>
+          </div>
+
           {categories.length === 0 ? (
             <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
               No layers available for this module yet.
