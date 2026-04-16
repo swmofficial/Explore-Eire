@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026 (session 4)
+> Last updated: 16 April 2026 (session 5 — offline maps)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -183,7 +183,7 @@ explore-eire/
 | StatusToast + OFFLINE badge | ✅ Built — animated stack, persistent offline detection |
 | Find / Discover nearby (FindSheet) | ✅ Built — GPS + bounding-box query, Haversine sort, Pro gate |
 | Route builder (basic) | ✅ Built — contextmenu long-press, gold polyline, save to Supabase routes |
-| Offline map downloads (OfflineManager) | ⚠️ Stub |
+| Offline map downloads (OfflineManager) | ✅ Built — Cache API download, SW intercept, region list, storage bar |
 | Weather layer | ⚠️ Stub |
 | Capacitor native wrapper | ❌ Not started |
 | Plausible analytics | ❌ Not started |
@@ -228,6 +228,7 @@ explore-eire/
 34. **Elevation profile in mapStore** — `elevationProfile: [{elevation, distanceM}]` accumulates during tracking. Written by `useTracks` every 5th GPS point via MapTiler terrain-rgb-v2 tile + canvas pixel decode. Cleared by `startTracking`. Read by `TrackOverlay` for live graph and summary stats. `clearElevationProfile` must be called in `startTracking`.
 35. **TrackOverlay full-screen overlay** — wrapper `div` has `pointer-events: none` so the map remains interactive during tracking. Only the top bar and bottom panel have `pointer-events: auto`. Top bar overlays CategoryHeader (same position, higher zIndex=45). Bottom panel is 220px high, contains 4 stat cells + SVG elevation graph + Stop button.
 36. **showWaypoints toggle** — `mapStore.showWaypoints` (default true) gates `saved-waypoints-circles` layer visibility. `syncLayerVisibility` reads it via `useMapStore.getState()`. Must be in `useEffect` dependency array in Map.jsx alongside other visibility deps. LayerPanel exposes it under a "MY DATA" section at the top of the scrollable list.
+37. **Service Worker tile interception** — `public/sw.js` intercepts `api.maptiler.com` tile requests only (regex: `/tiles/[^/]+/\d+/\d+/\d+.(jpg|jpeg|png|webp)`). Do NOT widen the intercept to all fetches — MapLibre style JSON, fonts and sprites must always go to the network. Cache name `'offline-tiles'` must match `OFFLINE_CACHE` constant in `useOffline.js`. SW registered in `src/main.jsx` after `createRoot().render()`.
 
 ---
 
@@ -267,10 +268,10 @@ explore-eire/
 24. ✅ LayerPanel — MY DATA section added at top with "Saved waypoints" toggle (showWaypoints in mapStore)
 25. ✅ TrackOverlay rebuild — full-screen overlay mode; top bar (accent dot, Tracking label, REC dot, time); bottom panel (4 stats, SVG elevation graph, Stop); completion summary with Save/Discard; trail gold dotted polyline
 26. ✅ useTracks — elevation fetching from MapTiler terrain-rgb-v2 tiles (every 5th point); stopTracking now synchronous/non-saving; saveTrack() separate async function
+33. ✅ Offline maps — OfflineManager bottom sheet (current view estimate, name input, download progress bar, saved regions list, storage usage bar); useOffline (Cache API download with 6-concurrent batching, deleteRegion, getStorageUsage, progress 0–100%, isOnline); public/sw.js Service Worker (cache-first, fetch+cache on miss, 1×1 grey placeholder offline); SW registered in main.jsx
 
 **Next (in order):**
 21. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
-22. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
 23. Field Sports module — data sourcing required first
 18. Hiking module — data sourcing required first
 19. Archaeology module — NMS data integration
