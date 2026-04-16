@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026 (session 3)
+> Last updated: 16 April 2026 (session 4)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -223,7 +223,7 @@ explore-eire/
 29. **StatusToast offline detection** — `window.addEventListener('offline/online')` fires persistent toast (duration=0) when offline; dismisses it and fires 'Back online' on reconnect. `addToast` is called with `duration: 0` for persistent toasts — never auto-dismissed. Persistent offline toast is tappable to dismiss on desktop.
 30. **Toast action dispatch from hooks** — `useWaypoints` and `useTracks` call `useMapStore.getState().addToast(...)` inside async callbacks. This is the correct pattern for dispatching actions from outside the React render tree (same as `syncLayerVisibility`). Do not use `useMapStore()` directly in async code.
 31. **Basemap switch — terrain must be added FIRST** — In the `style.load` callback after `map.setStyle()`, the terrain source must be added (and `map.setTerrain()` called) BEFORE `addDataLayers()`. If terrain is added after data layers, MapLibre may fail to apply 3D terrain correctly. Order: (1) terrain source + setTerrain if is3DRef.current, (2) addDataLayers, (3) restore source data, (4) syncLayerVisibility.
-32. **DataSheet bottom constraint** — DataSheet container uses `height: 100dvh; bottom: 0` (extends to bottom of screen behind camera button). `getSnap()` collapsed = `h - 80 - 64 - 32` so the 80px peek sits above the 64px camera button with 32px clearance. The sheet content is visible in the peek; the portion behind the camera button is hidden by z-index. `env(safe-area-inset-bottom)` is handled in CSS if needed.
+32. **DataSheet two-layer architecture** — Outer wrapper: `position:fixed; height:100dvh; pointer-events:none; z-index:20` (transparent, no background). Inner panel: `position:absolute; bottom:0; height:calc(100dvh - 120px); pointer-events:all` with background + border-radius + transform. `getSnap()` computes against `innerH = h - 120`: collapsed = `innerH - 60` (60px peek), half = `innerH * 0.45`, full = `innerH * 0.08`. Camera button: `position:fixed; z-index:30` when collapsed, `z-index:10` when half/full — reads `dataSheetState` from mapStore in CornerControls. DO NOT collapse these back into one element — the two-layer approach is required for correct z-index behaviour.
 33. **useTracks split: stopTracking / saveTrack** — `stopTracking()` is now synchronous — it stops the GPS watch, computes stats, and returns the summary object without saving. `saveTrack(summary)` is a separate async function that persists to Supabase and fires the toast. TrackOverlay shows a Save/Discard choice before persisting. Map.jsx must pass both `onStop={stopTracking}` and `onSave={saveTrack}` to TrackOverlay.
 34. **Elevation profile in mapStore** — `elevationProfile: [{elevation, distanceM}]` accumulates during tracking. Written by `useTracks` every 5th GPS point via MapTiler terrain-rgb-v2 tile + canvas pixel decode. Cleared by `startTracking`. Read by `TrackOverlay` for live graph and summary stats. `clearElevationProfile` must be called in `startTracking`.
 35. **TrackOverlay full-screen overlay** — wrapper `div` has `pointer-events: none` so the map remains interactive during tracking. Only the top bar and bottom panel have `pointer-events: auto`. Top bar overlays CategoryHeader (same position, higher zIndex=45). Bottom panel is 220px high, contains 4 stat cells + SVG elevation graph + Stop button.
@@ -256,7 +256,13 @@ explore-eire/
 19. ✅ RouteBuilder — contextmenu long-press, dashed gold polyline, numbered dots, save to Supabase routes
 20. ✅ SplashScreen — 1.8s hold + 300ms fade, gold wordmark + tagline, mounted in App.jsx
 21. ✅ Basemap switch bugfix — terrain source added first in style.load callback
-22. ✅ DataSheet bottom — container bounded by camera button area (bottom: calc(64px+24px+safeArea)); snap points use effectiveH
+22. ✅ DataSheet bottom — two-layer container: outer pointer-events:none z-index:20, inner panel calc(100dvh-120px) with transform. 60px peek. Camera z-index:30 collapsed / z-index:10 expanded
+27. ✅ User location dot — custom pulsing blue Marker via watchPosition, always visible in map view; replaces GeolocateControl dot
+28. ✅ Centre on Me — crosshair button in CornerControls bottom-right; flies map to userLocation (mapStore)
+29. ✅ Settings gear icon — Feather-style cog (24x24 viewbox) replaces old sun/brightness SVG
+30. ✅ DataSheet skeleton — 8 animated grey pulse rows (skeletonPulse CSS) replace "Loading…" while data loads
+31. ✅ Haptics — src/lib/haptics.js triggerHaptic('light'|'medium'|'heavy') using navigator.vibrate(); wired to sheet snap, track stop, waypoint save
+32. ✅ Safe area — DataSheet list paddingBottom:env(safe-area-inset-bottom); camera btn bottom:80px+safeArea
 23. ✅ CategoryHeader — Go & Track icon changed to stopwatch SVG
 24. ✅ LayerPanel — MY DATA section added at top with "Saved waypoints" toggle (showWaypoints in mapStore)
 25. ✅ TrackOverlay rebuild — full-screen overlay mode; top bar (accent dot, Tracking label, REC dot, time); bottom panel (4 stats, SVG elevation graph, Stop); completion summary with Save/Discard; trail gold dotted polyline

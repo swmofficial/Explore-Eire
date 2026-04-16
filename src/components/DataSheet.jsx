@@ -16,6 +16,7 @@ import useMapStore from '../store/mapStore'
 import useModuleStore from '../store/moduleStore'
 import useUserStore from '../store/userStore'
 import { supabase } from '../lib/supabase'
+import { triggerHaptic } from '../lib/haptics'
 
 // ── Tier helpers ────────────────────────────────────────────────
 
@@ -355,6 +356,7 @@ export default function DataSheet() {
       currentTranslateRef.current = targetY
       setCurrentTranslate(targetY)
       setDataSheetState(targetName)
+      triggerHaptic('light')
     }
 
     el.addEventListener('touchstart', onStart, { passive: true })
@@ -481,7 +483,7 @@ export default function DataSheet() {
         bottom: 0,
         height: '100dvh',
         pointerEvents: 'none',
-        zIndex: 22,
+        zIndex: 20,
       }}
     >
     {/* Inner: the actual sheet panel — never reaches top 120px of viewport */}
@@ -732,11 +734,25 @@ export default function DataSheet() {
           </div>
 
           {/* List — scrollable */}
-          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
             {loading ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>
-                Loading…
-              </div>
+              // Skeleton rows
+              [...Array(8)].map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    padding: '12px 16px', gap: 12,
+                    borderBottom: '1px solid var(--color-border)',
+                  }}
+                >
+                  <div className="skeleton-circle" style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0 }} />
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div className="skeleton-line" style={{ height: 13, width: `${48 + (i % 3) * 14}%`, borderRadius: 4 }} />
+                    <div className="skeleton-line" style={{ height: 11, width: `${28 + (i % 4) * 8}%`, borderRadius: 4 }} />
+                  </div>
+                </div>
+              ))
             ) : activeTab === 'gold' ? (
               goldSamples.length === 0 ? (
                 <div style={{ padding: '24px 16px', textAlign: 'center', color: 'var(--color-muted)', fontSize: 13 }}>

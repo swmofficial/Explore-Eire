@@ -16,6 +16,7 @@ import useMapStore from '../store/mapStore'
 import useModuleStore from '../store/moduleStore'
 import { calcTrailDistanceM } from '../hooks/useTracks'
 import { getModule } from '../lib/moduleConfig'
+import { triggerHaptic } from '../lib/haptics'
 
 // ── Formatters ──────────────────────────────────────────────────────
 
@@ -143,7 +144,8 @@ export default function TrackOverlay({ onStop, onSave }) {
 
   async function handleStop() {
     setStopping(true)
-    const result = onStop() // stopTracking is now synchronous
+    const result = onStop()
+    triggerHaptic('medium')
     setStopping(false)
     setSummary(result)
   }

@@ -46,14 +46,35 @@ function SettingsBtn({ onPress }) {
         borderRadius: 12,
       }}
     >
+      {/* Gear / cog icon */}
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </button>
+  )
+}
+
+function CentreOnMeBtn({ onPress, hasLocation }) {
+  return (
+    <button
+      onClick={onPress}
+      aria-label="Centre on my location"
+      style={{
+        ...GLASS,
+        position: 'absolute',
+        bottom: BOTTOM_OFFSET,
+        right: SIDE_OFFSET_R,
+        width: 52,
+        height: 52,
+        borderRadius: 12,
+        opacity: hasLocation ? 1 : 0.45,
+      }}
+    >
+      {/* Crosshair icon */}
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="10" cy="10" r="2.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <path
-          d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.1 4.1l1.06 1.06M14.84 14.84l1.06 1.06M4.1 15.9l1.06-1.06M14.84 5.16l1.06-1.06"
-          stroke="#E8EAF0"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
+        <circle cx="10" cy="10" r="3.5" stroke="#E8EAF0" strokeWidth="1.5"/>
+        <path d="M10 2v3.5M10 14.5V18M2 10h3.5M14.5 10H18" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     </button>
   )
@@ -108,7 +129,8 @@ function BasemapBtn({ onPress }) {
   )
 }
 
-function CameraBtn({ onPress }) {
+function CameraBtn({ onPress, dataSheetState }) {
+  const zIndex = dataSheetState === 'collapsed' ? 30 : 10
   return (
     <button
       onClick={onPress}
@@ -122,7 +144,7 @@ function CameraBtn({ onPress }) {
         width: 64,
         height: 64,
         borderRadius: 16,
-        zIndex: 30,
+        zIndex,
         border: '1px solid rgba(232,201,106,0.4)',
       }}
     >
@@ -145,6 +167,9 @@ export default function CornerControls() {
     setBasemapPickerOpen,
     setLayerPanelOpen,
     setWaypointSheet,
+    dataSheetState,
+    mapInstance,
+    userLocation,
   } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
 
@@ -160,12 +185,18 @@ export default function CornerControls() {
     }
   }
 
+  function handleCentreOnMe() {
+    if (!mapInstance || !userLocation) return
+    mapInstance.flyTo({ center: [userLocation.lng, userLocation.lat], zoom: 15, duration: 800 })
+  }
+
   return (
     <>
       <SettingsBtn onPress={() => setSettingsPanelOpen(true)} />
       <LayersBtn onPress={handleLayersPress} />
       <BasemapBtn onPress={() => setBasemapPickerOpen(true)} />
-      <CameraBtn onPress={handleCameraPress} />
+      <CameraBtn onPress={handleCameraPress} dataSheetState={dataSheetState} />
+      <CentreOnMeBtn onPress={handleCentreOnMe} hasLocation={!!userLocation} />
     </>
   )
 }

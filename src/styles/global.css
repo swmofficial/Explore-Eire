@@ -235,6 +235,56 @@ html, body {
   50%       { opacity: 0.45; transform: scale(1.5); }
 }
 
+/* Skeleton loading pulse */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.65; }
+}
+
+.skeleton-line,
+.skeleton-circle {
+  background: var(--color-raised);
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+/* User location dot — pulsing ring */
+@keyframes locationPulse {
+  0%   { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+}
+
+.user-location-marker {
+  width: 16px;
+  height: 16px;
+  position: relative;
+  pointer-events: none;
+}
+
+.user-location-dot-ring {
+  width: 28px;
+  height: 28px;
+  background: rgba(75, 139, 232, 0.22);
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: locationPulse 2s ease-out infinite;
+}
+
+.user-location-dot-inner {
+  width: 14px;
+  height: 14px;
+  background: #4B8BE8;
+  border: 2.5px solid #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 6px rgba(75, 139, 232, 0.5);
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
@@ -345,14 +395,10 @@ html, body {
   display: none !important;
 }
 
-/* GPS dot — blue pulsing dot styling */
+/* Hide MapLibre's built-in GPS dot — replaced by custom user-location-marker */
 .maplibregl-user-location-dot,
 .maplibregl-user-location-dot::before {
-  background-color: #4B8BE8 !important;
-}
-
-.maplibregl-user-location-dot::before {
-  box-shadow: 0 0 0 0 rgba(75,139,232,0.4) !important;
+  display: none !important;
 }
 
 /* Hide scrollbar on category header tab strip */

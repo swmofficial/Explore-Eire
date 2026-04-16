@@ -103,6 +103,10 @@ const useMapStore = create((set) => ({
   showWaypoints: true,
   setShowWaypoints: (v) => set({ showWaypoints: v }),
 
+  // Current user GPS location — updated by Map.jsx watchPosition
+  userLocation: null, // { lat, lng }
+  setUserLocation: (loc) => set({ userLocation: loc }),
+
   // Toast notifications — { id, message, type, duration }
   // type: 'success' | 'error' | 'warning' | 'info' | 'offline'
   // duration: ms to show (0 = persistent until removed manually)

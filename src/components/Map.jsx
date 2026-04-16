@@ -602,10 +602,11 @@ function syncLayerVisibility(map) {
 // ── Component ──────────────────────────────────────────────────────
 
 export default function Map({ onHome }) {
-  const containerRef  = useRef(null)
-  const mapRef        = useRef(null)
-  const geolocateRef  = useRef(null)
-  const mapLoadedRef  = useRef(false)
+  const containerRef        = useRef(null)
+  const mapRef              = useRef(null)
+  const mapLoadedRef        = useRef(false)
+  const locationMarkerRef   = useRef(null)
+  const locationWatchRef    = useRef(null)
   const samplesRef             = useRef([])
   const sessionTrailRef        = useRef([])
   const sessionWaypointsRef    = useRef([])
@@ -615,7 +616,7 @@ export default function Map({ onHome }) {
   const is3DRef       = useRef(false)
 
   const {
-    setMapInstance,
+    setMapInstance, setUserLocation,
     layerVisibility,
     tierFilter,
     sessionTrail,
@@ -668,13 +669,31 @@ export default function Map({ onHome }) {
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right')
 
-    const geolocate = new maplibregl.GeolocateControl({
-      positionOptions: { enableHighAccuracy: true },
-      trackUserLocation: true,
-      showUserHeading: true,
-    })
-    map.addControl(geolocate, 'bottom-right')
-    geolocateRef.current = geolocate
+    // Custom user location dot — always visible once GPS acquired
+    const markerEl = document.createElement('div')
+    markerEl.className = 'user-location-marker'
+    markerEl.style.display = 'none'
+    const ring = document.createElement('div')
+    ring.className = 'user-location-dot-ring'
+    const dot = document.createElement('div')
+    dot.className = 'user-location-dot-inner'
+    markerEl.appendChild(ring)
+    markerEl.appendChild(dot)
+    const locationMarker = new maplibregl.Marker({ element: markerEl, anchor: 'center' })
+      .setLngLat([0, 0])
+      .addTo(map)
+    locationMarkerRef.current = locationMarker
+
+    locationWatchRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        locationMarkerRef.current?.setLngLat([longitude, latitude])
+        markerEl.style.display = 'block'
+        useMapStore.getState().setUserLocation({ lat: latitude, lng: longitude })
+      },
+      (err) => { console.warn('[Map] geolocation:', err.message) },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    )
 
     map.on('load', () => {
       addDataLayers(map, samplesRef.current)
@@ -767,18 +786,23 @@ export default function Map({ onHome }) {
         addRoutePoint({ lat: e.lngLat.lat, lng: e.lngLat.lng, id: crypto.randomUUID() })
       })
 
-      try { geolocate.trigger() } catch { /* GPS unavailable */ }
     })
 
     mapRef.current = map
 
     return () => {
+      if (locationWatchRef.current != null) {
+        navigator.geolocation.clearWatch(locationWatchRef.current)
+        locationWatchRef.current = null
+      }
+      locationMarkerRef.current?.remove()
+      locationMarkerRef.current = null
       setMapInstance(null)
       mapLoadedRef.current = false
       map.remove()
       mapRef.current = null
     }
-  }, [setMapInstance, setSelectedSample]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [setMapInstance, setSelectedSample, setUserLocation]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Basemap switching ─────────────────────────────────────────
   useEffect(() => {

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 import useMapStore from '../store/mapStore'
+import { triggerHaptic } from '../lib/haptics'
 
 // ── Photo upload helper ────────────────────────────────────────────
 async function uploadWaypointPhoto(file, userId) {
@@ -82,6 +83,7 @@ export function useWaypoints() {
       }
       setSavedWaypoints((prev) => [data, ...prev])
       addToast({ message: 'Waypoint saved', type: 'success' })
+      triggerHaptic('medium')
       return data
     },
     [user, isGuest],
