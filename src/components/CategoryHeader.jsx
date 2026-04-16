@@ -1,13 +1,28 @@
 // CategoryHeader.jsx — Fixed top strip in map view.
-// Left: home grid icon (returns to module dashboard).
-// Centre: active module name.
-// No tabs — data navigation moved to DataSheet bottom sheet.
+// Left:   home grid icon (returns to module dashboard).
+// Centre: active module name + accent dot.
+// Right:  Go & Track button (Pro gate). When tracking: pulsing red dot.
+//
+// onStartTracking is passed from Map.jsx (wraps useTracks.startTracking).
+// isPro/isGuest gate is enforced here — free users see UpgradeSheet.
 import useModuleStore from '../store/moduleStore'
+import useMapStore from '../store/mapStore'
+import useUserStore from '../store/userStore'
 import { getModule } from '../lib/moduleConfig'
 
-export default function CategoryHeader({ onHome }) {
+export default function CategoryHeader({ onHome, onStartTracking }) {
   const { activeModule } = useModuleStore()
   const module = getModule(activeModule)
+  const { isTracking } = useMapStore()
+  const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
+
+  function handleTrackPress() {
+    if (!isPro || isGuest) {
+      setShowUpgradeSheet(true)
+    } else {
+      onStartTracking?.()
+    }
+  }
 
   return (
     <div
@@ -30,7 +45,7 @@ export default function CategoryHeader({ onHome }) {
           position: 'relative',
         }}
       >
-        {/* Home button — grid icon, left */}
+        {/* Home button — left */}
         <button
           onClick={onHome}
           aria-label="Back to module dashboard"
@@ -92,6 +107,47 @@ export default function CategoryHeader({ onHome }) {
             {module?.label ?? 'Explore Eire'}
           </span>
         </div>
+
+        {/* Go & Track button — right */}
+        <button
+          onClick={handleTrackPress}
+          aria-label={isTracking ? 'Tracking active' : 'Go & Track'}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: 52,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: isTracking ? 'default' : 'pointer',
+            padding: 0,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          {isTracking ? (
+            /* Pulsing red dot while active */
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#E84B4B',
+                animation: 'trackingPulse 1.2s ease-in-out infinite',
+              }}
+            />
+          ) : (
+            /* Track / route icon */
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="9" cy="9" r="3" stroke="var(--color-muted)" strokeWidth="1.5"/>
+              <path d="M9 1v2M9 15v2M1 9h2M15 9h2" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M3.5 3.5l1.4 1.4M13.1 13.1l1.4 1.4M3.5 14.5l1.4-1.4M13.1 4.9l1.4-1.4" stroke="var(--color-muted)" strokeWidth="1.2" strokeLinecap="round"/>
+            </svg>
+          )}
+        </button>
       </div>
     </div>
   )

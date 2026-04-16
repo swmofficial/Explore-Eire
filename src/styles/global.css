@@ -223,6 +223,12 @@ html, body {
   to   { transform: translateY(-100%); opacity: 0; }
 }
 
+/* Pulsing red dot for active GPS tracking */
+@keyframes trackingPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.45; transform: scale(1.5); }
+}
+
 /* Reduced motion overrides */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

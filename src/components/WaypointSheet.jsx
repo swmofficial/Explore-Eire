@@ -3,7 +3,7 @@
 //   - CornerControls camera button (Pro)  → mode: 'add'
 //   - Map tap on a saved-waypoints-circles → mode: 'view'
 // GPS coords come from navigator.geolocation ONLY — never EXIF.
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import useMapStore from '../store/mapStore'
 import { useGeolocation } from '../hooks/useGeolocation'
 
@@ -98,11 +98,15 @@ const INPUT_STYLE = {
 // ── Add mode ───────────────────────────────────────────────────────
 function AddMode({ onClose, addWaypoint }) {
   const { getCurrentPosition } = useGeolocation()
-  const [coords, setCoords]     = useState(null)
+  const [coords, setCoords]         = useState(null)
   const [gpsLoading, setGpsLoading] = useState(true)
-  const [name, setName]         = useState('')
-  const [icon, setIcon]         = useState('prospect')
-  const [saving, setSaving]     = useState(false)
+  const [name, setName]             = useState('')
+  const [description, setDescription] = useState('')
+  const [icon, setIcon]             = useState('prospect')
+  const [photo, setPhoto]           = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
+  const [saving, setSaving]         = useState(false)
+  const fileInputRef                = useRef(null)
 
   // One-shot GPS read when sheet opens
   useEffect(() => {
@@ -120,6 +124,19 @@ function AddMode({ onClose, addWaypoint }) {
     return () => { cancelled = true }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Revoke object URL on unmount to avoid memory leaks
+  useEffect(() => {
+    return () => { if (photoPreview) URL.revokeObjectURL(photoPreview) }
+  }, [photoPreview])
+
+  function handlePhotoSelect(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setPhoto(file)
+    if (photoPreview) URL.revokeObjectURL(photoPreview)
+    setPhotoPreview(URL.createObjectURL(file))
+  }
+
   async function handleSave() {
     if (!coords) return
     setSaving(true)
@@ -128,7 +145,8 @@ function AddMode({ onClose, addWaypoint }) {
       lat: coords.latitude,
       lng: coords.longitude,
       icon,
-      created_at: new Date().toISOString(),
+      description: description.trim() || null,
+      photo: photo || null,
     })
     setSaving(false)
     onClose()
@@ -176,7 +194,7 @@ function AddMode({ onClose, addWaypoint }) {
           </div>
 
           {/* Name input */}
-          <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 14 }}>
             <label style={LABEL_STYLE}>Name</label>
             <input
               type="text"
@@ -188,8 +206,21 @@ function AddMode({ onClose, addWaypoint }) {
             />
           </div>
 
+          {/* Description */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={LABEL_STYLE}>Description (optional)</label>
+            <textarea
+              placeholder="Notes, observations…"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              maxLength={500}
+              rows={3}
+              style={{ ...INPUT_STYLE, resize: 'none', lineHeight: 1.5 }}
+            />
+          </div>
+
           {/* Icon picker */}
-          <div style={{ marginBottom: 24 }}>
+          <div style={{ marginBottom: 16 }}>
             <span style={LABEL_STYLE}>Type</span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {ICONS.map((opt) => (
@@ -219,6 +250,64 @@ function AddMode({ onClose, addWaypoint }) {
             </div>
           </div>
 
+          {/* Photo input */}
+          <div style={{ marginBottom: 24 }}>
+            <span style={LABEL_STYLE}>Photo (optional)</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handlePhotoSelect}
+            />
+            {photoPreview ? (
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <img
+                  src={photoPreview}
+                  alt="Preview"
+                  style={{
+                    width: 80, height: 80, objectFit: 'cover',
+                    borderRadius: 8, border: '1px solid var(--color-border)',
+                    display: 'block',
+                  }}
+                />
+                <button
+                  onClick={() => { setPhoto(null); setPhotoPreview(null) }}
+                  style={{
+                    position: 'absolute', top: -6, right: -6,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: '#E84B4B', border: 'none',
+                    color: '#fff', fontSize: 12, lineHeight: 1,
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 14px',
+                  background: 'var(--color-raised)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 8,
+                  color: 'var(--color-muted)',
+                  fontSize: 13, cursor: 'pointer',
+                  WebkitTapHighlightColor: 'transparent',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M2 11l3.5-3.5L8 10l2.5-3L14 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <rect x="1" y="2" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="5" cy="6" r="1.25" stroke="currentColor" strokeWidth="1.25"/>
+                </svg>
+                Add Photo
+              </button>
+            )}
+          </div>
+
           {/* Save */}
           <button
             onClick={handleSave}
@@ -243,6 +332,7 @@ function AddMode({ onClose, addWaypoint }) {
 
 // ── View mode ──────────────────────────────────────────────────────
 function ViewMode({ waypoint, onClose, deleteWaypoint }) {
+  const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   async function handleDelete() {
@@ -251,6 +341,8 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
     setDeleting(false)
     onClose()
   }
+
+  const photos = waypoint.photos ?? []
 
   return (
     <>
@@ -276,6 +368,19 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
             <CloseBtn onClick={onClose} />
           </div>
 
+          {/* Photo */}
+          {photos.length > 0 && (
+            <img
+              src={photos[0]}
+              alt="Waypoint photo"
+              style={{
+                width: '100%', height: 160, objectFit: 'cover',
+                borderRadius: 10, marginBottom: 12,
+                border: '1px solid var(--color-border)',
+              }}
+            />
+          )}
+
           {/* Location */}
           <div style={{
             padding: '10px 12px',
@@ -288,6 +393,21 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
               {Number(waypoint.lat).toFixed(6)}, {Number(waypoint.lng).toFixed(6)}
             </div>
           </div>
+
+          {/* Description */}
+          {waypoint.description && (
+            <div style={{
+              padding: '10px 12px',
+              background: 'var(--color-raised)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 8, marginBottom: 10,
+            }}>
+              <span style={LABEL_STYLE}>Description</span>
+              <div style={{ fontSize: 13, color: 'var(--color-primary)', lineHeight: 1.5 }}>
+                {waypoint.description}
+              </div>
+            </div>
+          )}
 
           {/* Created */}
           <div style={{
@@ -302,23 +422,59 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
             </div>
           </div>
 
-          {/* Delete */}
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            style={{
-              width: '100%', height: 48,
-              background: 'transparent',
-              color: deleting ? 'var(--color-muted)' : '#E84B4B',
-              border: `1px solid ${deleting ? 'var(--color-border)' : '#E84B4B'}`,
-              borderRadius: 12, fontSize: 14, fontWeight: 600,
-              cursor: deleting ? 'not-allowed' : 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'opacity 150ms ease',
-            }}
-          >
-            {deleting ? 'Deleting…' : 'Delete Waypoint'}
-          </button>
+          {/* Delete — with confirm step */}
+          {confirmDelete ? (
+            <div>
+              <p style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 12, textAlign: 'center' }}>
+                Delete this waypoint?
+              </p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  style={{
+                    flex: 1, height: 44,
+                    background: 'var(--color-raised)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 10, fontSize: 14, fontWeight: 500,
+                    color: 'var(--color-primary)', cursor: 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  style={{
+                    flex: 1, height: 44,
+                    background: 'transparent',
+                    color: deleting ? 'var(--color-muted)' : '#E84B4B',
+                    border: `1px solid ${deleting ? 'var(--color-border)' : '#E84B4B'}`,
+                    borderRadius: 10, fontSize: 14, fontWeight: 600,
+                    cursor: deleting ? 'not-allowed' : 'pointer',
+                    WebkitTapHighlightColor: 'transparent',
+                  }}
+                >
+                  {deleting ? 'Deleting…' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              style={{
+                width: '100%', height: 48,
+                background: 'transparent',
+                color: '#E84B4B',
+                border: '1px solid #E84B4B',
+                borderRadius: 12, fontSize: 14, fontWeight: 600,
+                cursor: 'pointer',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              Delete Waypoint
+            </button>
+          )}
         </div>
       </div>
     </>

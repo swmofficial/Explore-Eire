@@ -18,10 +18,13 @@ export function useGeolocation() {
     })
   }
 
-  function startWatching() {
+  function startWatching(callback) {
     if (watchIdRef.current !== null) return
     watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => setPosition(pos),
+      (pos) => {
+        setPosition(pos)
+        if (callback) callback(pos)
+      },
       (err) => setError(err),
       { enableHighAccuracy: true, maximumAge: 5000 },
     )

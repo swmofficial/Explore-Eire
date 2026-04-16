@@ -12,6 +12,7 @@ import useModuleStore from '../store/moduleStore'
 import { useGoldSamples } from '../hooks/useGoldSamples'
 import { useMineralLocalities } from '../hooks/useMineralLocalities'
 import { useWaypoints } from '../hooks/useWaypoints'
+import { useTracks } from '../hooks/useTracks'
 import {
   BASEMAPS,
   DEFAULT_CENTER,
@@ -30,6 +31,7 @@ import MineralSheet from './MineralSheet'
 import LayerPanel from './LayerPanel'
 import BasemapPicker from './BasemapPicker'
 import WaypointSheet from './WaypointSheet'
+import TrackOverlay from './TrackOverlay'
 
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
@@ -195,6 +197,16 @@ function buildTrailGeoJSON(trail) {
   }
 }
 
+function buildTrailLineGeoJSON(trail) {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates: trail.length >= 2 ? trail.map((p) => [p.lng, p.lat]) : [],
+    },
+  }
+}
+
 function buildWaypointGeoJSON(waypoints) {
   return {
     type: 'FeatureCollection',
@@ -239,6 +251,7 @@ function buildSavedWaypointGeoJSON(waypoints) {
       properties: {
         id: wp.id,
         name: wp.name ?? '',
+        icon: wp.icon ?? 'prospect',
         description: wp.description ?? '',
         lat: wp.lat,
         lng: wp.lng,
@@ -341,7 +354,28 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
     })
   }
 
-  // Session trail
+  // Session trail polyline (LineString connecting GPS points)
+  if (!map.getSource('session-line-src')) {
+    map.addSource('session-line-src', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } },
+    })
+  }
+  if (!map.getLayer('session-trail-line')) {
+    map.addLayer({
+      id: 'session-trail-line',
+      type: 'line',
+      source: 'session-line-src',
+      paint: {
+        'line-color': '#4B8BE8',
+        'line-width': 2.5,
+        'line-opacity': 0.85,
+      },
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+    })
+  }
+
+  // Session trail (individual GPS point dots — render on top of the line)
   if (!map.getSource('session-trail')) {
     map.addSource('session-trail', {
       type: 'geojson',
@@ -546,6 +580,7 @@ export default function Map({ onHome }) {
   const { samples } = useGoldSamples()
   const { localities } = useMineralLocalities()
   const { savedWaypoints, addWaypoint, deleteWaypoint } = useWaypoints()
+  const { startTracking, stopTracking } = useTracks()
 
   // Keep refs in sync for use in style.load callbacks
   samplesRef.current = samples
@@ -606,6 +641,7 @@ export default function Map({ onHome }) {
               waypoint: {
                 id: p.id,
                 name: p.name,
+                icon: p.icon,
                 description: p.description,
                 lat: p.lat,
                 lng: p.lng,
@@ -696,6 +732,7 @@ export default function Map({ onHome }) {
       map.getSource('stream-samples')?.setData(buildStreamGeoJSON(samplesRef.current))
       map.getSource('rock-samples')?.setData(buildRockGeoJSON(samplesRef.current))
       map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrailRef.current))
+      map.getSource('session-line-src')?.setData(buildTrailLineGeoJSON(sessionTrailRef.current))
       map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypointsRef.current))
       map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypointsRef.current))
       map.getSource('mineral-localities')?.setData(buildMineralGeoJSON(mineralLocalitiesRef.current))
@@ -750,11 +787,12 @@ export default function Map({ onHome }) {
     syncLayerVisibility(map)
   }, [layerVisibility, tierFilter, isPro, activeModule, activeMineralCategory])
 
-  // ── Update session trail ───────────────────────────────────────
+  // ── Update session trail (dots + connecting polyline) ─────────
   useEffect(() => {
     const map = mapRef.current
     if (!map || !mapLoadedRef.current) return
     map.getSource('session-trail')?.setData(buildTrailGeoJSON(sessionTrail))
+    map.getSource('session-line-src')?.setData(buildTrailLineGeoJSON(sessionTrail))
   }, [sessionTrail])
 
   // ── Update session waypoints ───────────────────────────────────
@@ -777,8 +815,9 @@ export default function Map({ onHome }) {
         ref={containerRef}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
       />
-      <CategoryHeader onHome={onHome} />
+      <CategoryHeader onHome={onHome} onStartTracking={startTracking} />
       <CornerControls />
+      <TrackOverlay onStop={stopTracking} />
       <DataSheet />
       <SampleSheet />
       <MineralSheet />

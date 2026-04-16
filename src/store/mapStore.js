@@ -76,6 +76,22 @@ const useMapStore = create((set) => ({
   // string = only the layer matching this category is shown
   activeMineralCategory: null,
   setActiveMineralCategory: (cat) => set({ activeMineralCategory: cat }),
+
+  // GPS tracking state
+  isTracking: false,
+  setIsTracking: (v) => set({ isTracking: v }),
+
+  // Toast notifications — { id, message, type, duration }
+  // type: 'success' | 'error' | 'warning' | 'info' | 'offline'
+  // duration: ms to show (0 = persistent until removed manually)
+  toasts: [],
+  addToast: ({ message, type = 'info', duration = 3000 }) => {
+    const id = crypto.randomUUID()
+    set((state) => ({ toasts: [...state.toasts, { id, message, type, duration }] }))
+    return id
+  },
+  removeToast: (id) =>
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }))
 
 export default useMapStore

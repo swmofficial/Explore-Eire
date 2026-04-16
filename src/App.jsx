@@ -12,6 +12,7 @@ import SettingsPanel from './components/SettingsPanel'
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
+import StatusToast from './components/StatusToast'
 
 export default function App() {
   useAuth()         // initialise Supabase auth state listener
@@ -54,6 +55,7 @@ export default function App() {
       )}
       {/* Always rendered — can trigger from both dashboard and map views */}
       <LegalDisclaimerModal />
+      <StatusToast />
     </>
   )
 }
