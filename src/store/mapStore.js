@@ -103,6 +103,10 @@ const useMapStore = create((set) => ({
   showWaypoints: true,
   setShowWaypoints: (v) => set({ showWaypoints: v }),
 
+  // Offline manager open state
+  showOfflineManager: false,
+  setShowOfflineManager: (v) => set({ showOfflineManager: v }),
+
   // Current user GPS location — updated by Map.jsx watchPosition
   userLocation: null, // { lat, lng }
   setUserLocation: (loc) => set({ userLocation: loc }),

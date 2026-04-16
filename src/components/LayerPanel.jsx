@@ -172,9 +172,10 @@ export default function LayerPanel() {
     layerVisibility, setLayerVisibility,
     activeMineralCategory, setActiveMineralCategory,
     showWaypoints, setShowWaypoints,
+    setShowOfflineManager,
   } = useMapStore()
   const { activeModule } = useModuleStore()
-  const { isPro } = useUserStore()
+  const { isPro, setShowUpgradeSheet } = useUserStore()
 
   const categories = LAYER_CATEGORIES[activeModule] || []
   const module = getModule(activeModule)
@@ -341,6 +342,42 @@ export default function LayerPanel() {
             ))
           )}
         </div>
+
+          {/* Download for offline — bottom of list */}
+          <div style={{ marginTop: 4, padding: '8px 16px 16px' }}>
+            <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 12 }} />
+            <button
+              onClick={() => {
+                if (!isPro) { setShowUpgradeSheet(true); return }
+                setLayerPanelOpen(false)
+                setShowOfflineManager(true)
+              }}
+              style={{
+                width: '100%', padding: '11px 14px',
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 8,
+                color: 'var(--color-primary)',
+                fontSize: 13, fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
+                  <path d="M7.5 1v8M4.5 6l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2 11v1.5a.5.5 0 00.5.5h10a.5.5 0 00.5-.5V11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                </svg>
+                Download for offline
+              </div>
+              {!isPro && (
+                <span style={{ fontSize: 9, fontWeight: 700, color: '#C9A84C', background: 'rgba(232,201,106,0.15)', padding: '2px 5px', borderRadius: 4, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Pro
+                </span>
+              )}
+            </button>
+          </div>
 
         {/* Footer — Pro upsell if not subscribed */}
         {!isPro && (
