@@ -174,6 +174,17 @@ Pro:     background rgba(232,201,106,0.15), color #C9A84C
 New:     background rgba(91,143,212,0.15), color #3A6DB8
 ```
 
+**Toast notification colours (StatusToast.jsx):**
+```
+success: bg rgba(75,232,122,0.15),  border rgba(75,232,122,0.4),  text #4BE87A
+error:   bg rgba(232,75,75,0.15),   border rgba(232,75,75,0.4),   text #E84B4B
+warning: bg rgba(232,168,75,0.15),  border rgba(232,168,75,0.4),  text #E8A84B
+info:    bg rgba(75,139,232,0.15),  border rgba(75,139,232,0.4),  text #4B8BE8
+offline: bg rgba(255,68,68,0.2),    border rgba(255,68,68,0.5),   text #FF4444
+```
+Toast duration: 0 = persistent (offline badge). Non-zero = auto-dismiss after duration ms.
+Animations: `toastSlideDown` 180ms in, `toastSlideUp` 180ms out (keyframes in global.css).
+
 ### Motion Principles
 
 ```
@@ -508,20 +519,26 @@ created_at
 
 ### New tables (phase 2 — create in Supabase)
 
-**tracks**
+**tracks** *(built — saved by useTracks.stopTracking)*
 ```sql
-id              uuid PK
+id              uuid PK          DEFAULT gen_random_uuid()
 user_id         uuid FK → auth.users
-name            text
-module          text
-geojson         jsonb   -- GeoJSON LineString with timestamps
-distance_m      float
-duration_s      integer
-elevation_gain_m  float
-elevation_loss_m  float
-started_at      timestamp
-ended_at        timestamp
-created_at      timestamp
+name            text             -- auto-generated "Track — DD Mon YYYY"
+module          text             -- activeModule at time of recording
+geojson         jsonb            -- { type: 'LineString', coordinates: [[lng,lat], …] }
+distance_m      float            -- haversine total in metres
+duration_s      integer          -- wall-clock seconds
+elevation_gain_m  float          -- not yet populated (reserved)
+elevation_loss_m  float          -- not yet populated (reserved)
+started_at      timestamptz
+ended_at        timestamptz
+created_at      timestamptz      DEFAULT now()
+```
+*RLS: same pattern as waypoints — users own their own tracks.*
+```sql
+create policy "Users own tracks"
+  on tracks for all
+  to authenticated using (auth.uid() = user_id);
 ```
 
 **routes**
@@ -675,7 +692,18 @@ Option C (detail sheet): On any SampleSheet →
 
 **GPS comes from `navigator.geolocation.getCurrentPosition()` only.**
 
-**Photo storage:** `waypoint-photos/{user_id}/{timestamp}.jpg` in Supabase Storage
+**Photo storage:** `waypoint-photos/{user_id}/{timestamp}.{ext}` in Supabase Storage bucket `waypoint-photos`
+
+**Waypoint icon types:**
+```
+prospect  📍  — default, general prospecting location
+fish      🎣  — fishing spot
+camp      ⛺  — campsite or overnight stop
+hazard    ⚠️  — hazard or warning marker
+note      📝  — field note / observation
+custom    ⭐  — custom / user-defined
+```
+Icon is stored as a string id in `waypoints.icon`. `iconEmoji(id)` in WaypointSheet maps id → emoji.
 
 **Current state:** SampleSheet "Save Waypoint" button calls `mapStore.addSessionWaypoint()` which pins a gold circle on the map for the current session. Persistent save to Supabase is not yet implemented.
 

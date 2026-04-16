@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026
+> Last updated: 16 April 2026 (session 2)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -207,6 +207,11 @@ explore-eire/
 23. **WMS tiles returning XML instead of PNG** — Two causes: (a) `wmsRasterTileUrl` in `Map.jsx` did not include `STYLES=` in the URL. WMS 1.3.0 requires this parameter even when empty; omitting it causes GSI to return a `ServiceExceptionReport` XML document (`StylesNotDefined`) instead of a PNG tile. Fixed: `&STYLES=` added to `wmsRasterTileUrl`. (b) `index.js` in `~/wms-proxy/` used `new URLSearchParams(req.query).toString()` to forward the query string — Express decodes `req.query` values first, then URLSearchParams re-encodes them, which can corrupt Unicode characters in GSI layer names. Fixed: proxy now uses `req.originalUrl` to extract and pass the raw query string verbatim. Both fixes together ensure GSI returns `image/png` for all six WMS layers.
 24. **Mineral tab/LayerPanel not in sync** — DataSheet tab changes were not updating which mineral circle layer was visible on the map. Fixed: `activeMineralCategory` (already in mapStore) is now written by DataSheet `selectTab` (null for Gold tab, category string for mineral tabs) and by LayerPanel `handleToggle` for `mineralCategory: true` layers. `syncLayerVisibility` reads `activeMineralCategory` from store and shows only the matching MINERAL_LAYERS entry — all others hidden. LayerPanel mineral toggles are exclusive (toggling on sets the category, toggling the active one off clears it). `activeMineralCategory` added to the `syncLayerVisibility` useEffect dependency array in Map.jsx.
 25. **MAP_BOUNDS not set** — Map had no `maxBounds`, `minZoom`, or `maxZoom`. Added `MAP_BOUNDS` export to `mapConfig.js` (`maxBounds [[-12,49.5],[2.5,61.5]]`, `minZoom: 5`, `maxZoom: 18`) and spread it into the `maplibregl.Map` constructor options.
+26. **GPS tracking architecture** — `useTracks` calls `navigator.geolocation.watchPosition` directly (not via `useGeolocation`). It reads/writes mapStore via `useMapStore.getState()` inside callbacks (safe — same pattern as `syncLayerVisibility`). `startTracking` clears `sessionTrail` and sets `isTracking=true`. `stopTracking` saves to Supabase, fires toast, returns summary. `TrackOverlay` reads `isTracking`/`sessionTrail` from mapStore directly — no prop drilling of live state. `calcTrailDistanceM` is a pure function exported for reuse.
+27. **Trail polyline** — `session-line-src` source + `session-trail-line` line layer added to Map. Updated on every `sessionTrail` change and restored after basemap style switch. The existing `session-dots` layer renders on top of the line.
+28. **WaypointSheet description + photo** — `addWaypoint` now accepts `{ description, photo }`. Photo is a File object; `useWaypoints` uploads it to Supabase Storage `waypoint-photos/{userId}/{ts}.ext` before insert. If upload fails, waypoint is saved without photo (graceful). ViewMode now shows `description` and first photo; has two-step confirm before delete. `icon` field added to `buildSavedWaypointGeoJSON` properties so ViewMode displays correct emoji.
+29. **StatusToast offline detection** — `window.addEventListener('offline/online')` fires persistent toast (duration=0) when offline; dismisses it and fires 'Back online' on reconnect. `addToast` is called with `duration: 0` for persistent toasts — never auto-dismissed. Persistent offline toast is tappable to dismiss on desktop.
+30. **Toast action dispatch from hooks** — `useWaypoints` and `useTracks` call `useMapStore.getState().addToast(...)` inside async callbacks. This is the correct pattern for dispatching actions from outside the React render tree (same as `syncLayerVisibility`). Do not use `useMapStore()` directly in async code.
 
 ---
 
@@ -226,13 +231,15 @@ explore-eire/
 11. ✅ Mineral localities layer + MineralSheet + DataSheet tab bar (Gold | Copper | Lead | Uranium | Quartz | Silver | More)
 12. ✅ Mineral tab/LayerPanel sync — DataSheet tab and LayerPanel mineral toggles share activeMineralCategory; map shows only selected category layer
 13. ✅ MAP_BOUNDS — maxBounds, minZoom 5, maxZoom 18 added to map init
+14. ✅ GPS tracking — TrackOverlay (floating pill, live distance/duration, Stop), useTracks (watchPosition, Supabase save), trail polyline on map
+15. ✅ Waypoints full flow — WaypointSheet (add: GPS, name, description, icon, photo; view: photo, description, coords, confirm delete), useWaypoints (photo upload to Storage, toasts)
+16. ✅ StatusToast — animated toast system (success/error/warning/info/offline), persistent offline badge, online/offline auto-detection
+17. ✅ 3D terrain — verified correct, no changes needed
 
 **Next (in order):**
-14. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
-15. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
-13. GPS tracking — build TrackOverlay.jsx (useTracks hook scaffolded)
-14. StatusToast — persistent OFFLINE badge + system messages
-15. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
+18. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
+19. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
+20. Find / Discover — build FindSheet.jsx
 16. Find / Discover — build FindSheet.jsx
 17. Field Sports module — data sourcing required first
 18. Hiking module — data sourcing required first
