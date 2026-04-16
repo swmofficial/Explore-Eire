@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 15 April 2026
+> Last updated: 16 April 2026
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -205,6 +205,8 @@ explore-eire/
 21. **Legal Disclaimer row in Settings not tappable** — `SettingsPanel` had `onPress={() => {}}` (empty no-op). Fixed: added `showLegal` local state. Row tap sets it true, rendering `LegalDisclaimerModal` with `forceShow=true`. `LegalDisclaimerModal` now accepts `forceShow` and `onClose` props — `forceShow` bypasses the `legalAccepted` early-return so the modal renders regardless of acceptance state. Already-accepted users see a Close button; users who haven't accepted see the normal checkbox flow, with `onClose` called after acceptance.
 22. **DataSheet gesture clunky** — DataSheet used `height` CSS transitions between three states (60px/46vh/85vh). Replaced with `transform: translateY` physics-based spring gesture. Snap points: collapsed (80px peek = `translateY(h-80)`), half (`translateY(h*0.55)`), full (`translateY(h*0.08)`). Touch events attached directly on handle element with `{ passive: false }` on `touchmove` so `e.preventDefault()` works. During drag: 1:1 finger tracking, no transition. On release: `350ms cubic-bezier(0.32,0.72,0,1)` transition snaps to nearest point; release velocity (px/ms) influences target (fast flick up → full, fast flick down → collapsed). Handle bar is 32×4px `#2E3035`. External `dataSheetState` changes (e.g. from CornerControls) sync `translateY` via `useEffect`.
 23. **WMS tiles returning XML instead of PNG** — Two causes: (a) `wmsRasterTileUrl` in `Map.jsx` did not include `STYLES=` in the URL. WMS 1.3.0 requires this parameter even when empty; omitting it causes GSI to return a `ServiceExceptionReport` XML document (`StylesNotDefined`) instead of a PNG tile. Fixed: `&STYLES=` added to `wmsRasterTileUrl`. (b) `index.js` in `~/wms-proxy/` used `new URLSearchParams(req.query).toString()` to forward the query string — Express decodes `req.query` values first, then URLSearchParams re-encodes them, which can corrupt Unicode characters in GSI layer names. Fixed: proxy now uses `req.originalUrl` to extract and pass the raw query string verbatim. Both fixes together ensure GSI returns `image/png` for all six WMS layers.
+24. **Mineral tab/LayerPanel not in sync** — DataSheet tab changes were not updating which mineral circle layer was visible on the map. Fixed: `activeMineralCategory` (already in mapStore) is now written by DataSheet `selectTab` (null for Gold tab, category string for mineral tabs) and by LayerPanel `handleToggle` for `mineralCategory: true` layers. `syncLayerVisibility` reads `activeMineralCategory` from store and shows only the matching MINERAL_LAYERS entry — all others hidden. LayerPanel mineral toggles are exclusive (toggling on sets the category, toggling the active one off clears it). `activeMineralCategory` added to the `syncLayerVisibility` useEffect dependency array in Map.jsx.
+25. **MAP_BOUNDS not set** — Map had no `maxBounds`, `minZoom`, or `maxZoom`. Added `MAP_BOUNDS` export to `mapConfig.js` (`maxBounds [[-12,49.5],[2.5,61.5]]`, `minZoom: 5`, `maxZoom: 18`) and spread it into the `maplibregl.Map` constructor options.
 
 ---
 
@@ -222,10 +224,12 @@ explore-eire/
 9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out
 10. ✅ Legal disclaimer — built, tappable from Settings, forceShow prop added
 11. ✅ Mineral localities layer + MineralSheet + DataSheet tab bar (Gold | Copper | Lead | Uranium | Quartz | Silver | More)
+12. ✅ Mineral tab/LayerPanel sync — DataSheet tab and LayerPanel mineral toggles share activeMineralCategory; map shows only selected category layer
+13. ✅ MAP_BOUNDS — maxBounds, minZoom 5, maxZoom 18 added to map init
 
 **Next (in order):**
-12. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
-12. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
+14. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
+15. Waypoints — build WaypointSheet.jsx (useTracks/useWaypoints hooks scaffolded)
 13. GPS tracking — build TrackOverlay.jsx (useTracks hook scaffolded)
 14. StatusToast — persistent OFFLINE badge + system messages
 15. Offline maps — build OfflineManager.jsx (useOffline hook scaffolded)
