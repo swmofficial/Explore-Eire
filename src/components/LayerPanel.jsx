@@ -7,6 +7,10 @@ import useUserStore from '../store/userStore'
 import { LAYER_CATEGORIES } from '../lib/layerCategories'
 import { getModule } from '../lib/moduleConfig'
 
+function formatWeatherTime(iso) {
+  return new Date(iso).toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' })
+}
+
 // ── Toggle switch ──────────────────────────────────────────────
 function Toggle({ checked, onChange, disabled }) {
   return (
@@ -173,6 +177,7 @@ export default function LayerPanel() {
     activeMineralCategory, setActiveMineralCategory,
     showWaypoints, setShowWaypoints,
     setShowOfflineManager,
+    weatherLastUpdated,
   } = useMapStore()
   const { activeModule } = useModuleStore()
   const { isPro, setShowUpgradeSheet } = useUserStore()
@@ -323,6 +328,46 @@ export default function LayerPanel() {
                 disabled={false}
               />
             </div>
+          </div>
+
+          {/* WEATHER — shown for all modules */}
+          <div style={{ marginBottom: 8 }}>
+            <div
+              style={{
+                padding: '10px 16px 6px',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: 'var(--color-muted)',
+              }}
+            >
+              Weather
+            </div>
+            <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 2 }} />
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '10px 16px 6px',
+                gap: 10,
+              }}
+            >
+              <span style={{ fontSize: 14, color: 'var(--color-primary)', fontWeight: 400, flex: 1 }}>
+                Rainfall radar
+              </span>
+              <Toggle
+                checked={layerVisibility.rainfall_radar === true}
+                onChange={() => setLayerVisibility('rainfall_radar', !layerVisibility.rainfall_radar)}
+                disabled={false}
+              />
+            </div>
+            {layerVisibility.rainfall_radar && weatherLastUpdated && (
+              <div style={{ padding: '0 16px 10px', fontSize: 11, color: 'var(--color-muted)' }}>
+                Updated {formatWeatherTime(weatherLastUpdated)}
+              </div>
+            )}
           </div>
 
           {categories.length === 0 ? (

@@ -54,6 +54,43 @@ function wmsRasterTileUrl(endpoint, layerName) {
   )
 }
 
+// ── Weather (Met Éireann rainfall radar) tile URL ─────────────────
+// bust: optional cache-buster appended as _t=<timestamp> to force re-fetch
+function weatherTileUrl(bust = '') {
+  return (
+    `${WMS_PROXY}/wms/met` +
+    `?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap` +
+    `&FORMAT=image%2Fpng&TRANSPARENT=true` +
+    `&LAYERS=rainfall_radar&STYLES=` +
+    `&WIDTH=256&HEIGHT=256` +
+    `&CRS=EPSG%3A3857` +
+    `&BBOX={bbox-epsg-3857}` +
+    (bust ? `&_t=${bust}` : '')
+  )
+}
+
+// Removes and re-adds the rainfall radar source+layer with a fresh cache-bust URL.
+// Called by the auto-refresh interval so MapLibre fetches updated tiles.
+function refreshWeatherLayer(map) {
+  const visible = map.getLayer('wms-rainfall-radar')
+  if (visible) map.removeLayer('wms-rainfall-radar')
+  if (map.getSource('src-rainfall-radar')) map.removeSource('src-rainfall-radar')
+
+  map.addSource('src-rainfall-radar', {
+    type: 'raster',
+    tiles: [weatherTileUrl(Date.now())],
+    tileSize: 256,
+  })
+  map.addLayer({
+    id: 'wms-rainfall-radar',
+    type: 'raster',
+    source: 'src-rainfall-radar',
+    layout: { visibility: 'visible' },
+    paint: { 'raster-opacity': 0.7 },
+  })
+  useMapStore.getState().setWeatherLastUpdated(new Date().toISOString())
+}
+
 // ── Tier config — 7 layers, each with a MapLibre filter expression ─
 const TIER_LAYERS = [
   {
@@ -489,6 +526,24 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
     })
   }
 
+  // Weather — Met Éireann rainfall radar (no Pro gate, available to all users)
+  if (!map.getSource('src-rainfall-radar')) {
+    map.addSource('src-rainfall-radar', {
+      type: 'raster',
+      tiles: [weatherTileUrl()],
+      tileSize: 256,
+    })
+  }
+  if (!map.getLayer('wms-rainfall-radar')) {
+    map.addLayer({
+      id: 'wms-rainfall-radar',
+      type: 'raster',
+      source: 'src-rainfall-radar',
+      layout: { visibility: 'none' },
+      paint: { 'raster-opacity': 0.7 },
+    })
+  }
+
   // Mineral locality source + one circle layer per category
   if (!map.getSource('mineral-localities')) {
     map.addSource('mineral-localities', {
@@ -581,6 +636,15 @@ function syncLayerVisibility(map) {
     map.setLayoutProperty('saved-waypoints-circles', 'visibility', showWaypoints ? 'visible' : 'none')
   }
 
+  // Rainfall radar — no Pro gate, available to all users
+  if (map.getLayer('wms-rainfall-radar')) {
+    map.setLayoutProperty(
+      'wms-rainfall-radar',
+      'visibility',
+      layerVisibility.rainfall_radar === true ? 'visible' : 'none'
+    )
+  }
+
   // Mineral locality layers — only show the active category, and only in prospecting module
   const { activeModule } = useModuleStore.getState()
   const { activeMineralCategory } = useMapStore.getState()
@@ -613,7 +677,8 @@ export default function Map({ onHome }) {
   const savedWaypointsRef      = useRef([])
   const mineralLocalitiesRef   = useRef([])
   const routePointsRef         = useRef([])
-  const is3DRef       = useRef(false)
+  const is3DRef                = useRef(false)
+  const weatherRefreshRef      = useRef(null)
 
   const {
     setMapInstance, setUserLocation,
@@ -934,6 +999,26 @@ export default function Map({ onHome }) {
       })),
     })
   }, [routePoints])
+
+  // ── Weather auto-refresh (every 5 minutes while layer is on) ───
+  useEffect(() => {
+    const radarOn = layerVisibility.rainfall_radar === true
+    if (!radarOn) {
+      clearInterval(weatherRefreshRef.current)
+      weatherRefreshRef.current = null
+      return
+    }
+    // Record "now" as the initial fetch time when the layer is switched on
+    useMapStore.getState().setWeatherLastUpdated(new Date().toISOString())
+    weatherRefreshRef.current = setInterval(() => {
+      const m = mapRef.current
+      if (m && mapLoadedRef.current) refreshWeatherLayer(m)
+    }, 5 * 60 * 1000)
+    return () => {
+      clearInterval(weatherRefreshRef.current)
+      weatherRefreshRef.current = null
+    }
+  }, [layerVisibility.rainfall_radar]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>

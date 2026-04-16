@@ -107,6 +107,10 @@ const useMapStore = create((set) => ({
   showOfflineManager: false,
   setShowOfflineManager: (v) => set({ showOfflineManager: v }),
 
+  // Weather layer last-refresh timestamp (ISO string or null)
+  weatherLastUpdated: null,
+  setWeatherLastUpdated: (ts) => set({ weatherLastUpdated: ts }),
+
   // Current user GPS location — updated by Map.jsx watchPosition
   userLocation: null, // { lat, lng }
   setUserLocation: (loc) => set({ userLocation: loc }),
