@@ -32,6 +32,8 @@ import LayerPanel from './LayerPanel'
 import BasemapPicker from './BasemapPicker'
 import WaypointSheet from './WaypointSheet'
 import TrackOverlay from './TrackOverlay'
+import FindSheet from './FindSheet'
+import RouteBuilder from './RouteBuilder'
 
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
@@ -444,6 +446,48 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
     })
   }
 
+  // Route builder — dashed gold polyline + numbered point dots
+  if (!map.getSource('route-builder-src')) {
+    map.addSource('route-builder-src', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: [] } },
+    })
+  }
+  if (!map.getLayer('route-builder-line')) {
+    map.addLayer({
+      id: 'route-builder-line',
+      type: 'line',
+      source: 'route-builder-src',
+      paint: {
+        'line-color': '#E8C96A',
+        'line-width': 2.5,
+        'line-opacity': 0.9,
+        'line-dasharray': [4, 2],
+      },
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+    })
+  }
+  if (!map.getSource('route-points-src')) {
+    map.addSource('route-points-src', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] },
+    })
+  }
+  if (!map.getLayer('route-builder-dots')) {
+    map.addLayer({
+      id: 'route-builder-dots',
+      type: 'circle',
+      source: 'route-points-src',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': '#E8C96A',
+        'circle-stroke-color': '#FFFFFF',
+        'circle-stroke-width': 2,
+        'circle-opacity': 1,
+      },
+    })
+  }
+
   // Mineral locality source + one circle layer per category
   if (!map.getSource('mineral-localities')) {
     map.addSource('mineral-localities', {
@@ -560,6 +604,7 @@ export default function Map({ onHome }) {
   const sessionWaypointsRef    = useRef([])
   const savedWaypointsRef      = useRef([])
   const mineralLocalitiesRef   = useRef([])
+  const routePointsRef         = useRef([])
   const is3DRef       = useRef(false)
 
   const {
@@ -573,6 +618,8 @@ export default function Map({ onHome }) {
     basemap,
     is3D,
     activeMineralCategory,
+    routePoints,
+    routeBuilderOpen,
   } = useMapStore()
   const { isPro } = useUserStore()
   const { activeModule } = useModuleStore()
@@ -588,6 +635,7 @@ export default function Map({ onHome }) {
   sessionWaypointsRef.current = sessionWaypoints
   savedWaypointsRef.current = savedWaypoints
   mineralLocalitiesRef.current = localities
+  routePointsRef.current = routePoints
   is3DRef.current = is3D
 
   // ── Map initialisation (runs once) ────────────────────────────
@@ -702,6 +750,15 @@ export default function Map({ onHome }) {
         map.on('mouseleave', id, () => { map.getCanvas().style.cursor = '' })
       }
 
+      // Long-press (contextmenu) drops a route point when RouteBuilder is open
+      map.on('contextmenu', (e) => {
+        const { routeBuilderOpen: isBuilding, addRoutePoint } = useMapStore.getState()
+        const { isPro: pro } = useUserStore.getState()
+        if (!isBuilding || !pro) return
+        e.preventDefault()
+        addRoutePoint({ lat: e.lngLat.lat, lng: e.lngLat.lng, id: crypto.randomUUID() })
+      })
+
       try { geolocate.trigger() } catch { /* GPS unavailable */ }
     })
 
@@ -736,6 +793,23 @@ export default function Map({ onHome }) {
       map.getSource('session-waypoints-src')?.setData(buildWaypointGeoJSON(sessionWaypointsRef.current))
       map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypointsRef.current))
       map.getSource('mineral-localities')?.setData(buildMineralGeoJSON(mineralLocalitiesRef.current))
+      map.getSource('route-builder-src')?.setData({
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: routePointsRef.current.length >= 2
+            ? routePointsRef.current.map((p) => [p.lng, p.lat])
+            : [],
+        },
+      })
+      map.getSource('route-points-src')?.setData({
+        type: 'FeatureCollection',
+        features: routePointsRef.current.map((pt) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [pt.lng, pt.lat] },
+          properties: { id: pt.id },
+        })),
+      })
 
       syncLayerVisibility(map)
 
@@ -809,6 +883,27 @@ export default function Map({ onHome }) {
     map.getSource('saved-waypoints-src')?.setData(buildSavedWaypointGeoJSON(savedWaypoints))
   }, [savedWaypoints])
 
+  // ── Update route builder sources when points change ────────────
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapLoadedRef.current) return
+    map.getSource('route-builder-src')?.setData({
+      type: 'Feature',
+      geometry: {
+        type: 'LineString',
+        coordinates: routePoints.length >= 2 ? routePoints.map((p) => [p.lng, p.lat]) : [],
+      },
+    })
+    map.getSource('route-points-src')?.setData({
+      type: 'FeatureCollection',
+      features: routePoints.map((pt) => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [pt.lng, pt.lat] },
+        properties: { id: pt.id },
+      })),
+    })
+  }, [routePoints])
+
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <div
@@ -824,6 +919,8 @@ export default function Map({ onHome }) {
       <LayerPanel />
       <BasemapPicker />
       <WaypointSheet addWaypoint={addWaypoint} deleteWaypoint={deleteWaypoint} />
+      <FindSheet />
+      <RouteBuilder />
     </div>
   )
 }

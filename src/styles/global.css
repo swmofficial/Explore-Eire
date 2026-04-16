@@ -223,6 +223,12 @@ html, body {
   to   { transform: translateY(-100%); opacity: 0; }
 }
 
+/* Spinner for loading states */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 /* Pulsing red dot for active GPS tracking */
 @keyframes trackingPulse {
   0%, 100% { opacity: 1; transform: scale(1); }

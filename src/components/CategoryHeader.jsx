@@ -1,7 +1,9 @@
 // CategoryHeader.jsx — Fixed top strip in map view.
 // Left:   home grid icon (returns to module dashboard).
 // Centre: active module name + accent dot.
-// Right:  Go & Track button (Pro gate). When tracking: pulsing red dot.
+// Right:  Find button (prospecting only) + Go & Track button.
+//         Find: opens FindSheet (free for gold t6/t7, Pro for rest).
+//         Track: Pro gate; pulsing red dot when active.
 //
 // onStartTracking is passed from Map.jsx (wraps useTracks.startTracking).
 // isPro/isGuest gate is enforced here — free users see UpgradeSheet.
@@ -13,7 +15,7 @@ import { getModule } from '../lib/moduleConfig'
 export default function CategoryHeader({ onHome, onStartTracking }) {
   const { activeModule } = useModuleStore()
   const module = getModule(activeModule)
-  const { isTracking } = useMapStore()
+  const { isTracking, setFindSheetOpen } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
 
   function handleTrackPress() {
@@ -22,6 +24,10 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
     } else {
       onStartTracking?.()
     }
+  }
+
+  function handleFindPress() {
+    setFindSheetOpen(true)
   }
 
   return (
@@ -107,6 +113,36 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
             {module?.label ?? 'Explore Eire'}
           </span>
         </div>
+
+        {/* Find nearby button — prospecting only, right of centre */}
+        {activeModule === 'prospecting' && (
+          <button
+            onClick={handleFindPress}
+            aria-label="Find nearby"
+            style={{
+              position: 'absolute',
+              right: 52,
+              top: 0,
+              bottom: 0,
+              width: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--color-muted)',
+              padding: 0,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            {/* Search / crosshair icon */}
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <circle cx="8" cy="8" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M12.5 12.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </button>
+        )}
 
         {/* Go & Track button — right */}
         <button

@@ -13,11 +13,13 @@ import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
 import StatusToast from './components/StatusToast'
+import SplashScreen from './components/SplashScreen'
 
 export default function App() {
   useAuth()         // initialise Supabase auth state listener
   useSubscription() // sync subscription status on mount + after Stripe redirect
 
+  const [splashDone, setSplashDone] = useState(false)
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
   const { setActiveModule } = useModuleStore()
   const { setDataSheetState } = useMapStore()
@@ -41,6 +43,7 @@ export default function App() {
 
   return (
     <>
+      {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
       {view === 'dashboard' ? (
         <ModuleDashboard onEnterModule={enterModule} />
       ) : (
