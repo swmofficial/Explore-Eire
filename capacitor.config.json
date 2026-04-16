@@ -1,0 +1,13 @@
+{
+  "appId": "ie.exploreeire.app",
+  "appName": "Explore Eire",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

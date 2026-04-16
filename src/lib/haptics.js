@@ -1,7 +1,14 @@
-// haptics.js — Haptic feedback abstraction.
-// Web: uses navigator.vibrate(). Ready to swap for @capacitor/haptics in Session D.
-export function triggerHaptic(style = 'light') {
-  if (!('vibrate' in navigator)) return
-  const ms = style === 'heavy' ? 50 : style === 'medium' ? 30 : 15
-  try { navigator.vibrate(ms) } catch { /* silent — some browsers block in non-gesture context */ }
+// haptics.js — Haptic feedback via @capacitor/haptics.
+// On native iOS/Android: triggers real haptic motor feedback.
+// On web: falls back to navigator.vibrate() via the Capacitor web implementation.
+import { Haptics, ImpactStyle } from '@capacitor/haptics'
+
+export async function triggerHaptic(style = 'light') {
+  const impactStyle =
+    style === 'heavy'  ? ImpactStyle.Heavy  :
+    style === 'medium' ? ImpactStyle.Medium :
+    ImpactStyle.Light
+  try {
+    await Haptics.impact({ style: impactStyle })
+  } catch { /* silent — vibration not available on this platform */ }
 }
