@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026 (session 6 — weather layer)
+> Last updated: 16 April 2026 (session 7 — Capacitor native wrapper)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -65,7 +65,7 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 | Font | Plus Jakarta Sans | Google Fonts — 400/500/600/700 |
 | WMS Proxy | Hostinger VPS + Node | PM2 `wms-proxy` process |
 | Offline tiles | MapLibre + IndexedDB | Not yet implemented |
-| Native wrapper | Capacitor | Not yet started |
+| Native wrapper | Capacitor | **v8** — ios/ + android/ project dirs committed |
 | Analytics | Plausible | Not yet started |
 | Hosting | Vercel | Auto-deploy on push to main |
 
@@ -185,7 +185,7 @@ explore-eire/
 | Route builder (basic) | ✅ Built — contextmenu long-press, gold polyline, save to Supabase routes |
 | Offline map downloads (OfflineManager) | ✅ Built — Cache API download, SW intercept, region list, storage bar |
 | Weather layer (rainfall radar) | ✅ Built — Met Éireann WMS via VPS proxy, auto-refresh 5 min, timestamp |
-| Capacitor native wrapper | ❌ Not started |
+| Capacitor native wrapper | ✅ Built — ios/ + android/ committed, haptics + geolocation wired |
 | Plausible analytics | ❌ Not started |
 
 ---
@@ -230,6 +230,9 @@ explore-eire/
 36. **showWaypoints toggle** — `mapStore.showWaypoints` (default true) gates `saved-waypoints-circles` layer visibility. `syncLayerVisibility` reads it via `useMapStore.getState()`. Must be in `useEffect` dependency array in Map.jsx alongside other visibility deps. LayerPanel exposes it under a "MY DATA" section at the top of the scrollable list.
 37. **Service Worker tile interception** — `public/sw.js` intercepts `api.maptiler.com` tile requests only (regex: `/tiles/[^/]+/\d+/\d+/\d+.(jpg|jpeg|png|webp)`). Do NOT widen the intercept to all fetches — MapLibre style JSON, fonts and sprites must always go to the network. Cache name `'offline-tiles'` must match `OFFLINE_CACHE` constant in `useOffline.js`. SW registered in `src/main.jsx` after `createRoot().render()`.
 38. **Weather layer auto-refresh** — `rainfall_radar` layer uses `src-rainfall-radar` source (not in `WMS_LAYER_MAP` — handled separately in `syncLayerVisibility` with no Pro gate). Auto-refresh removes source+layer and re-adds with `&_t=<timestamp>` cache-buster via `refreshWeatherLayer(map)`. A `setInterval(5min)` runs when layer is on — started/cleared by a dedicated `useEffect` watching `layerVisibility.rainfall_radar`. `weatherLastUpdated` (mapStore) is set on turn-on and on each refresh tick; LayerPanel shows "Updated HH:MM" below the toggle. Met Éireann WMS layer name: `rainfall_radar`.
+39. **Capacitor base path** — `vite.config.js` has `base: './'`. This makes all built asset paths relative (`./assets/...`) so Capacitor can load them from the native WebView file system (`capacitor://localhost` iOS, `https://localhost` Android). Vercel deployment is unaffected since the SPA serves all routes from root `index.html`. Do NOT remove `base: './'` — native builds will break.
+40. **Capacitor geolocation** — `useGeolocation.js` uses `@capacitor/geolocation`. `watchPosition` is async and returns a string `CallbackID` (not a number). `clearWatch` takes `{ id: string }` not a number. `useTracks.js` and `Map.jsx` still use `navigator.geolocation` directly (intentional per session architecture — they work via WKWebView on iOS). Update them to `@capacitor/geolocation` when background-location is required.
+41. **Capacitor haptics** — `src/lib/haptics.js` uses `@capacitor/haptics` `Haptics.impact({ style: ImpactStyle.Light/Medium/Heavy })`. `triggerHaptic()` is now `async` (callers fire-and-forget, no changes needed). Web fallback handled by the Capacitor web implementation (calls `navigator.vibrate` internally).
 
 ---
 
@@ -271,6 +274,7 @@ explore-eire/
 26. ✅ useTracks — elevation fetching from MapTiler terrain-rgb-v2 tiles (every 5th point); stopTracking now synchronous/non-saving; saveTrack() separate async function
 33. ✅ Offline maps — OfflineManager bottom sheet (current view estimate, name input, download progress bar, saved regions list, storage usage bar); useOffline (Cache API download with 6-concurrent batching, deleteRegion, getStorageUsage, progress 0–100%, isOnline); public/sw.js Service Worker (cache-first, fetch+cache on miss, 1×1 grey placeholder offline); SW registered in main.jsx
 34. ✅ Weather layer — Met Éireann rainfall radar via /wms/met VPS proxy; WMS raster source+layer (wms-rainfall-radar); no Pro gate; auto-refreshes every 5 min with cache-bust URL; weatherLastUpdated in mapStore; WEATHER section in LayerPanel (all modules) with "Updated HH:MM" timestamp
+35. ✅ Capacitor native wrapper — @capacitor/{core,cli,ios,android,haptics,geolocation} v8; capacitor.config.json (appId ie.exploreeire.app, androidScheme https, SplashScreen.launchShowDuration 0); vite.config.js base './'; ios/ + android/ native project dirs committed; haptics.js → Haptics.impact(); useGeolocation.js → @capacitor/geolocation
 
 **Next (in order):**
 21. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
@@ -279,7 +283,7 @@ explore-eire/
 19. Archaeology module — NMS data integration
 20. Coastal module — data sourcing required first
 21. Route builder — build RouteBuilder.jsx
-22. Weather layer — Met Éireann API
-23. Capacitor — native iOS/Android wrapper
-24. App Store submission
+22. ✅ Weather layer — done
+23. ✅ Capacitor — native iOS/Android wrapper done
+24. App Store submission — requires macOS + Apple Developer account
 25. Custom domain — exploreeire.ie
