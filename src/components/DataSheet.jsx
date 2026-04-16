@@ -105,12 +105,13 @@ function formatDist(km) {
 
 function getSnap() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
-  // Container is full 100dvh. Collapsed peek (80px) sits above camera button (64px) with 32px clearance.
-  // safe-area-inset-bottom handled in CSS via env(); JS uses 0 approximation.
+  // Inner panel height is (100dvh - 120px). translateY is applied to the inner panel.
+  // Collapsed: translateY(innerH - 60) → only 60px peek visible above bottom of screen.
+  const innerH = h - 120
   return {
-    collapsed: h - 80 - 64 - 32,
-    half:      Math.round(h * 0.55),
-    full:      Math.round(h * 0.08),
+    collapsed: innerH - 60,
+    half:      Math.round(innerH * 0.45),
+    full:      Math.round(innerH * 0.08),
   }
 }
 
@@ -471,6 +472,7 @@ export default function DataSheet() {
   if (activeModule !== 'prospecting') return null
 
   return (
+    // Outer: full-screen anchor — no background, no pointer events, just a stacking context
     <div
       style={{
         position: 'fixed',
@@ -478,10 +480,22 @@ export default function DataSheet() {
         right: 0,
         bottom: 0,
         height: '100dvh',
+        pointerEvents: 'none',
+        zIndex: 22,
+      }}
+    >
+    {/* Inner: the actual sheet panel — never reaches top 120px of viewport */}
+    <div
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 'calc(100dvh - 120px)',
+        pointerEvents: 'all',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
         borderRadius: '16px 16px 0 0',
-        zIndex: 22,
         transform: `translateY(${currentTranslate}px)`,
         transition: isDragging ? 'none' : 'transform 350ms cubic-bezier(0.32, 0.72, 0, 1)',
         display: 'flex',
@@ -757,6 +771,7 @@ export default function DataSheet() {
           </div>
         </>
       )}
+    </div>
     </div>
   )
 }

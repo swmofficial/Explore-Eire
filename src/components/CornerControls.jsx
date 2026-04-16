@@ -115,14 +115,14 @@ function CameraBtn({ onPress }) {
       aria-label="Add waypoint with camera"
       style={{
         ...GLASS,
-        position: 'absolute',
-        bottom: BOTTOM_OFFSET,
+        position: 'fixed',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
         left: '50%',
         transform: 'translateX(-50%)',
         width: 64,
         height: 64,
         borderRadius: 16,
-        // Slightly brighter border on the camera button to draw focus
+        zIndex: 30,
         border: '1px solid rgba(232,201,106,0.4)',
       }}
     >
