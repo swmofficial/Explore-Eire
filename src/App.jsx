@@ -22,7 +22,7 @@ export default function App() {
 
   const [splashDone, setSplashDone] = useState(false)
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
-  const { setActiveModule } = useModuleStore()
+  const { setActiveModule, setActiveSurface } = useModuleStore()
   const { setDataSheetState } = useMapStore()
   const { theme } = useUserStore()
 
@@ -33,6 +33,7 @@ export default function App() {
 
   function enterModule(moduleId) {
     setActiveModule(moduleId)
+    setActiveSurface('map')
     setDataSheetState('collapsed')
     setView('map')
   }

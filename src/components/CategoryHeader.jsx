@@ -1,9 +1,7 @@
 // CategoryHeader.jsx — Fixed top strip in map view.
 // Left:   home grid icon (returns to module dashboard).
-// Centre: active module name + accent dot.
-// Right:  Find button (prospecting only) + Go & Track button.
-//         Find: opens FindSheet (free for gold t6/t7, Pro for rest).
-//         Track: Pro gate; pulsing red dot when active.
+// Centre: Map / Learn / Mine pill tabs.
+// Right:  Go & Track button (stopwatch / pulsing red dot while active).
 //
 // onStartTracking is passed from Map.jsx (wraps useTracks.startTracking).
 // isPro/isGuest gate is enforced here — free users see UpgradeSheet.
@@ -12,11 +10,35 @@ import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
 import { getModule } from '../lib/moduleConfig'
 
+const SURFACES = [
+  { id: 'map',   label: 'Map' },
+  { id: 'learn', label: 'Learn' },
+  { id: 'mine',  label: 'Mine' },
+]
+
+function pillStyle(active, accentColor) {
+  return {
+    padding: '5px 16px',
+    borderRadius: 20,
+    border: `1px solid ${active ? accentColor : 'var(--color-border)'}`,
+    background: active ? `${accentColor}22` : 'transparent',
+    color: active ? accentColor : 'var(--color-muted)',
+    fontSize: 12,
+    fontWeight: active ? 600 : 400,
+    cursor: 'pointer',
+    WebkitTapHighlightColor: 'transparent',
+    transition: 'all 120ms ease',
+    whiteSpace: 'nowrap',
+  }
+}
+
 export default function CategoryHeader({ onHome, onStartTracking }) {
-  const { activeModule } = useModuleStore()
+  const { activeModule, activeSurface, setActiveSurface } = useModuleStore()
   const module = getModule(activeModule)
-  const { isTracking, setFindSheetOpen } = useMapStore()
+  const { isTracking } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
+
+  const accent = module?.accent ?? '#E8C96A'
 
   function handleTrackPress() {
     if (!isPro || isGuest) {
@@ -26,9 +48,7 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
     }
   }
 
-  function handleFindPress() {
-    setFindSheetOpen(true)
-  }
+  // TODO: move Find trigger to CornerControls
 
   return (
     <div
@@ -72,7 +92,6 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
             WebkitTapHighlightColor: 'transparent',
           }}
         >
-          {/* 2×2 grid icon */}
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
             <rect x="2" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
             <rect x="10" y="2" width="6" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -81,68 +100,28 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
           </svg>
         </button>
 
-        {/* Module name — centred */}
+        {/* Three-pill surface tabs — centre */}
         <div
           style={{
             flex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 7,
+            gap: 6,
+            paddingLeft: 52,
+            paddingRight: 52,
           }}
         >
-          {module && (
-            <div
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: '50%',
-                background: module.accent,
-                flexShrink: 0,
-              }}
-            />
-          )}
-          <span
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: 'var(--color-primary)',
-              letterSpacing: '0.01em',
-            }}
-          >
-            {module?.label ?? 'Explore Eire'}
-          </span>
+          {SURFACES.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => setActiveSurface(s.id)}
+              style={pillStyle(activeSurface === s.id, accent)}
+            >
+              {s.label}
+            </button>
+          ))}
         </div>
-
-        {/* Find nearby button — prospecting only, right of centre */}
-        {activeModule === 'prospecting' && (
-          <button
-            onClick={handleFindPress}
-            aria-label="Find nearby"
-            style={{
-              position: 'absolute',
-              right: 52,
-              top: 0,
-              bottom: 0,
-              width: 44,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--color-muted)',
-              padding: 0,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            {/* Search / crosshair icon */}
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <circle cx="8" cy="8" r="5.25" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M12.5 12.5L16 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-        )}
 
         {/* Go & Track button — right */}
         <button
@@ -165,7 +144,6 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
           }}
         >
           {isTracking ? (
-            /* Pulsing red dot while active */
             <div
               style={{
                 width: 8,
@@ -176,7 +154,6 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
               }}
             />
           ) : (
-            /* Stopwatch icon */
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
               <circle cx="9" cy="11" r="5.5" stroke="var(--color-muted)" strokeWidth="1.5"/>
               <path d="M7 1.5h4" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round"/>

@@ -78,7 +78,7 @@ export default function MineralSheet() {
           zIndex: 40,
           background: 'var(--color-base)',
           borderTop: '1px solid var(--color-border)',
-          borderRadius: '16px 16px 0 0',
+          borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
           animation: 'slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)',
         }}

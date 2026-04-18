@@ -130,9 +130,10 @@ function GoldRow({ sample, userPos, isPro, onTap }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        width: '100%',
-        padding: '10px 16px',
-        borderBottom: '1px solid var(--color-surface)',
+        margin: '4px 12px',
+        padding: '10px 14px',
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-row)',
         gap: 12,
         cursor: isProGated ? 'default' : 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -190,15 +191,17 @@ function MineralRow({ locality, onTap }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        width: '100%',
-        padding: '10px 16px',
-        background: 'none',
+        width: 'calc(100% - 24px)',
+        margin: '4px 12px',
+        padding: '10px 14px',
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-row)',
         border: 'none',
-        borderBottom: '1px solid var(--color-surface)',
         cursor: 'pointer',
         gap: 12,
         WebkitTapHighlightColor: 'transparent',
         textAlign: 'left',
+        boxSizing: 'border-box',
       }}
     >
       {/* Category colour dot */}
@@ -254,7 +257,7 @@ export default function DataSheet() {
     setTierFilter, setSelectedSample, setSelectedMineral,
     setActiveMineralCategory,
   } = useMapStore()
-  const { activeModule } = useModuleStore()
+  const { activeModule, activeSurface } = useModuleStore()
   const { isPro, setShowUpgradeSheet } = useUserStore()
 
   const [activeTab, setActiveTab] = useState('gold')
@@ -471,7 +474,7 @@ export default function DataSheet() {
       ? `${goldSamples.length} gold samples`
       : `${mineralLocalities.length} ${activeTab} localities`
 
-  if (activeModule !== 'prospecting') return null
+  if (activeModule !== 'prospecting' || activeSurface !== 'map') return null
 
   return (
     // Outer: full-screen anchor — no background, no pointer events, just a stacking context
@@ -497,7 +500,7 @@ export default function DataSheet() {
         pointerEvents: 'all',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
-        borderRadius: '16px 16px 0 0',
+        borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0',
         transform: `translateY(${currentTranslate}px)`,
         transition: isDragging ? 'none' : 'transform 350ms cubic-bezier(0.32, 0.72, 0, 1)',
         display: 'flex',
@@ -742,8 +745,9 @@ export default function DataSheet() {
                   key={i}
                   style={{
                     display: 'flex', alignItems: 'center',
-                    padding: '12px 16px', gap: 12,
-                    borderBottom: '1px solid var(--color-border)',
+                    margin: '4px 12px', padding: '10px 14px', gap: 12,
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-row)',
                   }}
                 >
                   <div className="skeleton-circle" style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0 }} />

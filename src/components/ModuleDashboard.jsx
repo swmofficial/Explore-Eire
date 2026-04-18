@@ -1,7 +1,9 @@
 // ModuleDashboard.jsx — Home screen. 5 module icons, lock/unlock, branding, CTA.
 // "Sign up free" button opens AuthModal. AuthModal has "Continue as guest" link.
+import { useState, useEffect } from 'react'
 import useUserStore from '../store/userStore'
 import { MODULES } from '../lib/moduleConfig'
+import { supabase } from '../lib/supabase'
 import AuthModal from './AuthModal'
 
 function LockIcon() {
@@ -10,6 +12,102 @@ function LockIcon() {
       <rect x="4" y="9" width="12" height="9" rx="2" fill="currentColor" opacity="0.6" />
       <path d="M7 9V6.5a3 3 0 016 0V9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" fill="none" />
     </svg>
+  )
+}
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 18) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function getFirstName(user) {
+  if (!user) return 'Explorer'
+  const full = user.user_metadata?.full_name
+  if (full) return full.split(' ')[0]
+  const email = user.email ?? ''
+  const prefix = email.split('@')[0]
+  if (!prefix) return 'Explorer'
+  return prefix.charAt(0).toUpperCase() + prefix.slice(1)
+}
+
+function DashboardHeader({ user }) {
+  const [locationLine, setLocationLine] = useState(null)
+
+  useEffect(() => {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords
+        try {
+          const [geoRes, countRes] = await Promise.all([
+            fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`),
+            supabase
+              .from('gold_samples')
+              .select('id', { count: 'exact', head: true })
+              .gte('au_ppb', 100)
+              .gte('lat', lat - 0.9)
+              .lte('lat', lat + 0.9)
+              .gte('lng', lng - 1.1)
+              .lte('lng', lng + 1.1),
+          ])
+          const geo = await geoRes.json()
+          const county = geo?.address?.county ?? geo?.address?.state
+          const count = countRes.count ?? 0
+          if (county && count > 0) {
+            setLocationLine(`${count} high-grade sample${count === 1 ? '' : 's'} near ${county}`)
+          }
+        } catch {
+          // silent fail
+        }
+      },
+      () => {} // denied — no location line shown
+    )
+  }, [])
+
+  return (
+    <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
+      <div style={{
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: '0.35em',
+        textTransform: 'uppercase',
+        color: '#E8C96A',
+        marginBottom: 12,
+      }}>
+        Explore Eire
+      </div>
+      <h1 style={{
+        fontSize: 28,
+        fontWeight: 700,
+        letterSpacing: '-0.02em',
+        color: 'var(--color-primary)',
+        margin: 0,
+        lineHeight: 1.1,
+      }}>
+        {getGreeting()},<br />{getFirstName(user)}
+      </h1>
+      <p style={{
+        marginTop: 10,
+        fontSize: 14,
+        color: 'var(--color-muted)',
+        fontWeight: 400,
+        marginBottom: 0,
+      }}>
+        Ireland's all-in-one outdoor platform
+      </p>
+      {locationLine && (
+        <p style={{
+          marginTop: 6,
+          fontSize: 12,
+          color: '#E8C96A',
+          fontWeight: 500,
+          marginBottom: 0,
+        }}>
+          {locationLine}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -144,36 +242,7 @@ export default function ModuleDashboard({ onEnterModule }) {
     }}>
 
       {/* Header */}
-      <div style={{ textAlign: 'center', flex: '0 0 auto' }}>
-        <div style={{
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.35em',
-          textTransform: 'uppercase',
-          color: '#E8C96A',
-          marginBottom: 12,
-        }}>
-          Explore Eire
-        </div>
-        <h1 style={{
-          fontSize: 28,
-          fontWeight: 700,
-          letterSpacing: '-0.02em',
-          color: 'var(--color-primary)',
-          margin: 0,
-          lineHeight: 1.1,
-        }}>
-          Choose your<br />adventure
-        </h1>
-        <p style={{
-          marginTop: 10,
-          fontSize: 14,
-          color: 'var(--color-muted)',
-          fontWeight: 400,
-        }}>
-          Ireland's all-in-one outdoor platform
-        </p>
-      </div>
+      <DashboardHeader user={user} />
 
       {/* Module grid */}
       <div style={{

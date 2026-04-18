@@ -13,7 +13,28 @@ function getTier(ppb) {
   return GOLD_TIERS.find((t) => ppb >= t.min && ppb < t.max) ?? GOLD_TIERS[GOLD_TIERS.length - 1]
 }
 
-// ── Data row ───────────────────────────────────────────────────────
+// ── Stat card (2×2 grid) ───────────────────────────────────────────
+
+function StatCard({ label, value }) {
+  return (
+    <div
+      style={{
+        background: 'var(--color-raised)',
+        borderRadius: 'var(--radius-card)',
+        padding: '12px 14px',
+      }}
+    >
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-muted)', marginBottom: 4 }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-primary)' }}>
+        {value ?? '—'}
+      </div>
+    </div>
+  )
+}
+
+// ── Data row (coordinates + survey below grid) ─────────────────────
 
 function DataRow({ label, value }) {
   if (value == null || value === '') return null
@@ -84,7 +105,7 @@ export default function SampleSheet() {
           zIndex: 40,
           background: 'var(--color-base)',
           borderTop: '1px solid var(--color-border)',
-          borderRadius: '16px 16px 0 0',
+          borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0',
           paddingBottom: 'env(safe-area-inset-bottom, 16px)',
           animation: 'slideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)',
         }}
@@ -197,19 +218,24 @@ export default function SampleSheet() {
           </span>
         </div>
 
-        {/* Data grid */}
-        <div style={{ padding: '0 16px' }}>
-          <DataRow label="Sample ID"   value={selectedSample.sample_id} />
-          <DataRow label="Type"        value={selectedSample.sample_type} />
-          <DataRow label="Survey"      value={selectedSample.survey} />
-          <DataRow
+        {/* 2×2 stat card grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: '0 16px 16px' }}>
+          <StatCard label="Au (ppb)" value={ppb} />
+          <StatCard label="Sample Type" value={selectedSample.sample_type ?? 'Stream sed.'} />
+          <StatCard
             label="Arsenic (As)"
-            value={selectedSample.as_mgkg != null ? `${selectedSample.as_mgkg} mg/kg` : null}
+            value={selectedSample.as_mgkg != null ? `${selectedSample.as_mgkg} ppm` : null}
           />
-          <DataRow
+          <StatCard
             label="Lead (Pb)"
-            value={selectedSample.pb_mgkg != null ? `${selectedSample.pb_mgkg} mg/kg` : null}
+            value={selectedSample.pb_mgkg != null ? `${selectedSample.pb_mgkg} ppm` : null}
           />
+        </div>
+
+        {/* Coordinate + survey rows */}
+        <div style={{ padding: '0 16px' }}>
+          <DataRow label="Sample ID"     value={selectedSample.sample_id} />
+          <DataRow label="Survey"        value={selectedSample.survey} />
           <DataRow
             label="Easting (ING)"
             value={selectedSample.easting_ing != null ? selectedSample.easting_ing.toLocaleString() : null}

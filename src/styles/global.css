@@ -49,6 +49,11 @@
   --glass-bg:     rgba(10, 10, 10, 0.88);
   --glass-border: rgba(232, 201, 106, 0.25);
 
+  /* Border radius scale */
+  --radius-sheet: 24px;
+  --radius-card:  16px;
+  --radius-row:   12px;
+
   /* Typography scale */
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
@@ -118,9 +123,9 @@
 
 [data-theme="light"] {
   --color-void:    #E8EAF0;
-  --color-base:    #FFFFFF;
-  --color-surface: #F3F4F6;
-  --color-raised:  #E9EAEC;
+  --color-base:    #F5F3EF;
+  --color-surface: #EAE8E2;
+  --color-raised:  #E0DDD6;
   --color-border:  #D1D5DB;
   --color-muted:   #9CA3AF;
   --color-primary: #111214;

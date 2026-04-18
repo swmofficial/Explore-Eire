@@ -29,13 +29,13 @@ export const MODULES = [
     available: false, // data sourcing required
   },
   {
-    id: 'archaeology',
-    label: 'Archaeology',
-    shortLabel: 'Monuments',
+    id: 'discover',
+    label: 'Discover',
+    shortLabel: 'Explore',
     accent: '#C47AC0',
-    icon: '🏺',
-    description: 'Recorded Monuments',
-    available: false, // data sourcing required
+    icon: '🧭',
+    description: 'Restaurants, Bars & Attractions',
+    available: false, // Google Places integration — build last
   },
   {
     id: 'coastal',
