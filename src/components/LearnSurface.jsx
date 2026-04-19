@@ -1,37 +1,40 @@
-// LearnSurface.jsx — Educational content surface for each module.
-// Renders above the map when activeSurface === 'learn'.
-// Content is pulled from a `learn_articles` Supabase table (to be populated separately).
-// For now renders a scaffold with placeholder cards so the surface is visually complete.
+import { useState } from 'react'
 import useModuleStore from '../store/moduleStore'
 import { getModule } from '../lib/moduleConfig'
+import ArticleView from './ArticleView'
 
 const ARTICLE_STUBS = [
   {
+    slug: 'first-prospecting-trip',
     title: 'Your first prospecting trip',
     teaser: 'Everything you need to plan a safe, legal, and rewarding first outing — from kit to location.',
   },
   {
+    slug: 'gold-irish-geology',
     title: 'How gold forms in Irish geology',
     teaser: "Ireland\u2019s ancient Caledonian fold belts concentrate gold in predictable geological settings.",
   },
   {
+    slug: 'reading-a-stream',
     title: 'Reading a stream — where gold settles',
     teaser: 'Learn the inside bends, bedrock traps, and gravel bars where placer gold accumulates.',
   },
   {
+    slug: 'fools-gold',
     title: "Fool's gold and common misconceptions",
-    teaser: "Pyrite, chalcopyrite, and mica confuse beginners. Here's how to tell real gold on sight.",
+    teaser: "Pyrite, chalcopyrite, and mica confuse beginners. Here\u2019s how to tell real gold on sight.",
   },
   {
+    slug: 'legal-framework',
     title: 'The legal framework (two-day rule, land access)',
     teaser: 'The Minerals Development Act 2017, the two-day rule, and what you must know before you dig.',
   },
 ]
 
-function ArticleCard({ title, teaser, accentColor }) {
+function ArticleCard({ title, teaser, accentColor, onTap }) {
   return (
     <div
-      onClick={() => console.log('article tapped:', title)}
+      onClick={onTap}
       style={{
         background: 'var(--color-surface)',
         borderRadius: 'var(--radius-card)',
@@ -54,6 +57,7 @@ function ArticleCard({ title, teaser, accentColor }) {
 
 export default function LearnSurface() {
   const { activeSurface, activeModule } = useModuleStore()
+  const [openArticle, setOpenArticle] = useState(null)
 
   if (activeSurface !== 'learn') return null
 
@@ -92,15 +96,20 @@ export default function LearnSurface() {
 
         {ARTICLE_STUBS.map((article) => (
           <ArticleCard
-            key={article.title}
+            key={article.slug}
             title={article.title}
             teaser={article.teaser}
             accentColor={accent}
+            onTap={() => setOpenArticle(article.slug)}
           />
         ))}
 
         <div style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }} />
       </div>
+
+      {openArticle && (
+        <ArticleView slug={openArticle} onBack={() => setOpenArticle(null)} />
+      )}
     </div>
   )
 }

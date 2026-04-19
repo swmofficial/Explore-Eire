@@ -36,6 +36,7 @@ import FindSheet from './FindSheet'
 import RouteBuilder from './RouteBuilder'
 import LearnSurface from './LearnSurface'
 import MineSurface from './MineSurface'
+import AddFindSheet from './AddFindSheet'
 
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
 
@@ -696,6 +697,8 @@ export default function Map({ onHome }) {
     routePoints,
     routeBuilderOpen,
     showWaypoints,
+    addFindSheetOpen,
+    setAddFindSheetOpen,
   } = useMapStore()
   const { isPro } = useUserStore()
   const { activeModule } = useModuleStore()
@@ -1041,6 +1044,7 @@ export default function Map({ onHome }) {
       <WaypointSheet addWaypoint={addWaypoint} deleteWaypoint={deleteWaypoint} />
       <FindSheet />
       <RouteBuilder />
+      {addFindSheetOpen && <AddFindSheet onClose={() => setAddFindSheetOpen(false)} />}
     </div>
   )
 }

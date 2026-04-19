@@ -10,6 +10,10 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
+if (!import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY) {
+  console.warn('[Explore Eire] Stripe price IDs not set — upgrade flow will not work')
+}
+
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(console.warn)
 }

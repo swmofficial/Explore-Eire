@@ -81,6 +81,10 @@ const useMapStore = create((set) => ({
   findSheetOpen: false,
   setFindSheetOpen: (open) => set({ findSheetOpen: open }),
 
+  // AddFindSheet open state
+  addFindSheetOpen: false,
+  setAddFindSheetOpen: (open) => set({ addFindSheetOpen: open }),
+
   // Route builder state
   routeBuilderOpen: false,
   setRouteBuilderOpen: (open) => set({ routeBuilderOpen: open }),

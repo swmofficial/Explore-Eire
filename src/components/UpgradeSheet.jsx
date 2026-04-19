@@ -1,24 +1,9 @@
 // UpgradeSheet.jsx — Paywall bottom sheet.
 // Opens when userStore.showUpgradeSheet === true.
+// Tapping a plan pill calls handleSubscribe directly — no separate CTA.
 import { useState } from 'react'
 import useUserStore from '../store/userStore'
-
-async function startCheckout(plan, userId) {
-  const res = await fetch('/api/create-checkout-session', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      plan,
-      userId,
-      priceId: plan === 'annual'
-        ? import.meta.env.VITE_STRIPE_PRICE_ID_ANNUAL
-        : import.meta.env.VITE_STRIPE_PRICE_ID_MONTHLY,
-    }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Checkout failed')
-  return data.url
-}
+import useMapStore from '../store/mapStore'
 
 const FEATURES = [
   'All 5 modules unlocked',
@@ -30,22 +15,45 @@ const FEATURES = [
   '3D terrain',
 ]
 
+function Spinner() {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        width: 14,
+        height: 14,
+        border: '2px solid rgba(10,10,10,0.3)',
+        borderTopColor: '#0A0A0A',
+        borderRadius: '50%',
+        animation: 'spin 0.7s linear infinite',
+        verticalAlign: 'middle',
+        marginLeft: 6,
+      }}
+    />
+  )
+}
+
 export default function UpgradeSheet() {
   const { showUpgradeSheet, setShowUpgradeSheet, user } = useUserStore()
-  const [plan, setPlan] = useState('annual')
-  const [loading, setLoading] = useState(false)
-  const [checkoutError, setCheckoutError] = useState(null)
+  // loading: null | 'monthly' | 'annual'
+  const [loading, setLoading] = useState(null)
 
-  async function handleCheckout() {
-    if (!user) return
-    setLoading(true)
-    setCheckoutError(null)
+  async function handleSubscribe(plan) {
+    setLoading(plan)
     try {
-      const url = await startCheckout(plan, user.id)
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, userId: user?.id }),
+      })
+      const { url, error } = await res.json()
+      if (error) throw new Error(error)
       window.location.href = url
     } catch (err) {
-      setCheckoutError(err.message)
-      setLoading(false)
+      console.error('Checkout error:', err)
+      useMapStore.getState().addToast({ type: 'error', message: err.message || 'Checkout failed. Please try again.' })
+    } finally {
+      setLoading(null)
     }
   }
 
@@ -117,12 +125,7 @@ export default function UpgradeSheet() {
             {FEATURES.map((feature) => (
               <div
                 key={feature}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  paddingBottom: 10,
-                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10 }}
               >
                 <span style={{ color: '#E8C96A', fontSize: 14, lineHeight: 1, flexShrink: 0 }}>✓</span>
                 <span style={{ fontSize: 14, color: 'var(--color-primary)' }}>{feature}</span>
@@ -130,81 +133,59 @@ export default function UpgradeSheet() {
             ))}
           </div>
 
-          {/* Price pills */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          {/* Subscribe buttons */}
+          <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+            {/* Monthly */}
             <button
-              onClick={() => setPlan('monthly')}
+              onClick={() => handleSubscribe('monthly')}
+              disabled={!!loading || !user}
               style={{
                 flex: 1,
-                padding: '12px 8px',
-                borderRadius: 10,
-                border: `1.5px solid ${plan === 'monthly' ? '#E8C96A' : 'var(--color-border)'}`,
-                background: plan === 'monthly' ? 'rgba(232,201,106,0.08)' : 'var(--color-raised)',
-                cursor: 'pointer',
+                padding: '14px 8px',
+                borderRadius: 12,
+                border: '1.5px solid var(--color-border)',
+                background: 'var(--color-raised)',
+                cursor: loading || !user ? 'not-allowed' : 'pointer',
                 textAlign: 'center',
+                opacity: loading === 'annual' ? 0.5 : 1,
                 WebkitTapHighlightColor: 'transparent',
-                transition: 'border-color 150ms ease',
+                transition: 'opacity 150ms ease',
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: plan === 'monthly' ? '#E8C96A' : 'var(--color-primary)', marginBottom: 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-primary)', marginBottom: 2 }}>
                 Monthly
+                {loading === 'monthly' && <Spinner />}
               </div>
               <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>€9.99/month</div>
             </button>
 
+            {/* Annual */}
             <button
-              onClick={() => setPlan('annual')}
+              onClick={() => handleSubscribe('annual')}
+              disabled={!!loading || !user}
               style={{
                 flex: 1,
-                padding: '12px 8px',
-                borderRadius: 10,
-                border: `1.5px solid ${plan === 'annual' ? '#E8C96A' : 'var(--color-border)'}`,
-                background: plan === 'annual' ? 'rgba(232,201,106,0.08)' : 'var(--color-raised)',
-                cursor: 'pointer',
+                padding: '14px 8px',
+                borderRadius: 12,
+                border: '1.5px solid #E8C96A',
+                background: 'rgba(232,201,106,0.08)',
+                cursor: loading || !user ? 'not-allowed' : 'pointer',
                 textAlign: 'center',
+                opacity: loading === 'monthly' ? 0.5 : 1,
                 WebkitTapHighlightColor: 'transparent',
-                transition: 'border-color 150ms ease',
+                transition: 'opacity 150ms ease',
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: plan === 'annual' ? '#E8C96A' : 'var(--color-primary)', marginBottom: 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#E8C96A', marginBottom: 2 }}>
                 Annual
+                {loading === 'annual' && <Spinner />}
               </div>
               <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>€79/year</div>
               <div style={{ fontSize: 10, color: '#4BE87A', marginTop: 2, fontWeight: 500 }}>Save 34%</div>
             </button>
           </div>
 
-          {/* CTA button */}
-          <button
-            onClick={handleCheckout}
-            disabled={loading || !user}
-            style={{
-              width: '100%',
-              height: 52,
-              background: loading ? 'rgba(232,201,106,0.5)' : '#E8C96A',
-              color: '#0A0A0A',
-              border: 'none',
-              borderRadius: 12,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: loading || !user ? 'not-allowed' : 'pointer',
-              letterSpacing: '-0.01em',
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'background 150ms ease',
-            }}
-          >
-            {loading ? 'Redirecting…' : 'Start free trial'}
-          </button>
-
-          {/* Error message */}
-          {checkoutError && (
-            <p style={{ fontSize: 12, color: '#E84B4B', textAlign: 'center', marginTop: 8, marginBottom: 0 }}>
-              {checkoutError}
-            </p>
-          )}
-
-          {/* Sub-label */}
-          <p style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', marginTop: 10, marginBottom: 0 }}>
+          <p style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'center', margin: 0 }}>
             14-day free trial · Cancel any time
           </p>
         </div>

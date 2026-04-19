@@ -9,6 +9,7 @@
 // so they are always visible above the DataSheet.
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
+import useModuleStore from '../store/moduleStore'
 
 // Shared glass button style
 const GLASS = {
@@ -31,7 +32,7 @@ const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
 // Raised 76px from safe-area: 60px collapsed sheet height + 16px gap
 const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 76px)'
 
-function SettingsBtn({ onPress }) {
+function SettingsBtn({ onPress, activeSurface }) {
   return (
     <button
       onClick={onPress}
@@ -44,6 +45,7 @@ function SettingsBtn({ onPress }) {
         width: 52,
         height: 52,
         borderRadius: 12,
+        zIndex: activeSurface !== 'map' ? 5 : 20,
       }}
     >
       {/* Gear / cog icon */}
@@ -55,7 +57,7 @@ function SettingsBtn({ onPress }) {
   )
 }
 
-function CentreOnMeBtn({ onPress, hasLocation }) {
+function CentreOnMeBtn({ onPress, hasLocation, activeSurface }) {
   return (
     <button
       onClick={onPress}
@@ -69,6 +71,7 @@ function CentreOnMeBtn({ onPress, hasLocation }) {
         height: 52,
         borderRadius: 12,
         opacity: hasLocation ? 1 : 0.45,
+        zIndex: activeSurface !== 'map' ? 5 : 20,
       }}
     >
       {/* Crosshair icon */}
@@ -80,7 +83,7 @@ function CentreOnMeBtn({ onPress, hasLocation }) {
   )
 }
 
-function LayersBtn({ onPress }) {
+function LayersBtn({ onPress, activeSurface }) {
   return (
     <button
       onClick={onPress}
@@ -93,6 +96,7 @@ function LayersBtn({ onPress }) {
         width: 52,
         height: 52,
         borderRadius: 12,
+        zIndex: activeSurface !== 'map' ? 5 : 20,
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -104,7 +108,7 @@ function LayersBtn({ onPress }) {
   )
 }
 
-function BasemapBtn({ onPress }) {
+function BasemapBtn({ onPress, activeSurface }) {
   return (
     <button
       onClick={onPress}
@@ -117,6 +121,7 @@ function BasemapBtn({ onPress }) {
         width: 52,
         height: 52,
         borderRadius: 12,
+        zIndex: activeSurface !== 'map' ? 5 : 20,
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -129,8 +134,8 @@ function BasemapBtn({ onPress }) {
   )
 }
 
-function CameraBtn({ onPress, dataSheetState }) {
-  const zIndex = dataSheetState === 'collapsed' ? 30 : 10
+function CameraBtn({ onPress, dataSheetState, activeSurface }) {
+  const zIndex = activeSurface !== 'map' ? 5 : dataSheetState === 'collapsed' ? 30 : 10
   return (
     <button
       onClick={onPress}
@@ -167,19 +172,22 @@ export default function CornerControls() {
     setBasemapPickerOpen,
     setLayerPanelOpen,
     setWaypointSheet,
+    setAddFindSheetOpen,
     dataSheetState,
     mapInstance,
     userLocation,
   } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
+  const { activeSurface } = useModuleStore()
 
   function handleLayersPress() {
     setLayerPanelOpen(true)
   }
 
   function handleCameraPress() {
-    if (!isPro || isGuest) {
-      setShowUpgradeSheet(true)
+    if (!isPro || isGuest) { setShowUpgradeSheet(true); return }
+    if (activeSurface === 'mine') {
+      setAddFindSheetOpen(true)
     } else {
       setWaypointSheet({ mode: 'add' })
     }
@@ -192,11 +200,11 @@ export default function CornerControls() {
 
   return (
     <>
-      <SettingsBtn onPress={() => setSettingsPanelOpen(true)} />
-      <LayersBtn onPress={handleLayersPress} />
-      <BasemapBtn onPress={() => setBasemapPickerOpen(true)} />
-      <CameraBtn onPress={handleCameraPress} dataSheetState={dataSheetState} />
-      <CentreOnMeBtn onPress={handleCentreOnMe} hasLocation={!!userLocation} />
+      <SettingsBtn onPress={() => setSettingsPanelOpen(true)} activeSurface={activeSurface} />
+      <LayersBtn onPress={handleLayersPress} activeSurface={activeSurface} />
+      <BasemapBtn onPress={() => setBasemapPickerOpen(true)} activeSurface={activeSurface} />
+      <CameraBtn onPress={handleCameraPress} dataSheetState={dataSheetState} activeSurface={activeSurface} />
+      <CentreOnMeBtn onPress={handleCentreOnMe} hasLocation={!!userLocation} activeSurface={activeSurface} />
     </>
   )
 }

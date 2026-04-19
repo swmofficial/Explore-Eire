@@ -1,10 +1,11 @@
 // MineSurface.jsx — Personal history surface for each module.
 // Renders above the map when activeSurface === 'mine'.
 // Three sections: My Waypoints, My Tracks, My Finds Log.
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import useModuleStore from '../store/moduleStore'
 import useUserStore from '../store/userStore'
 import { useWaypoints } from '../hooks/useWaypoints'
+import { useFindsLog } from '../hooks/useFindsLog'
 import { supabase } from '../lib/supabase'
 
 // ── Section heading ────────────────────────────────────────────────
@@ -135,7 +136,122 @@ function FindsLogEmpty() {
         Your finds log is empty
       </div>
       <div style={{ fontSize: 13, fontWeight: 400, color: 'var(--color-muted)', lineHeight: 1.5 }}>
-        Tap the camera button on{'\n'}the map to log a find.
+        Tap the camera button on the map to log a find.
+      </div>
+    </div>
+  )
+}
+
+// ── Find row ───────────────────────────────────────────────────────
+
+function FindRow({ find, onDelete }) {
+  const [swiped, setSwiped] = useState(false)
+  const touchStartX = useRef(null)
+
+  const date = find.found_at
+    ? new Date(find.found_at).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })
+    : '—'
+
+  const location = find.lat != null && find.lng != null
+    ? `${find.lat.toFixed(4)}, ${find.lng.toFixed(4)}`
+    : null
+
+  function handleTouchStart(e) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e) {
+    if (touchStartX.current == null) return
+    const dx = touchStartX.current - e.changedTouches[0].clientX
+    if (dx > 50) setSwiped(true)
+    else if (dx < -20) setSwiped(false)
+    touchStartX.current = null
+  }
+
+  function handleLongPress() {
+    setSwiped(true)
+  }
+
+  const longPressTimer = useRef(null)
+
+  return (
+    <div
+      style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--color-border)' }}
+      onTouchStart={(e) => {
+        handleTouchStart(e)
+        longPressTimer.current = setTimeout(handleLongPress, 500)
+      }}
+      onTouchEnd={(e) => {
+        clearTimeout(longPressTimer.current)
+        handleTouchEnd(e)
+      }}
+      onTouchMove={() => clearTimeout(longPressTimer.current)}
+    >
+      {/* Delete button revealed on swipe */}
+      <button
+        onClick={() => onDelete(find.id)}
+        aria-label="Delete find"
+        style={{
+          position: 'absolute',
+          top: 0, right: 0, bottom: 0,
+          width: 72,
+          background: '#E53935',
+          border: 'none',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#fff',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        <TrashIcon />
+      </button>
+
+      {/* Row content */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '10px 16px',
+          gap: 12,
+          background: 'var(--color-base)',
+          transform: swiped ? 'translateX(-72px)' : 'translateX(0)',
+          transition: 'transform 220ms ease',
+        }}
+      >
+        {/* Thumbnail or placeholder */}
+        {find.photo_url ? (
+          <img
+            src={find.photo_url}
+            alt={find.title}
+            style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+          />
+        ) : (
+          <div style={{
+            width: 40, height: 40, borderRadius: 8, flexShrink: 0,
+            background: 'var(--color-surface)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 20,
+          }}>
+            🪨
+          </div>
+        )}
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {find.title}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>
+            {date}{location ? ` · ${location}` : ''}
+          </div>
+        </div>
+
+        {find.weight_g != null && (
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#E8C96A', flexShrink: 0 }}>
+            {find.weight_g}g
+          </div>
+        )}
       </div>
     </div>
   )
@@ -147,6 +263,7 @@ export default function MineSurface() {
   const { activeSurface } = useModuleStore()
   const { user, isGuest } = useUserStore()
   const { savedWaypoints, deleteWaypoint } = useWaypoints()
+  const { finds, deleteFind } = useFindsLog()
   const [tracks, setTracks] = useState([])
 
   useEffect(() => {
@@ -203,7 +320,13 @@ export default function MineSurface() {
 
         {/* My Finds Log */}
         <SectionHeading label="My Finds Log" />
-        <FindsLogEmpty />
+        {finds.length === 0 ? (
+          <FindsLogEmpty />
+        ) : (
+          finds.map((f) => (
+            <FindRow key={f.id} find={f} onDelete={deleteFind} />
+          ))
+        )}
 
         <div style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }} />
       </div>

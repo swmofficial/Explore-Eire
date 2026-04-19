@@ -1,5 +1,7 @@
 // App.jsx — Root component. Manages view state (dashboard ↔ map).
 // Wires auth listener, applies colour theme to <html> data-theme attribute.
+// Path-based routing (no React Router): /subscription/success and /subscription/cancel
+// are handled by checking window.location.pathname on mount.
 import { useState, useEffect } from 'react'
 import useModuleStore from './store/moduleStore'
 import useMapStore from './store/mapStore'
@@ -15,11 +17,20 @@ import LegalDisclaimerModal from './components/LegalDisclaimerModal'
 import StatusToast from './components/StatusToast'
 import SplashScreen from './components/SplashScreen'
 import OfflineManager from './components/OfflineManager'
+import SubscriptionSuccess from './pages/SubscriptionSuccess'
+import SubscriptionCancel from './pages/SubscriptionCancel'
+import Onboarding from './components/Onboarding'
+
+const PATH = window.location.pathname
 
 export default function App() {
   useAuth()         // initialise Supabase auth state listener
   useSubscription() // sync subscription status on mount + after Stripe redirect
 
+  // All hooks must be called before any conditional return (Rules of Hooks)
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => localStorage.getItem('ee_onboarded') !== 'true',
+  )
   const [splashDone, setSplashDone] = useState(false)
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
   const { setActiveModule, setActiveSurface } = useModuleStore()
@@ -30,6 +41,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
+
+  // Path-based page routing — checked once on mount (PATH is module-level const)
+  if (PATH === '/subscription/success') return <SubscriptionSuccess />
+  if (PATH === '/subscription/cancel') return <SubscriptionCancel />
 
   function enterModule(moduleId) {
     setActiveModule(moduleId)
@@ -62,6 +77,9 @@ export default function App() {
       <LegalDisclaimerModal />
       <StatusToast />
       <OfflineManager />
+      {showOnboarding && (
+        <Onboarding onComplete={() => setShowOnboarding(false)} />
+      )}
     </>
   )
 }
