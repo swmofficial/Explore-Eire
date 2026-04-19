@@ -86,6 +86,7 @@ function CentreOnMeBtn({ onPress, hasLocation, activeSurface }) {
 function LayersBtn({ onPress, activeSurface }) {
   return (
     <button
+      id="tour-layers-btn"
       onClick={onPress}
       aria-label="Layers"
       style={{
@@ -138,6 +139,7 @@ function CameraBtn({ onPress, dataSheetState, activeSurface }) {
   const zIndex = activeSurface !== 'map' ? 5 : dataSheetState === 'collapsed' ? 30 : 10
   return (
     <button
+      id="tour-camera-btn"
       onClick={onPress}
       aria-label="Add waypoint with camera"
       style={{

@@ -73,6 +73,7 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
       >
         {/* Home button — left */}
         <button
+          id="tour-home-btn"
           onClick={onHome}
           aria-label="Back to module dashboard"
           style={{
@@ -115,6 +116,7 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
           {SURFACES.map((s) => (
             <button
               key={s.id}
+              id={s.id === 'learn' ? 'tour-learn-tab' : s.id === 'mine' ? 'tour-mine-tab' : undefined}
               onClick={() => setActiveSurface(s.id)}
               style={pillStyle(activeSurface === s.id, accent)}
             >

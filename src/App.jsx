@@ -28,14 +28,18 @@ export default function App() {
   useSubscription() // sync subscription status on mount + after Stripe redirect
 
   // All hooks must be called before any conditional return (Rules of Hooks)
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => localStorage.getItem('ee_onboarded') !== 'true',
-  )
   const [splashDone, setSplashDone] = useState(false)
   const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
   const { setActiveModule, setActiveSurface } = useModuleStore()
   const { setDataSheetState } = useMapStore()
-  const { theme } = useUserStore()
+  const { theme, showOnboarding, setShowOnboarding } = useUserStore()
+
+  // Initialise onboarding state once on mount from localStorage
+  useEffect(() => {
+    if (localStorage.getItem('ee_onboarded') !== 'true') {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   // Apply theme to <html> so CSS [data-theme] selectors take effect
   useEffect(() => {
@@ -78,7 +82,10 @@ export default function App() {
       <StatusToast />
       <OfflineManager />
       {showOnboarding && (
-        <Onboarding onComplete={() => setShowOnboarding(false)} />
+        <Onboarding
+          onComplete={() => setShowOnboarding(false)}
+          onEnterTour={() => enterModule('prospecting')}
+        />
       )}
     </>
   )

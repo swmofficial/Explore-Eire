@@ -128,8 +128,14 @@ function SectionLabel({ children }) {
 // ── Main ───────────────────────────────────────────────────────────
 export default function SettingsPanel() {
   const { settingsPanelOpen, setSettingsPanelOpen } = useMapStore()
-  const { user, isGuest, isPro, theme, setTheme, setShowAuthModal, setUser, setIsPro } = useUserStore()
+  const { user, isGuest, isPro, theme, setTheme, setShowAuthModal, setUser, setIsPro, setShowOnboarding } = useUserStore()
   const [showLegal, setShowLegal] = useState(false)
+
+  function handleReplayTour() {
+    localStorage.setItem('ee_onboarded', 'false')
+    setSettingsPanelOpen(false)
+    setShowOnboarding(true)
+  }
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -298,6 +304,7 @@ export default function SettingsPanel() {
 
           {/* ── Legal ── */}
           <SectionLabel>Legal</SectionLabel>
+          <Row label="Replay intro tour" onPress={handleReplayTour} />
           <Row label="Legal Disclaimer" onPress={() => setShowLegal(true)} />
           <div style={{ padding: '10px 16px' }}>
             <p style={{ fontSize: 11, color: 'var(--color-muted)', margin: 0, lineHeight: 1.5 }}>

@@ -57,45 +57,43 @@ export default function ArticleView({ slug, onBack }) {
         zIndex: 16,
         display: 'flex',
         flexDirection: 'column',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Back button */}
-      <div
+      {/* Back button — fixed, never scrolls away */}
+      <button
+        onClick={onBack}
         style={{
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-          paddingLeft: 8,
-          paddingBottom: 4,
-          position: 'sticky',
-          top: 0,
+          position: 'fixed',
+          top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
+          left: 8,
+          zIndex: 17,
+          display: 'inline-flex',
+          alignItems: 'center',
+          minHeight: 44,
+          minWidth: 44,
+          padding: '0 12px',
           background: 'var(--color-base)',
-          zIndex: 1,
+          border: 'none',
+          borderRadius: 8,
+          cursor: 'pointer',
+          fontSize: 15,
+          fontWeight: 600,
+          color: 'var(--color-primary)',
+          WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <button
-          onClick={onBack}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            minHeight: 44,
-            minWidth: 44,
-            padding: '0 12px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: 15,
-            fontWeight: 500,
-            color: 'var(--color-muted)',
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          ← Back
-        </button>
-      </div>
+        ← Back
+      </button>
 
-      {/* Content */}
-      <div style={{ padding: '8px 20px', flex: 1 }}>
+      {/* Scrollable content — padded below the fixed back button */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 60px) 20px 8px',
+        }}
+      >
         {!body && !error && (
           <div style={{ color: 'var(--color-muted)', fontSize: 14, paddingTop: 24 }}>Loading…</div>
         )}

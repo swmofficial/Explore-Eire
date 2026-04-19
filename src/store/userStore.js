@@ -31,6 +31,9 @@ const useUserStore = create((set) => ({
   showUpgradeSheet: false,
   setShowUpgradeSheet: (show) => set({ showUpgradeSheet: show }),
 
+  showOnboarding: false,
+  setShowOnboarding: (show) => set({ showOnboarding: show }),
+
   // Colour theme — 'dark' | 'light' | 'eire'
   theme: 'dark',
   setTheme: (t) => set({ theme: t }),
