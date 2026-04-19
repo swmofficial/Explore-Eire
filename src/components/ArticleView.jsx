@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../lib/supabase'
 
 function renderMarkdown(md) {
@@ -48,52 +49,51 @@ export default function ArticleView({ slug, onBack }) {
       })
   }, [slug])
 
-  return (
+  // Portalled to document.body so it escapes any ancestor stacking context
+  // (LearnSurface has zIndex:15; CategoryHeader has zIndex:20 — without a portal
+  // the back button would be untappable because it's capped by LearnSurface's z-index)
+  return createPortal(
     <div
       style={{
         position: 'fixed',
-        inset: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
         background: 'var(--color-base)',
-        zIndex: 16,
-        display: 'flex',
-        flexDirection: 'column',
+        zIndex: 999,
+        overflowY: 'scroll',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
-      {/* Back button — fixed, never scrolls away */}
+      {/* Back button — fixed above everything, always tappable */}
       <button
         onClick={onBack}
         style={{
           position: 'fixed',
-          top: 'calc(env(safe-area-inset-top, 0px) + 8px)',
-          left: 8,
-          zIndex: 17,
+          top: 16,
+          left: 16,
+          zIndex: 9999,
           display: 'inline-flex',
           alignItems: 'center',
           minHeight: 44,
           minWidth: 44,
-          padding: '0 12px',
-          background: 'var(--color-base)',
+          padding: '8px 16px',
+          background: 'rgba(0,0,0,0.6)',
           border: 'none',
           borderRadius: 8,
           cursor: 'pointer',
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: 600,
-          color: 'var(--color-primary)',
+          color: '#fff',
           WebkitTapHighlightColor: 'transparent',
         }}
       >
         ← Back
       </button>
 
-      {/* Scrollable content — padded below the fixed back button */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          padding: 'calc(env(safe-area-inset-top, 0px) + 60px) 20px 8px',
-        }}
-      >
+      {/* Content — top padding clears the fixed back button */}
+      <div style={{ padding: '72px 20px 8px' }}>
         {!body && !error && (
           <div style={{ color: 'var(--color-muted)', fontSize: 14, paddingTop: 24 }}>Loading…</div>
         )}
@@ -120,6 +120,7 @@ export default function ArticleView({ slug, onBack }) {
         )}
         <div style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 32px)' }} />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

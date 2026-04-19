@@ -1,10 +1,16 @@
 import { createClient } from '@supabase/supabase-js'
 
+// Auto-load .env — Node 22+ built-in, no dotenv package required
+try { process.loadEnvFile(new URL('../.env', import.meta.url).pathname) } catch {}
+
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-  console.error('Missing SUPABASE_URL (or VITE_SUPABASE_URL) and/or SUPABASE_SERVICE_ROLE_KEY')
+  console.error('Missing env vars. Add to .env or pass inline:')
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seedArticles.js')
+  console.error('SUPABASE_URL:', SUPABASE_URL ? '✓' : '✗ missing')
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', SERVICE_ROLE_KEY ? '✓' : '✗ missing')
   process.exit(1)
 }
 
