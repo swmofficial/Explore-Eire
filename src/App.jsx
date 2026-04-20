@@ -1,16 +1,14 @@
-// App.jsx — Root component. Manages view state (dashboard ↔ map).
+// App.jsx — Root component. 5-tab navigation shell.
 // Wires auth listener, applies colour theme to <html> data-theme attribute.
 // Path-based routing (no React Router): /subscription/success and /subscription/cancel
 // are handled by checking window.location.pathname on mount.
 import { useState, useEffect } from 'react'
-import useModuleStore from './store/moduleStore'
-import useMapStore from './store/mapStore'
 import useUserStore from './store/userStore'
 import { useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
-import ModuleDashboard from './components/ModuleDashboard'
 import MapView from './components/Map'
-import SettingsPanel from './components/SettingsPanel'
+import BottomNav from './components/BottomNav'
+// import SettingsPanel from './components/SettingsPanel'   // ARCHIVED — replaced by Settings tab
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
@@ -29,9 +27,7 @@ export default function App() {
 
   // All hooks must be called before any conditional return (Rules of Hooks)
   const [splashDone, setSplashDone] = useState(false)
-  const [view, setView] = useState('dashboard') // 'dashboard' | 'map'
-  const { setActiveModule, setActiveSurface } = useModuleStore()
-  const { setDataSheetState } = useMapStore()
+  const [activeTab, setActiveTab] = useState('dashboard')
   const { theme, showOnboarding, setShowOnboarding } = useUserStore()
 
   // Initialise onboarding state once on mount from localStorage
@@ -50,43 +46,46 @@ export default function App() {
   if (PATH === '/subscription/success') return <SubscriptionSuccess />
   if (PATH === '/subscription/cancel') return <SubscriptionCancel />
 
-  function enterModule(moduleId) {
-    setActiveModule(moduleId)
-    setActiveSurface('map')
-    setDataSheetState('collapsed')
-    setView('map')
-  }
-
-  function goToDashboard() {
-    setDataSheetState('collapsed')
-    setView('dashboard')
-  }
-
   return (
     <>
       {!splashDone && <SplashScreen onDone={() => setSplashDone(true)} />}
-      {view === 'dashboard' ? (
-        <ModuleDashboard onEnterModule={enterModule} />
-      ) : (
-        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden' }}>
-          {/* Map renders the map + its own overlaid UI components */}
-          <MapView onHome={goToDashboard} />
-          {/* App-level panels that sit above Map's overlays */}
-          <SettingsPanel />
-          <AuthModal />
-          <UpgradeSheet />
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: 'var(--color-void)' }}>
+        {/* Map always mounted — visibility toggled with CSS to preserve WebGL/MapLibre context */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          visibility: activeTab === 'map' ? 'visible' : 'hidden',
+          pointerEvents: activeTab === 'map' ? 'auto' : 'none',
+          zIndex: activeTab === 'map' ? 1 : -1,
+        }}>
+          <MapView />
         </div>
-      )}
-      {/* Always rendered — can trigger from both dashboard and map views */}
-      <LegalDisclaimerModal />
-      <StatusToast />
-      <OfflineManager />
-      {showOnboarding && (
-        <Onboarding
-          onComplete={() => setShowOnboarding(false)}
-          onEnterTour={() => enterModule('prospecting')}
-        />
-      )}
+
+        {/* Non-map tabs rendered conditionally */}
+        {activeTab !== 'map' && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
+            {activeTab === 'dashboard' && <div style={{ color: 'white', padding: 40 }}>Dashboard — coming Phase 2</div>}
+            {activeTab === 'settings' && <div style={{ color: 'white', padding: 40 }}>Settings — coming Phase 3</div>}
+            {activeTab === 'learn' && <div style={{ color: 'white', padding: 40 }}>Learn — coming Phase 4</div>}
+            {activeTab === 'profile' && <div style={{ color: 'white', padding: 40 }}>Profile — coming Phase 5</div>}
+          </div>
+        )}
+
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* App-level overlays */}
+        <AuthModal />
+        <UpgradeSheet />
+        <LegalDisclaimerModal />
+        <StatusToast />
+        <OfflineManager />
+        {showOnboarding && (
+          <Onboarding
+            onComplete={() => setShowOnboarding(false)}
+            onEnterTour={() => setActiveTab('map')}
+          />
+        )}
+      </div>
     </>
   )
 }

@@ -23,7 +23,6 @@ import {
   TERRAIN_CONFIG,
   MAP_BOUNDS,
 } from '../lib/mapConfig'
-import CategoryHeader from './CategoryHeader'
 import CornerControls from './CornerControls'
 import DataSheet from './DataSheet'
 import SampleSheet from './SampleSheet'
@@ -668,7 +667,7 @@ function syncLayerVisibility(map) {
 
 // ── Component ──────────────────────────────────────────────────────
 
-export default function Map({ onHome }) {
+export default function Map() {
   const containerRef        = useRef(null)
   const mapRef              = useRef(null)
   const mapLoadedRef        = useRef(false)
@@ -699,8 +698,9 @@ export default function Map({ onHome }) {
     showWaypoints,
     addFindSheetOpen,
     setAddFindSheetOpen,
+    isTracking,
   } = useMapStore()
-  const { isPro } = useUserStore()
+  const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
   const { activeModule } = useModuleStore()
 
   const { samples } = useGoldSamples()
@@ -1025,13 +1025,57 @@ export default function Map({ onHome }) {
     }
   }, [layerVisibility.rainfall_radar]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  function handleTrackPress() {
+    if (!isPro || isGuest) {
+      setShowUpgradeSheet(true)
+    } else {
+      startTracking()
+    }
+  }
+
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
       <div
         ref={containerRef}
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: '64px' }}
       />
-      <CategoryHeader onHome={onHome} onStartTracking={startTracking} />
+
+      {/* Floating Go & Track pill — above nav bar */}
+      {!isTracking && (
+        <button
+          onClick={handleTrackPress}
+          aria-label="Go & Track"
+          style={{
+            position: 'absolute',
+            bottom: 88,
+            right: 16,
+            zIndex: 30,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: '#E8C96A',
+            color: '#1A1D2E',
+            border: 'none',
+            borderRadius: 24,
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 700,
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(232,201,106,0.35)',
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="8" cy="10" r="5" stroke="#1A1D2E" strokeWidth="1.4"/>
+            <path d="M6 1.5h4" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 1.5v2.5" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 10V7.5" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 10l1.8 1.1" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          Go &amp; Track
+        </button>
+      )}
+
       <CornerControls />
       <TrackOverlay onStop={stopTracking} onSave={saveTrack} />
       <LearnSurface />

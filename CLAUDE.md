@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 16 April 2026 (session 7 — Capacitor native wrapper)
+> Last updated: 19 April 2026 (session 8 — Learn surface, Mine surface, Onboarding coach marks)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -60,11 +60,11 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 | Basemap tiles | MapTiler | satellite (default), outdoor, topo + terrain-rgb-v2 |
 | Database | Supabase | `@supabase/supabase-js` v2 |
 | Auth | Supabase Auth | Email + Google OAuth implemented |
-| Payments | Stripe | `@stripe/stripe-js` v9 — serverless stubs, not yet wired |
+| Payments | Stripe | `@stripe/stripe-js` v9 — checkout + webhook wired |
 | State management | Zustand | v5 — mapStore, moduleStore, userStore |
 | Font | Plus Jakarta Sans | Google Fonts — 400/500/600/700 |
 | WMS Proxy | Hostinger VPS + Node | PM2 `wms-proxy` process |
-| Offline tiles | MapLibre + IndexedDB | Not yet implemented |
+| Offline tiles | MapLibre + Cache API | Service Worker intercepts MapTiler tiles |
 | Native wrapper | Capacitor | **v8** — ios/ + android/ project dirs committed |
 | Analytics | Plausible | Not yet started |
 | Hosting | Vercel | Auto-deploy on push to main |
@@ -76,74 +76,134 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 ```
 explore-eire/
 ├── api/                         ← Vercel serverless functions — must be at root, not src/api/
-│   ├── create-checkout-session.js  ← POST {plan, userId} → {url} Stripe Checkout session
+│   ├── create-checkout-session.js  ← POST {priceId, userId} → {url} Stripe Checkout session
 │   └── stripe-webhook.js           ← Vercel webhook handler — updates Supabase subscriptions
+├── scripts/
+│   └── seedArticles.js          ← Seeds learn_articles table. Requires SUPABASE_SERVICE_ROLE_KEY
+│                                   passed as env var (or add to .env — loaded via process.loadEnvFile).
+│                                   Deletes all prospecting rows then inserts 5 full articles.
+│                                   Run: SUPABASE_SERVICE_ROLE_KEY=<key> node scripts/seedArticles.js
 ├── index.html                   ← viewport-fit=cover, Plus Jakarta Sans, theme-color
-├── vite.config.js               ← React plugin only
+├── vite.config.js               ← React plugin, base: './' for Capacitor, /api proxy for local dev
 ├── package.json
+├── capacitor.config.json        ← appId: ie.exploreeire.app, androidScheme: https
 ├── CLAUDE.md
+├── ARCHITECTURE.md
 ├── .env                         ← never commit — in .gitignore
 ├── .gitignore                   ← UTF-8, covers node_modules + .env + dist
 └── src/
-    ├── main.jsx                 ← imports maplibre-gl CSS + global.css, renders App
-    ├── App.jsx                  ← dashboard↔map routing, mounts SettingsPanel/AuthModal/UpgradeSheet
+    ├── main.jsx                 ← imports maplibre-gl CSS + global.css, renders App,
+    │                               registers Service Worker (public/sw.js)
+    ├── App.jsx                  ← dashboard↔map routing. Mounts SettingsPanel/AuthModal/
+    │                               UpgradeSheet/Onboarding. showOnboarding from userStore,
+    │                               initialised from localStorage 'ee_onboarded' on mount.
+    │                               onEnterTour={() => enterModule('prospecting')} passed to
+    │                               Onboarding so coach mark targets are in DOM.
     ├── store/
     │   ├── mapStore.js          ← map instance, basemap(satellite), layers, 3D, DataSheet state,
     │   │                           LayerPanel/Settings/BasemapPicker open states, selectedSample,
-    │   │                           tierFilter, sessionTrail, sessionWaypoints
-    │   ├── moduleStore.js       ← activeModule, accessibleModules, activeCategoryTab
+    │   │                           tierFilter, sessionTrail, sessionWaypoints, elevationProfile,
+    │   │                           isTracking, userLocation, showWaypoints, weatherLastUpdated,
+    │   │                           addFindSheetOpen, addToast (toast queue)
+    │   ├── moduleStore.js       ← activeModule, accessibleModules, activeSurface, activeCategoryTab
     │   └── userStore.js         ← user, isGuest, isPro, subscriptionStatus, legalAccepted,
-    │                               showLegalDisclaimer, showAuthModal, showUpgradeSheet, theme
+    │                               showLegalDisclaimer, showAuthModal, showUpgradeSheet,
+    │                               showOnboarding, setShowOnboarding, theme
     ├── components/
     │   ├── Map.jsx              ← MapLibre map + overlay UI host. Renders: CategoryHeader,
-    │   │                           CornerControls, DataSheet, SampleSheet, LayerPanel, BasemapPicker.
+    │   │                           CornerControls, DataSheet, SampleSheet, MineralSheet,
+    │   │                           FindSheet, WaypointSheet, TrackOverlay, RouteBuilder,
+    │   │                           LayerPanel, BasemapPicker, LearnSurface, MineSurface.
     │   │                           Handles basemap switching, 3D terrain, WMS layers, gold tiers.
     │   ├── ModuleDashboard.jsx  ← 5 module icons, lock/unlock, CTA, renders AuthModal inline
-    │   ├── CategoryHeader.jsx   ← Fixed top strip: home button + module name + accent dot. No tabs.
+    │   ├── CategoryHeader.jsx   ← Fixed top strip: home button (id=tour-home-btn) + Map/Learn/Mine
+    │   │                           pill tabs (id=tour-learn-tab, id=tour-mine-tab) + Go & Track.
     │   ├── LayerPanel.jsx       ← Right drawer (260ms slide). Layer toggles with Pro badges.
+    │   │                           MY DATA section at top (showWaypoints toggle). WEATHER section.
     │   │                           Opened by Layers corner button. Filtered by activeModule.
-    │   ├── SettingsPanel.jsx    ← Left drawer. Theme (Dark/Light/Eire), account, sign out.
-    │   ├── CornerControls.jsx   ← 4 glass buttons. Settings→SettingsPanel, Layers→LayerPanel,
-    │   │                           Basemap→BasemapPicker, Camera→UpgradeSheet(free)/TODO(Pro)
-    │   ├── DataSheet.jsx        ← 3-state bottom sheet (60px/46vh/85vh). Tier filter pills,
-    │   │                           WMS toggle pills (Heatmap/Geology), nearest sample list.
+    │   ├── SettingsPanel.jsx    ← Left drawer. Theme (Dark/Light/Eire), account, sign out,
+    │   │                           Replay intro tour (sets ee_onboarded='false', showOnboarding=true),
+    │   │                           Legal Disclaimer (forceShow modal).
+    │   ├── CornerControls.jsx   ← 5 glass buttons. Settings→SettingsPanel, Layers→LayerPanel,
+    │   │                           Basemap→BasemapPicker, Camera→AddFindSheet(mine)/WaypointSheet
+    │   │                           (map)/UpgradeSheet(free), CentreOnMe→flyTo(userLocation).
+    │   │                           LayersBtn id=tour-layers-btn, CameraBtn id=tour-camera-btn.
+    │   ├── DataSheet.jsx        ← 3-state bottom sheet (60px peek/46vh/85vh). Spring gesture drag.
+    │   │                           Tier filter pills, WMS toggle pills (Pro-gated), nearest sample list.
     │   ├── SampleSheet.jsx      ← Sample detail: ppb hero, data rows, upstream tip, Save Waypoint.
-    │   ├── MineralSheet.jsx     ← Mineral locality detail: name H1, category badge, townland, county, description, notes, coords.
+    │   ├── MineralSheet.jsx     ← Mineral locality detail: name H1, category badge, townland, county,
+    │   │                           description, notes, coords.
+    │   ├── LearnSurface.jsx     ← position:fixed zIndex:15. Shows when activeSurface==='learn'.
+    │   │                           Renders article stub cards from ARTICLE_STUBS. Tap → setOpenArticle(slug).
+    │   │                           {openArticle && <ArticleView slug onBack />} rendered inside.
+    │   ├── ArticleView.jsx      ← Renders via createPortal(document.body) — escapes LearnSurface
+    │   │                           stacking context (see bug #42). position:fixed zIndex:999,
+    │   │                           overflowY:scroll. Back button: position:fixed top:16px left:16px
+    │   │                           zIndex:9999 background:rgba(0,0,0,0.6). Fetches article body
+    │   │                           from learn_articles by slug on mount.
+    │   ├── MineSurface.jsx      ← position:fixed. Shows when activeSurface==='mine'.
+    │   │                           Uses useFindsLog hook. Renders finds list + Add Find entry point.
+    │   ├── AddFindSheet.jsx     ← Bottom sheet for logging finds. Fields: title, description, GPS coords
+    │   │                           (auto from device), photo picker (uploads to finds-photos bucket),
+    │   │                           weight (g). Calls useFindsLog.addFind() on submit.
     │   ├── BasemapPicker.jsx    ← Bottom sheet. 3 thumbnail cards + 2D/3D terrain toggle.
-    │   ├── UpgradeSheet.jsx     ← Paywall. Feature list, monthly/annual pills, CTA (Stripe TODO).
+    │   ├── UpgradeSheet.jsx     ← Paywall. Feature list, monthly/annual pills. Resolves price ID
+    │   │                           via import.meta.env, POSTs to /api/create-checkout-session.
     │   ├── AuthModal.jsx        ← Sign In/Up modal. Google OAuth + email/password + Continue as guest.
-    │   ├── BottomSheet.jsx      ← Minimal reusable shell (no spring/drag yet)
+    │   ├── BottomSheet.jsx      ← Minimal reusable shell
     │   ├── FindSheet.jsx        ← GPS bounding-box query → Haversine sort → nearest 50 gold/minerals.
     │   │                           Gold tab free (t6/t7) / Pro (t1-t5). Minerals tab full Pro. Tab bar,
     │   │                           loading/error/empty states. Tap row → flyTo + open SampleSheet/MineralSheet.
     │   ├── WaypointSheet.jsx    ← Add/view/delete waypoints. Description, photo upload to Supabase Storage,
     │   │                           two-step confirm delete, photo display in view mode.
-    │   ├── TrackOverlay.jsx     ← Floating pill (duration + distance) while tracking. Completion summary sheet.
-    │   │                           Reads isTracking + sessionTrail from mapStore. Saves track to Supabase.
-    │   ├── OfflineManager.jsx   ← STUB
+    │   ├── TrackOverlay.jsx     ← Full-screen overlay (pointer-events:none wrapper). Top bar + bottom
+    │   │                           panel (4 stats, SVG elevation graph, Stop). Completion summary
+    │   │                           with Save/Discard. Reads isTracking + sessionTrail from mapStore.
+    │   ├── OfflineManager.jsx   ← Bottom sheet. Cache API download with 6-concurrent batching,
+    │   │                           saved regions list, storage usage bar. SW intercepts MapTiler tiles.
     │   ├── RouteBuilder.jsx     ← Long-press (contextmenu) drops route points on map. Dashed gold polyline +
     │   │                           numbered dots. Panel: distance, point list, Clear + Save to Supabase routes.
     │   │                           Pro gate. Route sources: route-builder-src, route-points-src in Map.jsx.
     │   ├── SplashScreen.jsx     ← 1.8s branded hold + 300ms fade. Gold wordmark + grey tagline. Calls onDone.
     │   │                           Mounted in App.jsx with splashDone local state.
+    │   ├── Onboarding.jsx       ← 7-step onboarding. Step 0: welcome splash (opaque, zIndex:100).
+    │   │                           Steps 1–5: CoachMark overlay — transparent backdrop (zIndex:100) +
+    │   │                           spotlight div (box-shadow cutout, zIndex:101) + tooltip card (zIndex:102).
+    │   │                           Targets measured via getBoundingClientRect() in rAF callback.
+    │   │                           Step 6: location permission screen (opaque, zIndex:100).
+    │   │                           Completion: localStorage 'ee_onboarded'='true'. Replay from Settings.
     │   ├── StatusToast.jsx      ← Animated toast stack. Persistent OFFLINE badge. Monitors navigator.onLine.
-    │   └── LegalDisclaimerModal.jsx  ← Centred popup, 8 legal sections, checkbox accept, Supabase upsert
+    │   └── LegalDisclaimerModal.jsx  ← Centred popup, 8 legal sections, checkbox accept, Supabase upsert.
+    │                               Accepts forceShow + onClose props for Settings replay.
+    ├── pages/
+    │   ├── SubscriptionSuccess.jsx  ← Stripe redirect landing page (/subscription/success).
+    │   │                               Shows confirmation, links back to app.
+    │   └── SubscriptionCancel.jsx   ← Stripe redirect landing page (/subscription/cancel).
+    │                               Shows cancellation message, links back to app.
     ├── hooks/
     │   ├── useAuth.js           ← Auth state listener, legalFetchedFor ref, profile + sub fetch
     │   ├── useGoldSamples.js    ← Batched Supabase load (1000/batch, loop until exhausted)
     │   ├── useMineralLocalities.js ← Batched Supabase load of mineral_localities (1000/batch)
-    │   ├── useGeolocation.js    ← Device GPS: getCurrentPosition, watchPosition, stopWatching
+    │   ├── useGeolocation.js    ← Device GPS via @capacitor/geolocation. watchPosition returns
+    │   │                           string CallbackID. clearWatch takes { id: string }.
     │   ├── useSubscription.js   ← STUB (subscription fetch handled by useAuth currently)
-    │   ├── useTracks.js         ← Full GPS tracking. startTracking/stopTracking. Exports calcTrailDistanceM.
-    │   │                           Saves completed track to Supabase tracks table. Uses watchPosition directly.
+    │   ├── useTracks.js         ← Full GPS tracking. startTracking/stopTracking/saveTrack.
+    │   │                           Elevation fetch every 5th point (MapTiler terrain-rgb-v2 tile decode).
+    │   │                           Exports calcTrailDistanceM. Uses navigator.geolocation directly.
     │   ├── useWaypoints.js      ← Full CRUD. Photo upload to Supabase Storage waypoint-photos/{userId}/{ts}.ext.
-    │   └── useOffline.js        ← Partial (online/offline detection works; download TODO)
+    │   ├── useFindsLog.js       ← CRUD for finds_log table. addFind uploads photo to Supabase Storage
+    │   │                           bucket 'finds-photos' at finds-photos/{userId}/{ts}.ext before insert.
+    │   │                           Returns { finds, addFind, deleteFind, loading, error }.
+    │   └── useOffline.js        ← Cache API download (6-concurrent batching), deleteRegion,
+    │                               getStorageUsage, progress 0–100%, isOnline detection.
     ├── lib/
     │   ├── supabase.js          ← createClient with VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY
     │   ├── mapConfig.js         ← BASEMAPS, TERRAIN_SOURCE, TERRAIN_CONFIG, DEFAULT_CENTER/ZOOM,
-    │   │                           GOLD_TIERS, GSI_LAYERS (Unicode-escaped), buildWmsUrl
+    │   │                           GOLD_TIERS, GSI_LAYERS (Unicode-escaped), buildWmsUrl, MAP_BOUNDS
     │   ├── layerCategories.js   ← LAYER_CATEGORIES: module → [{id, label, layers:[{id,label,pro}]}]
-    │   └── moduleConfig.js      ← MODULES array (5 entries), getModule(id)
+    │   ├── moduleConfig.js      ← MODULES array (5 entries), getModule(id)
+    │   └── haptics.js           ← triggerHaptic('light'|'medium'|'heavy') via @capacitor/haptics.
+    │                               Async, callers fire-and-forget.
     └── styles/
         └── global.css           ← CSS vars (all 3 themes), reset, animations, MapLibre overrides
 ```
@@ -168,8 +228,8 @@ explore-eire/
 | Basemap switching (setStyle + re-add layers) | ✅ Built |
 | 3D terrain (MapTiler terrain-rgb-v2) | ✅ Built |
 | UpgradeSheet paywall (feature list, monthly/annual) | ✅ Built |
-| SettingsPanel (theme, account, sign out) | ✅ Built |
-| Session trail on map (blue dots) | ✅ Built (mapStore + Map.jsx) |
+| SettingsPanel (theme, account, sign out, replay tour, legal) | ✅ Built |
+| Session trail on map (blue dots + gold polyline) | ✅ Built (mapStore + Map.jsx) |
 | Session waypoints on map (gold dots) | ✅ Built (mapStore + Map.jsx) |
 | Legal disclaimer | ✅ Built — centred popup, checkbox accept, Supabase upsert, no reappear on refresh |
 | Stripe serverless functions | ✅ In correct /api root directory — checkout session + webhook handler |
@@ -177,8 +237,9 @@ explore-eire/
 | Supabase configuration | ✅ Site URL and redirect URLs set to Vercel production domain |
 | Stripe checkout (wired) | ⚠️ Env vars required in Vercel — STRIPE_SECRET_KEY, STRIPE_PRICE_ID_MONTHLY/ANNUAL |
 | Stripe webhook (wired) | ⚠️ Env vars required in Vercel — STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY |
+| Stripe redirect pages | ✅ Built — SubscriptionSuccess.jsx + SubscriptionCancel.jsx at /subscription/success|cancel |
 | Splash screen (SplashScreen) | ✅ Built — 1.8s hold + 300ms fade, gold wordmark + tagline |
-| GPS Go & Track (TrackOverlay) | ✅ Built — floating pill, completion summary, saves to Supabase |
+| GPS Go & Track (TrackOverlay) | ✅ Built — floating pill, completion summary with Save/Discard, saves to Supabase |
 | Waypoints full flow (WaypointSheet) | ✅ Built — add/view/delete, photo upload, two-step delete |
 | StatusToast + OFFLINE badge | ✅ Built — animated stack, persistent offline detection |
 | Find / Discover nearby (FindSheet) | ✅ Built — GPS + bounding-box query, Haversine sort, Pro gate |
@@ -186,6 +247,11 @@ explore-eire/
 | Offline map downloads (OfflineManager) | ✅ Built — Cache API download, SW intercept, region list, storage bar |
 | Weather layer (rainfall radar) | ✅ Built — Met Éireann WMS via VPS proxy, auto-refresh 5 min, timestamp |
 | Capacitor native wrapper | ✅ Built — ios/ + android/ committed, haptics + geolocation wired |
+| Learn surface (LearnSurface + ArticleView) | ✅ Built — article list, full-screen reader portalled to body, back button fixed |
+| Prospecting articles seeded | ✅ 5 articles in learn_articles table (run scripts/seedArticles.js) |
+| Mine surface (MineSurface + AddFindSheet + useFindsLog) | ✅ Built — finds log with GPS, photo upload to finds-photos bucket |
+| Onboarding coach marks | ✅ Built — 7-step tour, spotlight cutout, tooltip cards, dynamic positioning via getBoundingClientRect |
+| Replay intro tour (Settings) | ✅ Built — resets ee_onboarded, triggers showOnboarding via userStore |
 | Plausible analytics | ❌ Not started |
 
 ---
@@ -233,12 +299,13 @@ explore-eire/
 39. **Capacitor base path** — `vite.config.js` has `base: './'`. This makes all built asset paths relative (`./assets/...`) so Capacitor can load them from the native WebView file system (`capacitor://localhost` iOS, `https://localhost` Android). Vercel deployment is unaffected since the SPA serves all routes from root `index.html`. Do NOT remove `base: './'` — native builds will break.
 40. **Capacitor geolocation** — `useGeolocation.js` uses `@capacitor/geolocation`. `watchPosition` is async and returns a string `CallbackID` (not a number). `clearWatch` takes `{ id: string }` not a number. `useTracks.js` and `Map.jsx` still use `navigator.geolocation` directly (intentional per session architecture — they work via WKWebView on iOS). Update them to `@capacitor/geolocation` when background-location is required.
 41. **Capacitor haptics** — `src/lib/haptics.js` uses `@capacitor/haptics` `Haptics.impact({ style: ImpactStyle.Light/Medium/Heavy })`. `triggerHaptic()` is now `async` (callers fire-and-forget, no changes needed). Web fallback handled by the Capacitor web implementation (calls `navigator.vibrate` internally).
+42. **ArticleView stacking context trap** — ArticleView rendered inside LearnSurface (zIndex:15). CategoryHeader sits at zIndex:20 in the same ancestor context. Because LearnSurface creates a stacking context, any z-index on ArticleView's children is capped globally by LearnSurface's z:15 — meaning the back button at zIndex:9999 was still below CategoryHeader (z:20), which intercepted all taps at the top of the screen. Fixed: ArticleView now uses `createPortal(…, document.body)` to render outside all ancestor stacking contexts. Container: `position:fixed; zIndex:999`. Back button: `position:fixed; top:16px; left:16px; zIndex:9999; background:rgba(0,0,0,0.6)`. Any future full-screen overlay rendered inside a positioned parent must use a portal or explicitly account for the ancestor stacking context.
 
 ---
 
 ## What's Next — Phase 2 Build Priority
 
-**Done:**
+**Done (sessions 1–8):**
 1. ✅ Repo setup — Explore Eire brand, clean architecture
 2. ✅ Core map view — MapLibre, satellite basemap, category header, corner controls
 3. ✅ Module dashboard — 5 icons, lock/unlock, CTA
@@ -247,43 +314,32 @@ explore-eire/
 6. ✅ Subscription store + paywall UI (UpgradeSheet)
 7. ✅ Basemap picker — 3 thumbnails, 2D/3D toggle
 8. ✅ 3D terrain — MapTiler terrain-rgb-v2
-9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out
+9. ✅ Settings panel — theme switching (Dark/Light/Eire), account, sign out, replay tour
 10. ✅ Legal disclaimer — built, tappable from Settings, forceShow prop added
-11. ✅ Mineral localities layer + MineralSheet + DataSheet tab bar (Gold | Copper | Lead | Uranium | Quartz | Silver | More)
-12. ✅ Mineral tab/LayerPanel sync — DataSheet tab and LayerPanel mineral toggles share activeMineralCategory; map shows only selected category layer
-13. ✅ MAP_BOUNDS — maxBounds, minZoom 5, maxZoom 18 added to map init
-14. ✅ GPS tracking — TrackOverlay (floating pill, live distance/duration, Stop), useTracks (watchPosition, Supabase save), trail polyline on map
-15. ✅ Waypoints full flow — WaypointSheet (add: GPS, name, description, icon, photo; view: photo, description, coords, confirm delete), useWaypoints (photo upload to Storage, toasts)
-16. ✅ StatusToast — animated toast system (success/error/warning/info/offline), persistent offline badge, online/offline auto-detection
-17. ✅ 3D terrain — verified correct, no changes needed
-
-18. ✅ FindSheet — GPS + bounding-box query, Haversine sort, nearest 50 gold/minerals, Pro gate
-19. ✅ RouteBuilder — contextmenu long-press, dashed gold polyline, numbered dots, save to Supabase routes
-20. ✅ SplashScreen — 1.8s hold + 300ms fade, gold wordmark + tagline, mounted in App.jsx
-21. ✅ Basemap switch bugfix — terrain source added first in style.load callback
-22. ✅ DataSheet bottom — two-layer container: outer pointer-events:none z-index:20, inner panel calc(100dvh-120px) with transform. 60px peek. Camera z-index:30 collapsed / z-index:10 expanded
-27. ✅ User location dot — custom pulsing blue Marker via watchPosition, always visible in map view; replaces GeolocateControl dot
-28. ✅ Centre on Me — crosshair button in CornerControls bottom-right; flies map to userLocation (mapStore)
-29. ✅ Settings gear icon — Feather-style cog (24x24 viewbox) replaces old sun/brightness SVG
-30. ✅ DataSheet skeleton — 8 animated grey pulse rows (skeletonPulse CSS) replace "Loading…" while data loads
-31. ✅ Haptics — src/lib/haptics.js triggerHaptic('light'|'medium'|'heavy') using navigator.vibrate(); wired to sheet snap, track stop, waypoint save
-32. ✅ Safe area — DataSheet list paddingBottom:env(safe-area-inset-bottom); camera btn bottom:80px+safeArea
-23. ✅ CategoryHeader — Go & Track icon changed to stopwatch SVG
-24. ✅ LayerPanel — MY DATA section added at top with "Saved waypoints" toggle (showWaypoints in mapStore)
-25. ✅ TrackOverlay rebuild — full-screen overlay mode; top bar (accent dot, Tracking label, REC dot, time); bottom panel (4 stats, SVG elevation graph, Stop); completion summary with Save/Discard; trail gold dotted polyline
-26. ✅ useTracks — elevation fetching from MapTiler terrain-rgb-v2 tiles (every 5th point); stopTracking now synchronous/non-saving; saveTrack() separate async function
-33. ✅ Offline maps — OfflineManager bottom sheet (current view estimate, name input, download progress bar, saved regions list, storage usage bar); useOffline (Cache API download with 6-concurrent batching, deleteRegion, getStorageUsage, progress 0–100%, isOnline); public/sw.js Service Worker (cache-first, fetch+cache on miss, 1×1 grey placeholder offline); SW registered in main.jsx
-34. ✅ Weather layer — Met Éireann rainfall radar via /wms/met VPS proxy; WMS raster source+layer (wms-rainfall-radar); no Pro gate; auto-refreshes every 5 min with cache-bust URL; weatherLastUpdated in mapStore; WEATHER section in LayerPanel (all modules) with "Updated HH:MM" timestamp
-35. ✅ Capacitor native wrapper — @capacitor/{core,cli,ios,android,haptics,geolocation} v8; capacitor.config.json (appId ie.exploreeire.app, androidScheme https, SplashScreen.launchShowDuration 0); vite.config.js base './'; ios/ + android/ native project dirs committed; haptics.js → Haptics.impact(); useGeolocation.js → @capacitor/geolocation
+11. ✅ Mineral localities layer + MineralSheet + DataSheet tab bar
+12. ✅ Mineral tab/LayerPanel sync
+13. ✅ MAP_BOUNDS — maxBounds, minZoom 5, maxZoom 18
+14. ✅ GPS tracking — TrackOverlay, useTracks, trail polyline on map
+15. ✅ Waypoints full flow — WaypointSheet, useWaypoints, photo upload
+16. ✅ StatusToast — animated stack, persistent offline badge
+17. ✅ FindSheet — GPS + bounding-box query, Haversine sort, Pro gate
+18. ✅ RouteBuilder — contextmenu long-press, dashed gold polyline, save to Supabase
+19. ✅ SplashScreen — 1.8s hold + 300ms fade
+20. ✅ Offline maps — OfflineManager, useOffline, Service Worker
+21. ✅ Weather layer — Met Éireann rainfall radar, auto-refresh 5 min
+22. ✅ Capacitor native wrapper — iOS + Android, haptics, geolocation
+23. ✅ Learn surface — LearnSurface, ArticleView (portal), 5 articles seeded
+24. ✅ Mine surface — MineSurface, AddFindSheet, useFindsLog, finds-photos bucket
+25. ✅ Onboarding coach marks — spotlight tour, getBoundingClientRect positioning
+26. ✅ Replay intro tour from Settings
+27. ✅ Stripe redirect pages — SubscriptionSuccess, SubscriptionCancel
 
 **Next (in order):**
-21. Stripe — wire create-checkout-session.js + stripe-webhook.js (stubs exist)
-23. Field Sports module — data sourcing required first
-18. Hiking module — data sourcing required first
-19. Archaeology module — NMS data integration
-20. Coastal module — data sourcing required first
-21. Route builder — build RouteBuilder.jsx
-22. ✅ Weather layer — done
-23. ✅ Capacitor — native iOS/Android wrapper done
-24. App Store submission — requires macOS + Apple Developer account
-25. Custom domain — exploreeire.ie
+1. Stripe — wire env vars in Vercel (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY, APP_URL, VITE_STRIPE_PRICE_ID_MONTHLY/ANNUAL)
+2. App Store submission — requires macOS + Apple Developer account
+3. Custom domain — exploreeire.ie
+4. Field Sports module — data sourcing required first
+5. Hiking module — data sourcing required first
+6. Archaeology module — NMS data integration
+7. Coastal module — data sourcing required first
+8. Plausible analytics

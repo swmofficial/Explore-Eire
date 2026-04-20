@@ -10,26 +10,13 @@ const TOOLTIP_W = 280
 const TOOLTIP_H_EST = 170   // conservative estimate; avoids overlap when placing above
 const EDGE_PAD = 14
 
+// Steps referencing CategoryHeader IDs (tour-home-btn, tour-learn-tab, tour-mine-tab)
+// have been removed — CategoryHeader replaced by BottomNav in UX overhaul.
 const COACH_STEPS = [
-  {
-    targetId: 'tour-home-btn',
-    title: 'Five modules',
-    body: 'Switch between Prospecting, Hiking, Fishing, Surfing and more. Each module has its own map data, learning content and finds log.',
-  },
   {
     targetId: 'tour-layers-btn',
     title: 'Map layers',
     body: 'Toggle GSI gold sample data, satellite imagery, terrain overlays and more — all sourced from official Irish datasets.',
-  },
-  {
-    targetId: 'tour-learn-tab',
-    title: 'Learn',
-    body: 'Step-by-step guides written for Irish conditions. From reading a stream to understanding bedrock geology.',
-  },
-  {
-    targetId: 'tour-mine-tab',
-    title: 'Log your finds',
-    body: 'Tap Mine to open your personal finds log. Record GPS location, photos, weight and notes for every find.',
   },
   {
     targetId: 'tour-camera-btn',
@@ -279,7 +266,7 @@ function CoachMark({ targetId, title, body, coachIndex, onNext }) {
         )}
 
         <div style={{ fontSize: 11, fontWeight: 500, color: '#6B7280', marginBottom: 8, letterSpacing: '0.04em' }}>
-          {counter} of 6
+          {counter} of {COACH_STEPS.length + 1}
         </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: '#E8EAF0', marginBottom: 6, lineHeight: 1.3 }}>
           {title}
@@ -338,7 +325,7 @@ export default function Onboarding({ onComplete, onEnterTour }) {
     )
   }
 
-  if (step === 6) {
+  if (step === COACH_STEPS.length + 1) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: '#0A0A0A', zIndex: 100 }}>
         <Permissions onComplete={handleComplete} />

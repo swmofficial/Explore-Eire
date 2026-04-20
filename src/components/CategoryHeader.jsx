@@ -1,3 +1,4 @@
+// ARCHIVED — replaced by BottomNav in UX overhaul. Do not import.
 // CategoryHeader.jsx — Fixed top strip in map view.
 // Left:   home grid icon (returns to module dashboard).
 // Centre: Map / Learn / Mine pill tabs.
