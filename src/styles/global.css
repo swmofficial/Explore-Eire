@@ -8,7 +8,7 @@
 :root {
   /* Background scale (dark UI — map context) */
   --color-void:       #1A1D2E;
-  --color-base:       #111214;
+  --color-base:       #1A1D2E;
   --color-surface:    #1A1C20;
   --color-raised:     #242628;
   --color-border:     #2E3035;

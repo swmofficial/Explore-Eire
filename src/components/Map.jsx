@@ -33,8 +33,6 @@ import WaypointSheet from './WaypointSheet'
 import TrackOverlay from './TrackOverlay'
 import FindSheet from './FindSheet'
 import RouteBuilder from './RouteBuilder'
-import LearnSurface from './LearnSurface'
-import MineSurface from './MineSurface'
 import AddFindSheet from './AddFindSheet'
 
 const WMS_PROXY = 'https://srv1566939.hstgr.cloud'
@@ -1078,8 +1076,6 @@ export default function Map() {
 
       <CornerControls />
       <TrackOverlay onStop={stopTracking} onSave={saveTrack} />
-      <LearnSurface />
-      <MineSurface />
       <DataSheet />
       <SampleSheet />
       <MineralSheet />
