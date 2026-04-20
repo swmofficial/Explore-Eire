@@ -182,7 +182,7 @@ export default function DashboardView({ onNavigate }) {
       overflowY: 'auto',
       background: '#1A1D2E',
       paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
-      paddingBottom: 80,
+      paddingBottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px)',
       paddingLeft: 16,
       paddingRight: 16,
     }}>
