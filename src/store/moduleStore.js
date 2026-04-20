@@ -16,7 +16,7 @@ const useModuleStore = create((set) => ({
   activeCategoryTab: null,
   setActiveCategoryTab: (tab) => set({ activeCategoryTab: tab }),
 
-  // Three-surface navigation: map | learn | mine
+  // Surface state: 'map' (default) | 'none'
   activeSurface: 'map',
   setActiveSurface: (surface) => set({ activeSurface: surface }),
 }))

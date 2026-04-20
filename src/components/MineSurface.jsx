@@ -1,5 +1,5 @@
+// SUPERSEDED by ProfileView.jsx for waypoints/finds/tracks. Kept for reference.
 // MineSurface.jsx — Personal history surface for each module.
-// Renders above the map when activeSurface === 'mine'.
 // Three sections: My Waypoints, My Tracks, My Finds Log.
 import { useState, useEffect, useRef } from 'react'
 import useModuleStore from '../store/moduleStore'
@@ -260,14 +260,14 @@ function FindRow({ find, onDelete }) {
 // ── Main component ─────────────────────────────────────────────────
 
 export default function MineSurface() {
-  const { activeSurface } = useModuleStore()
+  useModuleStore() // retained for potential future surface switching
   const { user, isGuest } = useUserStore()
   const { savedWaypoints, deleteWaypoint } = useWaypoints()
   const { finds, deleteFind } = useFindsLog()
   const [tracks, setTracks] = useState([])
 
   useEffect(() => {
-    if (!user || isGuest || activeSurface !== 'mine') return
+    if (!user || isGuest) return
     supabase
       .from('tracks')
       .select('id, name, distance_m, duration_s, started_at, created_at')
@@ -275,9 +275,7 @@ export default function MineSurface() {
       .order('created_at', { ascending: false })
       .limit(50)
       .then(({ data }) => setTracks(data ?? []))
-  }, [user?.id, isGuest, activeSurface]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (activeSurface !== 'mine') return null
+  }, [user?.id, isGuest]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div

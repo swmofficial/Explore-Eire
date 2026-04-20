@@ -188,11 +188,7 @@ export default function CornerControls() {
 
   function handleCameraPress() {
     if (!isPro || isGuest) { setShowUpgradeSheet(true); return }
-    if (activeSurface === 'mine') {
-      setAddFindSheetOpen(true)
-    } else {
-      setWaypointSheet({ mode: 'add' })
-    }
+    setWaypointSheet({ mode: 'add' })
   }
 
   function handleCentreOnMe() {

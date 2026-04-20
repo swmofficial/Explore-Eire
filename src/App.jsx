@@ -10,7 +10,7 @@ import MapView from './components/Map'
 import BottomNav from './components/BottomNav'
 import DashboardView from './components/DashboardView'
 import SettingsView from './components/SettingsView'
-// import SettingsPanel from './components/SettingsPanel'   // ARCHIVED — replaced by Settings tab
+import ProfileView from './components/ProfileView'
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
@@ -69,7 +69,7 @@ export default function App() {
             {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
             {activeTab === 'settings' && <SettingsView onNavigate={setActiveTab} />}
             {activeTab === 'learn' && <div style={{ color: 'white', padding: 40 }}>Learn — coming Phase 4</div>}
-            {activeTab === 'profile' && <div style={{ color: 'white', padding: 40 }}>Profile — coming Phase 5</div>}
+            {activeTab === 'profile' && <ProfileView onNavigate={setActiveTab} />}
           </div>
         )}
 

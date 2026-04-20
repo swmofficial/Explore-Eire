@@ -56,10 +56,8 @@ function ArticleCard({ title, teaser, accentColor, onTap }) {
 }
 
 export default function LearnSurface() {
-  const { activeSurface, activeModule } = useModuleStore()
+  const { activeModule } = useModuleStore()
   const [openArticle, setOpenArticle] = useState(null)
-
-  if (activeSurface !== 'learn') return null
 
   const module = getModule(activeModule)
   const accent = module?.accent ?? '#E8C96A'
