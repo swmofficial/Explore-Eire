@@ -1,5 +1,5 @@
 # Explore Eire — Phase 2 Architect File
-> Last updated: 19 April 2026 (session 8 — Learn surface, Mine surface, Onboarding coach marks)
+> Last updated: 20 April 2026 (session 9 — comprehensive audit: stores, styles, nav z-index, DataSheet geometry)
 > For full design system, module specs, DB schema and waypoint spec see ARCHITECTURE.md — read it before working on any new component or module.
 > DO NOT write a single line of code until you have read this file in full
 
@@ -113,11 +113,28 @@ explore-eire/
     │   ├── Map.jsx              ← MapLibre map + overlay UI host. Renders: CategoryHeader,
     │   │                           CornerControls, DataSheet, SampleSheet, MineralSheet,
     │   │                           FindSheet, WaypointSheet, TrackOverlay, RouteBuilder,
-    │   │                           LayerPanel, BasemapPicker, LearnSurface, MineSurface.
+    │   │                           LayerPanel, BasemapPicker, AddFindSheet.
     │   │                           Handles basemap switching, 3D terrain, WMS layers, gold tiers.
+    │   ├── BottomNav.jsx        ← 5-tab navigation bar (Settings/Dashboard/Map/Learn/Profile).
+    │   │                           zIndex: 40. MapPin tab centre-raised. Haptic feedback on tap.
+    │   ├── DashboardView.jsx    ← Waypoint count, finds count, live map overview cards.
+    │   ├── SettingsView.jsx     ← Settings screen: links to Profile, Password, Notifications, Premium
+    │   │                           sub-pages. Theme switcher. Sign out.
+    │   ├── ProfileView.jsx      ← User profile: avatar, display name, finds log, track history.
+    │   ├── LearnView.jsx        ← Course library, progress summary, course detail → chapter reader.
+    │   ├── settings/
+    │   │   ├── ProfileSettings.jsx       ← Edit display name, avatar
+    │   │   ├── PasswordSettings.jsx      ← Change password
+    │   │   ├── NotificationSettings.jsx  ← Push notification preferences
+    │   │   └── PremiumSettings.jsx       ← Subscription status, upgrade CTA
+    │   ├── learn/
+    │   │   ├── CourseDetail.jsx    ← Chapter list for a course, progress bar, start/continue
+    │   │   ├── ChapterReader.jsx   ← Page-by-page content + optional quiz at end
+    │   │   ├── CourseQuiz.jsx      ← Multiple-choice quiz flow
+    │   │   └── CourseCertificate.jsx ← Completion certificate + share action
     │   ├── ModuleDashboard.jsx  ← 5 module icons, lock/unlock, CTA, renders AuthModal inline
-    │   ├── CategoryHeader.jsx   ← Fixed top strip: home button (id=tour-home-btn) + Map/Learn/Mine
-    │   │                           pill tabs (id=tour-learn-tab, id=tour-mine-tab) + Go & Track.
+    │   ├── CategoryHeader.jsx   ← ARCHIVED — replaced by BottomNav. Fixed top strip: home button
+    │   │                           (id=tour-home-btn) + Map/Learn/Mine pill tabs + Go & Track.
     │   ├── LayerPanel.jsx       ← Right drawer (260ms slide). Layer toggles with Pro badges.
     │   │                           MY DATA section at top (showWaypoints toggle). WEATHER section.
     │   │                           Opened by Layers corner button. Filtered by activeModule.
@@ -252,6 +269,11 @@ explore-eire/
 | Mine surface (MineSurface + AddFindSheet + useFindsLog) | ✅ Built — finds log with GPS, photo upload to finds-photos bucket |
 | Onboarding coach marks | ✅ Built — 7-step tour, spotlight cutout, tooltip cards, dynamic positioning via getBoundingClientRect |
 | Replay intro tour (Settings) | ✅ Built — resets ee_onboarded, triggers showOnboarding via userStore |
+| BottomNav 5-tab shell | ✅ Built — Settings/Dashboard/Map/Learn/Profile, zIndex 40, haptic feedback |
+| DashboardView | ✅ Built — live waypoint + find counts, activity cards |
+| SettingsView | ✅ Built — Profile/Password/Notifications/Premium sub-pages |
+| ProfileView | ✅ Built — avatar, display name, finds + track history |
+| LearnView + learning platform | ✅ Built — courses, chapters, quizzes, certificates (localStorage progress) |
 | Plausible analytics | ❌ Not started |
 
 ---
@@ -300,12 +322,13 @@ explore-eire/
 40. **Capacitor geolocation** — `useGeolocation.js` uses `@capacitor/geolocation`. `watchPosition` is async and returns a string `CallbackID` (not a number). `clearWatch` takes `{ id: string }` not a number. `useTracks.js` and `Map.jsx` still use `navigator.geolocation` directly (intentional per session architecture — they work via WKWebView on iOS). Update them to `@capacitor/geolocation` when background-location is required.
 41. **Capacitor haptics** — `src/lib/haptics.js` uses `@capacitor/haptics` `Haptics.impact({ style: ImpactStyle.Light/Medium/Heavy })`. `triggerHaptic()` is now `async` (callers fire-and-forget, no changes needed). Web fallback handled by the Capacitor web implementation (calls `navigator.vibrate` internally).
 42. **ArticleView stacking context trap** — ArticleView rendered inside LearnSurface (zIndex:15). CategoryHeader sits at zIndex:20 in the same ancestor context. Because LearnSurface creates a stacking context, any z-index on ArticleView's children is capped globally by LearnSurface's z:15 — meaning the back button at zIndex:9999 was still below CategoryHeader (z:20), which intercepted all taps at the top of the screen. Fixed: ArticleView now uses `createPortal(…, document.body)` to render outside all ancestor stacking contexts. Container: `position:fixed; zIndex:999`. Back button: `position:fixed; top:16px; left:16px; zIndex:9999; background:rgba(0,0,0,0.6)`. Any future full-screen overlay rendered inside a positioned parent must use a portal or explicitly account for the ancestor stacking context.
+43. **BottomNav z-index** — BottomNav must be zIndex: 40. All modal bottom sheets sit at 41–49, corner controls at 42 when on map surface. DataSheet outer wrapper must be anchored bottom: calc(64px + env(safe-area-inset-bottom, 0px)) (not bottom: 0) so its collapsed 60px peek clears the nav bar. getSnap() must subtract NAV_H = 64 from innerH. CornerControl bottom buttons use calc(env(safe-area-inset-bottom, 0px) + 64px + 16px) not a hardcoded pixel value.
 
 ---
 
 ## What's Next — Phase 2 Build Priority
 
-**Done (sessions 1–8):**
+**Done (sessions 1–9):**
 1. ✅ Repo setup — Explore Eire brand, clean architecture
 2. ✅ Core map view — MapLibre, satellite basemap, category header, corner controls
 3. ✅ Module dashboard — 5 icons, lock/unlock, CTA
@@ -333,6 +356,11 @@ explore-eire/
 25. ✅ Onboarding coach marks — spotlight tour, getBoundingClientRect positioning
 26. ✅ Replay intro tour from Settings
 27. ✅ Stripe redirect pages — SubscriptionSuccess, SubscriptionCancel
+28. ✅ BottomNav 5-tab navigation shell
+29. ✅ DashboardView with live waypoint + find counts
+30. ✅ SettingsView with Profile, Password, Notifications, Premium sub-pages
+31. ✅ ProfileView with finds + track history
+32. ✅ LearnView + full learning platform (courses, chapters, quizzes, certificates)
 
 **Next (in order):**
 1. Stripe — wire env vars in Vercel (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY, APP_URL, VITE_STRIPE_PRICE_ID_MONTHLY/ANNUAL)

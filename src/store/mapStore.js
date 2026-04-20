@@ -130,6 +130,8 @@ const useMapStore = create((set) => ({
   },
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  dismissToast: (id) =>
+    set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 }))
 
 export default useMapStore

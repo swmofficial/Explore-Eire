@@ -13,7 +13,7 @@ export function useSubscription() {
 
     const { data: sub, error } = await supabase
       .from('subscriptions')
-      .select('status, plan, current_period_end')
+      .select('status, current_period_end')
       .eq('user_id', user.id)
       .single()
 

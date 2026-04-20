@@ -106,9 +106,10 @@ function formatDist(km) {
 
 function getSnap() {
   const h = typeof window !== 'undefined' ? window.innerHeight : 800
-  // Inner panel height is (100dvh - 120px). translateY is applied to the inner panel.
+  const NAV_H = 64
+  // Inner panel height is (total - 120 - NAV_H). translateY is applied to the inner panel.
   // Collapsed: translateY(innerH - 60) → only 60px peek visible above bottom of screen.
-  const innerH = h - 120
+  const innerH = h - 120 - NAV_H
   return {
     collapsed: innerH - 60,
     half:      Math.round(innerH * 0.45),
@@ -483,8 +484,8 @@ export default function DataSheet() {
         position: 'fixed',
         left: 0,
         right: 0,
-        bottom: 0,
-        height: '100dvh',
+        bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+        height: 'calc(100dvh - 64px - env(safe-area-inset-bottom, 0px))',
         pointerEvents: 'none',
         zIndex: 20,
       }}
@@ -496,7 +497,7 @@ export default function DataSheet() {
         left: 0,
         right: 0,
         bottom: 0,
-        height: 'calc(100dvh - 120px)',
+        height: 'calc(100% - 120px)',
         pointerEvents: 'all',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',

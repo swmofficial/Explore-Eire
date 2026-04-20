@@ -4,11 +4,8 @@
 import { Haptics, ImpactStyle } from '@capacitor/haptics'
 
 export async function triggerHaptic(style = 'light') {
-  const impactStyle =
-    style === 'heavy'  ? ImpactStyle.Heavy  :
-    style === 'medium' ? ImpactStyle.Medium :
-    ImpactStyle.Light
   try {
-    await Haptics.impact({ style: impactStyle })
-  } catch { /* silent — vibration not available on this platform */ }
+    const s = style.charAt(0).toUpperCase() + style.slice(1)
+    await Haptics.impact({ style: ImpactStyle[s] ?? ImpactStyle.Light })
+  } catch { /* silently fail on web */ }
 }

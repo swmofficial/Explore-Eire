@@ -29,8 +29,8 @@ const GLASS = {
 const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 44px + 12px)'
 const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
-// Raised 88px from safe-area: nav bar height + breathing room
-const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 88px)'
+// Raised above BottomNav: 64px nav height + 16px gap + safe-area
+const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 64px + 16px)'
 
 function SettingsBtn({ onPress, activeSurface }) {
   return (
@@ -45,7 +45,7 @@ function SettingsBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 20,
+        zIndex: activeSurface !== 'map' ? 5 : 42,
       }}
     >
       {/* Gear / cog icon */}
@@ -71,7 +71,7 @@ function CentreOnMeBtn({ onPress, hasLocation, activeSurface }) {
         height: 52,
         borderRadius: 12,
         opacity: hasLocation ? 1 : 0.45,
-        zIndex: activeSurface !== 'map' ? 5 : 20,
+        zIndex: activeSurface !== 'map' ? 5 : 42,
       }}
     >
       {/* Crosshair icon */}
@@ -97,7 +97,7 @@ function LayersBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 20,
+        zIndex: activeSurface !== 'map' ? 5 : 42,
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -122,7 +122,7 @@ function BasemapBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 20,
+        zIndex: activeSurface !== 'map' ? 5 : 42,
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -136,7 +136,7 @@ function BasemapBtn({ onPress, activeSurface }) {
 }
 
 function CameraBtn({ onPress, dataSheetState, activeSurface }) {
-  const zIndex = activeSurface !== 'map' ? 5 : dataSheetState === 'collapsed' ? 30 : 10
+  const zIndex = activeSurface !== 'map' ? 5 : dataSheetState === 'collapsed' ? 42 : 10
   return (
     <button
       id="tour-camera-btn"
@@ -145,7 +145,7 @@ function CameraBtn({ onPress, dataSheetState, activeSurface }) {
       style={{
         ...GLASS,
         position: 'fixed',
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px + 16px)',
         left: '50%',
         transform: 'translateX(-50%)',
         width: 64,

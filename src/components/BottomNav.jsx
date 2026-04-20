@@ -93,7 +93,7 @@ export default function BottomNav({ activeTab, onTabChange }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-around',
-        zIndex: 50,
+        zIndex: 40,
       }}
     >
       {TABS.map((tab) => {

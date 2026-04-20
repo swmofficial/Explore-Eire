@@ -41,13 +41,14 @@ All modules share: map engine, waypoints, offline tiles, GPS tracking, 3D terrai
 
 **Background scale (dark UI — map context):**
 ```
-Void:    #0A0A0A  — deepest background, module dashboard
-Base:    #111214  — primary app background
-Surface: #1A1C20  — panels, drawers, sheets
-Raised:  #242628  — cards, elevated elements
-Border:  #2E3035  — all borders and dividers
-Muted:   #6B7280  — secondary text, icons, placeholders
-Primary: #E8EAF0  — primary text on dark bg
+Void:    #0D0F1A  — deepest background, module dashboard (dark theme)
+Base:    #1A1D2E  — primary app background
+Surface: #222540  — panels, drawers, sheets
+Raised:  #2E3250  — cards, elevated elements
+Border:  #2E3250  — all borders and dividers
+Muted:   #6B6F8A  — secondary text, icons, placeholders
+Primary: #E8EAF0  — primary text on dark bg (alias: --color-text)
+Nav-bg:  #13152a  — bottom nav background
 White:   #FFFFFF  — high emphasis text only
 ```
 
@@ -99,9 +100,9 @@ default:   #6B7280  (amethyst, jasper, unknown)
 Three themes are implemented in `global.css` via `[data-theme]` on `<html>`. Map canvas stays dark regardless of theme.
 
 ```
-dark  (default) — #0A0A0A void, #111214 base
-light           — #E8EAF0 void, #FFFFFF base (glass buttons stay dark for legibility on map)
-eire            — #0D1F0D void, #102010 base — deep forest green
+dark  (default) — #0D0F1A void, #1A1D2E base, --color-nav-bg: #13152a
+light           — #F0F2F8 void, #FFFFFF base, --color-nav-bg: #FFFFFF (glass buttons stay dark)
+eire            — #0A1A0F void, #0F2318 base, --color-nav-bg: #0A1A0F — deep forest green
 ```
 
 Theme is stored in `userStore.theme`, applied in App.jsx via `document.documentElement.setAttribute('data-theme', theme)`. Selectable from SettingsPanel.
@@ -148,13 +149,21 @@ Transition: transform 260ms ease-out (translateX)
 Overlay:    rgba(0,0,0,0.5) behind, backdropFadeIn 200ms
 ```
 
-**Category header strip:**
+**Bottom navigation bar:**
+```
+Height:     64px + env(safe-area-inset-bottom, 0px)
+Background: var(--color-nav-bg)
+Tabs:       Settings | Dashboard | Map (centre raised, gold circle) | Learn | Profile
+zIndex:     40 (bottom sheets 41–49, corner controls 42 on map)
+```
+
+**Category header strip (map-view only, archived from main nav):**
 ```
 Height:     44px + safe-area-inset-top
-Background: #0A0A0A solid (var(--color-void))
-Content:    Home grid icon (left) + module name + accent dot (centre)
-Border-bottom: 1px solid #2E3035
-NOTE: No tabs — data/layer navigation moved to DataSheet bottom sheet
+Background: var(--color-void)
+Content:    Home grid icon (left) + Map/Learn/Mine pill tabs (centre) + Go & Track (right)
+Border-bottom: 1px solid var(--color-border)
+NOTE: CategoryHeader is still rendered inside Map.jsx for the map surface pill tabs.
 ```
 
 **Module icons (dashboard):**
@@ -245,24 +254,28 @@ All animations respect `@media (prefers-reduced-motion: reduce)`.
 ### Screen Inventory
 
 **Primary screens (built):**
-- Module dashboard — home base, always accessible
-- Map view — primary surface, full screen satellite basemap
+- BottomNav — 5-tab navigation shell (Settings/Dashboard/Map/Learn/Profile), zIndex 40
+- DashboardView — home base: live waypoint + find counts, activity overview
+- Map (MapView) — primary surface, full screen satellite basemap
+- LearnView — course library, progress, chapter reader, quizzes, certificates
+- ProfileView — user profile, finds log, track history
+- SettingsView — Settings screen with sub-pages (Profile/Password/Notifications/Premium)
 - LayerPanel — right drawer, filtered by active module
-- SettingsPanel — left drawer, theme/account/legal
+- SettingsPanel — left drawer (rendered by CornerControls on map surface)
 - DataSheet — three-state bottom sheet (layer filters + nearest samples)
-- SampleSheet — detail sheet for gold sample tap
+- SampleSheet, MineralSheet — data detail sheets
 - AuthModal — sign in / sign up / guest
 - BasemapPicker — 3 thumbnail basemap cards + 2D/3D toggle
 - UpgradeSheet — paywall (feature list, monthly/annual, CTA)
-
-**Stubs (file exists, returns null):**
-- FindSheet — nearby discovery (DataSheet partially covers this for Prospecting)
-- WaypointSheet — waypoint detail / add waypoint flow
-- TrackOverlay — Go & Track mode full screen overlay
-- RouteBuilder — route planning tool
-- OfflineManager — offline map download manager
-- StatusToast — system message toast + persistent OFFLINE badge
-- LegalDisclaimerModal — first-login scroll-to-accept (useAuth triggers it but nothing renders it)
+- FindSheet — GPS bounding-box query, Haversine sort, Pro gate
+- WaypointSheet — add/view/delete waypoints, photo upload
+- TrackOverlay — Go & Track mode full screen overlay, elevation graph, Save/Discard
+- RouteBuilder — contextmenu long-press, dashed gold polyline, save to Supabase
+- OfflineManager — Cache API download, region list, storage bar
+- StatusToast — animated stack, persistent OFFLINE badge
+- LegalDisclaimerModal — first-login scroll-to-accept, forceShow from Settings
+- MineSurface — finds log + waypoints + tracks history (superseded by ProfileView)
+- LearnSurface — article list (superseded by LearnView)
 
 ### Corner Controls Layout
 
@@ -552,6 +565,23 @@ distance_m      float
 elevation_profile  jsonb  -- array of {distance, elevation} points
 created_at      timestamp
 ```
+
+**finds_log** *(built — saved by useFindsLog.addFind)*
+```sql
+id            uuid PK          DEFAULT gen_random_uuid()
+user_id       uuid FK → auth.users ON DELETE CASCADE
+module_id     text             DEFAULT 'prospecting'
+title         text NOT NULL
+description   text
+photo_url     text             -- public URL from finds-photos Storage bucket
+lat           double precision
+lng           double precision
+weight_g      numeric
+size_mm       numeric
+found_at      timestamptz      DEFAULT now()
+created_at    timestamptz      DEFAULT now()
+```
+*RLS: `create policy "Users own their finds" on finds_log for all using (auth.uid() = user_id)`*
 
 **offline_regions**
 ```sql

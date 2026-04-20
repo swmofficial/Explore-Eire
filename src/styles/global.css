@@ -5,20 +5,23 @@
 /* ------------------------------------------------------------
    CSS Custom Properties — Colour System
    ------------------------------------------------------------ */
-:root {
+:root, [data-theme="dark"] {
   /* Background scale (dark UI — map context) */
-  --color-void:       #1A1D2E;
+  --color-void:       #0D0F1A;
   --color-base:       #1A1D2E;
-  --color-surface:    #252840;
+  --color-surface:    #222540;
   --color-raised:     #2E3250;
-  --color-border:     #3A3D6A;
-  --color-card:       #252840;
+  --color-border:     #2E3250;
+  --color-card:       #222540;
   --color-card-border: #2E3250;
   --color-card-alt:   #1E2240;
-  --color-nav-bg:     #0F1120;
-  --color-muted:   #6B7280;
-  --color-primary: #E8EAF0;
-  --color-white:   #FFFFFF;
+  --color-nav-bg:     #13152a;
+  --color-muted:      #6B6F8A;
+  --color-primary:    #E8EAF0;
+  --color-text:       #E8EAF0;
+  --color-accent:     #E8C96A;
+  --color-white:      #FFFFFF;
+  --radius-sheet: 16px;
 
   /* Brand accent — Eire Gold */
   --gold-50:  #FFF8E7;
@@ -130,13 +133,18 @@
    ------------------------------------------------------------ */
 
 [data-theme="light"] {
-  --color-void:    #E8EAF0;
-  --color-base:    #F5F3EF;
-  --color-surface: #EAE8E2;
+  --color-void:    #F0F2F8;
+  --color-base:    #FFFFFF;
+  --color-surface: #F5F6FA;
   --color-raised:  #E0DDD6;
-  --color-border:  #D1D5DB;
-  --color-muted:   #9CA3AF;
-  --color-primary: #111214;
+  --color-border:  #E0E3EF;
+  --color-card:    #F5F6FA;
+  --color-card-border: #E0E3EF;
+  --color-nav-bg:  #FFFFFF;
+  --color-muted:   #8A8FAA;
+  --color-primary: #1A1D2E;
+  --color-text:    #1A1D2E;
+  --color-accent:  #C4A020;
   --color-white:   #0A0A0A;
 
   /* Glass button override for light theme — keep readable on map */
@@ -146,13 +154,18 @@
 
 /* Eire — deep forest green */
 [data-theme="eire"] {
-  --color-void:    #0D1F0D;
-  --color-base:    #102010;
-  --color-surface: #162816;
+  --color-void:    #0A1A0F;
+  --color-base:    #0F2318;
+  --color-surface: #163020;
   --color-raised:  #1C321C;
-  --color-border:  #274027;
-  --color-muted:   #7A9E7A;
-  --color-primary: #EDF0ED;
+  --color-border:  #1E4028;
+  --color-card:    #163020;
+  --color-card-border: #1E4028;
+  --color-nav-bg:  #0A1A0F;
+  --color-muted:   #5A8A6A;
+  --color-primary: #D4F0DC;
+  --color-text:    #D4F0DC;
+  --color-accent:  #E8C96A;
   --color-white:   #FFFFFF;
 }
 
