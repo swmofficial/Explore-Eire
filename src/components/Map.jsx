@@ -1038,15 +1038,16 @@ export default function Map() {
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: '64px' }}
       />
 
-      {/* Floating Go & Track pill — above nav bar */}
+      {/* Floating Go & Track pill — top centre, below category header */}
       {!isTracking && (
         <button
           onClick={handleTrackPress}
           aria-label="Go & Track"
           style={{
             position: 'fixed',
-            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
-            right: 16,
+            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
             zIndex: 30,
             display: 'flex',
             alignItems: 'center',
@@ -1055,12 +1056,13 @@ export default function Map() {
             color: '#1A1D2E',
             border: 'none',
             borderRadius: 24,
-            padding: '12px 20px',
+            padding: '10px 20px',
             fontSize: 14,
             fontWeight: 700,
             cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(232,201,106,0.35)',
+            boxShadow: '0 4px 16px rgba(232,201,106,0.45)',
             WebkitTapHighlightColor: 'transparent',
+            whiteSpace: 'nowrap',
           }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
