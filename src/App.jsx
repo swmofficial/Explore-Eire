@@ -8,6 +8,7 @@ import { useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
 import MapView from './components/Map'
 import BottomNav from './components/BottomNav'
+import DashboardView from './components/DashboardView'
 // import SettingsPanel from './components/SettingsPanel'   // ARCHIVED — replaced by Settings tab
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
@@ -64,7 +65,7 @@ export default function App() {
         {/* Non-map tabs rendered conditionally */}
         {activeTab !== 'map' && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-            {activeTab === 'dashboard' && <div style={{ color: 'white', padding: 40 }}>Dashboard — coming Phase 2</div>}
+            {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
             {activeTab === 'settings' && <div style={{ color: 'white', padding: 40 }}>Settings — coming Phase 3</div>}
             {activeTab === 'learn' && <div style={{ color: 'white', padding: 40 }}>Learn — coming Phase 4</div>}
             {activeTab === 'profile' && <div style={{ color: 'white', padding: 40 }}>Profile — coming Phase 5</div>}
