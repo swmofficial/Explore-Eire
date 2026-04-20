@@ -11,6 +11,7 @@ import BottomNav from './components/BottomNav'
 import DashboardView from './components/DashboardView'
 import SettingsView from './components/SettingsView'
 import ProfileView from './components/ProfileView'
+import LearnView from './components/LearnView'
 import AuthModal from './components/AuthModal'
 import UpgradeSheet from './components/UpgradeSheet'
 import LegalDisclaimerModal from './components/LegalDisclaimerModal'
@@ -68,7 +69,7 @@ export default function App() {
           <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
             {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
             {activeTab === 'settings' && <SettingsView onNavigate={setActiveTab} />}
-            {activeTab === 'learn' && <div style={{ color: 'white', padding: 40 }}>Learn — coming Phase 4</div>}
+            {activeTab === 'learn' && <LearnView />}
             {activeTab === 'profile' && <ProfileView onNavigate={setActiveTab} />}
           </div>
         )}

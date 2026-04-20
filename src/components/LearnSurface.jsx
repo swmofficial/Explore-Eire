@@ -1,3 +1,4 @@
+// SUPERSEDED by LearnView.jsx — this component is no longer used
 import { useState } from 'react'
 import useModuleStore from '../store/moduleStore'
 import { getModule } from '../lib/moduleConfig'
