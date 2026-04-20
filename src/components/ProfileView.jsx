@@ -245,7 +245,7 @@ export default function ProfileView({ onNavigate }) {
   return (
     <div style={{
       position: 'absolute', inset: 0, overflowY: 'auto',
-      background: '#1A1D2E', paddingBottom: 80,
+      background: '#1A1D2E', paddingBottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px)',
     }}>
 
       {/* HEADER CARD */}
