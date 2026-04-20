@@ -21,7 +21,6 @@
   --color-text:       #E8EAF0;
   --color-accent:     #E8C96A;
   --color-white:      #FFFFFF;
-  --radius-sheet: 16px;
 
   /* Brand accent — Eire Gold */
   --gold-50:  #FFF8E7;
@@ -57,7 +56,7 @@
   --glass-border: rgba(232, 201, 106, 0.25);
 
   /* Border radius scale */
-  --radius-sheet: 24px;
+  --radius-sheet: 16px;
   --radius-card:  16px;
   --radius-row:   12px;
 
