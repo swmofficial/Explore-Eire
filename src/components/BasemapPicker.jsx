@@ -3,9 +3,9 @@
 import useMapStore from '../store/mapStore'
 
 const BASEMAP_CARDS = [
-  { id: 'outdoor',   label: 'Outdoor',   thumbColor: '#2D4A3E' },
-  { id: 'satellite', label: 'Satellite', thumbColor: '#1A2535' },
-  { id: 'topo',      label: 'Topo',      thumbColor: '#3B2D5C' },
+  { id: 'outdoor',   label: 'Outdoor',   thumbColor: '#1E3028' },
+  { id: 'satellite', label: 'Satellite', thumbColor: '#1A1D2E' },
+  { id: 'topo',      label: 'Topo',      thumbColor: '#252840' },
 ]
 
 const styles = {
