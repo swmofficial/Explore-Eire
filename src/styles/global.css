@@ -82,6 +82,10 @@
   --text-label-case:    uppercase;
   --text-label-tracking: 0.08em;
 
+  /* Nav bar — used by all page views for bottom padding */
+  --nav-height: 64px;
+  --nav-total: calc(64px + env(safe-area-inset-bottom, 0px));
+
   /* Component sizing */
   --btn-standard-size: 52px;
   --btn-camera-size:   64px;
