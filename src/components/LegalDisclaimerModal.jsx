@@ -52,6 +52,7 @@ const LEGAL_SECTIONS = [
 // forceShow — bypass the legalAccepted gate (used from SettingsPanel)
 // onClose  — called when user closes in forceShow mode
 export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
+  return null
   const { user, isGuest, legalAccepted, setLegalAccepted } = useUserStore()
   const [checked, setChecked] = useState(false)
   const [saving, setSaving] = useState(false)

@@ -16,8 +16,8 @@ const GLASS = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  background: 'rgba(10,10,10,0.88)',
-  border: '1px solid rgba(232,201,106,0.25)',
+  background: 'rgba(26,29,46,0.92)',
+  border: '1px solid #2E3250',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
   cursor: 'pointer',
@@ -152,7 +152,7 @@ function CameraBtn({ onPress, dataSheetState, activeSurface }) {
         height: 64,
         borderRadius: 16,
         zIndex,
-        border: '1px solid rgba(232,201,106,0.4)',
+        border: '1px solid #2E3250',
       }}
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
