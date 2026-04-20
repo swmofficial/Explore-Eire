@@ -9,9 +9,9 @@
   /* Background scale (dark UI — map context) */
   --color-void:       #1A1D2E;
   --color-base:       #1A1D2E;
-  --color-surface:    #1A1C20;
-  --color-raised:     #242628;
-  --color-border:     #2E3035;
+  --color-surface:    #252840;
+  --color-raised:     #2E3250;
+  --color-border:     #3A3D6A;
   --color-card:       #252840;
   --color-card-border: #2E3250;
   --color-card-alt:   #1E2240;

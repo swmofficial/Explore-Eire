@@ -29,8 +29,8 @@ const GLASS = {
 const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 44px + 12px)'
 const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
-// Raised 76px from safe-area: 60px collapsed sheet height + 16px gap
-const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 76px)'
+// Raised 88px from safe-area: nav bar height + breathing room
+const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 88px)'
 
 function SettingsBtn({ onPress, activeSurface }) {
   return (

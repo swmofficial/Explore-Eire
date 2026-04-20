@@ -1044,8 +1044,8 @@ export default function Map() {
           onClick={handleTrackPress}
           aria-label="Go & Track"
           style={{
-            position: 'absolute',
-            bottom: 88,
+            position: 'fixed',
+            bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
             right: 16,
             zIndex: 30,
             display: 'flex',
