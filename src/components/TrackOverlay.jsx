@@ -319,16 +319,39 @@ export default function TrackOverlay({ onStop, onSave }) {
           >
             {formatMmSs(duration)}
           </span>
+
+          {/* Stop pill — escape hatch */}
+          <button
+            onClick={handleStop}
+            disabled={stopping}
+            style={{
+              marginLeft: 8,
+              background: 'rgba(232,75,75,0.15)',
+              border: '1px solid rgba(232,75,75,0.4)',
+              borderRadius: 20,
+              padding: '4px 12px',
+              fontSize: 12,
+              fontWeight: 700,
+              color: '#E84B4B',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+              flexShrink: 0,
+            }}
+          >
+            Stop
+          </button>
         </div>
       </div>
 
-      {/* Bottom panel */}
+      {/* Bottom panel — sits above nav bar (64px) */}
       <div
         style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0,
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          background: 'rgba(10,10,10,0.92)',
-          borderTop: '1px solid rgba(232,201,106,0.25)',
+          position: 'absolute',
+          bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
+          left: 0, right: 0,
+          background: 'var(--color-base)',
+          border: '1px solid rgba(232,201,106,0.25)',
+          borderRadius: '16px 16px 0 0',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           pointerEvents: 'auto',
