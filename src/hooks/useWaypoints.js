@@ -64,6 +64,16 @@ export function useWaypoints() {
         return localWp
       }
 
+      const { isPro } = useUserStore.getState()
+
+      if (!isPro && savedWaypoints.length >= 5) {
+        addToast({
+          message: 'Waypoint limit reached — upgrade to Pro for unlimited',
+          type: 'warning',
+        })
+        return null
+      }
+
       // Upload photo if provided (File object in waypointObj.photo)
       const { photo, ...fields } = waypointObj
       let photos = []
