@@ -316,13 +316,6 @@ input, textarea, select {
    ------------------------------------------------------------ */
 
 /* Glass button base */
-/* Corner controls stay dark on map regardless of theme */
-[data-theme="light"] .glass-btn {
-  background: rgba(10, 10, 10, 0.88);
-  border: 1px solid rgba(232, 201, 106, 0.25);
-  color: #E8EAF0;
-}
-
 .glass-btn {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
