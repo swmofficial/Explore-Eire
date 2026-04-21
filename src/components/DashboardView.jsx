@@ -2,6 +2,7 @@ import useUserStore from '../store/userStore'
 import { useWaypoints } from '../hooks/useWaypoints'
 import { useFindsLog } from '../hooks/useFindsLog'
 import { useCourseSummary } from '../hooks/useLearn'
+import { useTracks } from '../hooks/useTracks'
 
 // ── Icon helpers ───────────────────────────────────────────────────
 
@@ -167,6 +168,7 @@ export default function DashboardView({ onNavigate }) {
   const { savedWaypoints } = useWaypoints()
   const { finds } = useFindsLog()
   const { inProgressCount, overallPercent } = useCourseSummary()
+  const { savedTrackCount } = useTracks()
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -336,6 +338,19 @@ export default function DashboardView({ onNavigate }) {
             : 'No finds recorded yet'
         }
         right={findsCount > 0 ? <StatNumber value={findsCount} /> : null}
+        onPress={() => onNavigate('profile')}
+      />
+
+      {/* Card 4 — My Sessions */}
+      <ActivityCard
+        icon={<CompassIcon />}
+        title="My Sessions"
+        subtitle={
+          savedTrackCount > 0
+            ? `${savedTrackCount} session${savedTrackCount === 1 ? '' : 's'} recorded`
+            : 'No sessions yet — tap Go & Track on the map'
+        }
+        right={savedTrackCount > 0 ? <StatNumber value={savedTrackCount} /> : null}
         onPress={() => onNavigate('profile')}
       />
 

@@ -3,7 +3,7 @@
 // stopTracking(): stops GPS watch, computes stats, returns summary (does NOT auto-save)
 // saveTrack(summary): persists track to Supabase, fires toast
 // calcTrailDistanceM(): exported pure helper used by TrackOverlay for live display
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 import useModuleStore from '../store/moduleStore'
@@ -92,6 +92,20 @@ export function useTracks() {
   const watchIdRef      = useRef(null)
   const startedAtRef    = useRef(null)
   const pointCountRef   = useRef(0) // throttle elevation fetches
+
+  const [savedTrackCount, setSavedTrackCount] = useState(0)
+
+  useEffect(() => {
+    if (!user) return
+
+    supabase
+      .from('tracks')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .then(({ count }) => {
+        setSavedTrackCount(count || 0)
+      })
+  }, [user])
 
   // startTracking — clears trail + elevation profile, starts GPS watch, sets isTracking=true
   function startTracking() {
@@ -220,5 +234,5 @@ export function useTracks() {
     return true
   }
 
-  return { startTracking, stopTracking, saveTrack }
+  return { startTracking, stopTracking, saveTrack, savedTrackCount }
 }

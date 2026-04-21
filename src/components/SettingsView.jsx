@@ -154,6 +154,8 @@ const MoonSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><pat
 const StarSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2l1.8 3.8L14 6.6l-3 2.9.7 4.1L8 11.5l-3.7 2.1.7-4.1-3-2.9 4.2-.8L8 2z" stroke="var(--color-accent)" strokeWidth="1.3" strokeLinejoin="round"/></svg>
 const QuestionSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="var(--color-accent)" strokeWidth="1.3"/><path d="M6.3 6a1.7 1.7 0 0 1 3.3.6c0 1.2-1.3 1.6-1.6 2.4" stroke="var(--color-accent)" strokeWidth="1.3" strokeLinecap="round"/><circle cx="8" cy="12" r=".6" fill="var(--color-accent)"/></svg>
 const TrashSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M6 4V2.5h4V4M5 4l.5 9h5L11 4" stroke="var(--color-danger)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+const ShieldSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2L3 4.5V8c0 3 2.5 5 5 6 2.5-1 5-3 5-6V4.5L8 2z" stroke="var(--color-accent)" strokeWidth="1.3" strokeLinejoin="round"/></svg>
+const DocSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="3" y="2" width="10" height="12" rx="1.5" stroke="var(--color-accent)" strokeWidth="1.3"/><path d="M5.5 5.5h5M5.5 8h5M5.5 10.5h3" stroke="var(--color-accent)" strokeWidth="1.3" strokeLinecap="round"/></svg>
 
 // ── Main ───────────────────────────────────────────────────────────
 
@@ -279,6 +281,8 @@ export default function SettingsView({ onNavigate }) {
       {/* MORE group */}
       <GroupLabel>More</GroupLabel>
       <SettingsCard>
+        <SettingsRow icon={ShieldSVG} label="Privacy Policy" onPress={() => window.open('https://exploreeire.ie/privacy', '_blank')} />
+        <SettingsRow icon={DocSVG} label="Terms of Service" onPress={() => window.open('https://exploreeire.ie/terms', '_blank')} />
         <SettingsRow icon={StarSVG} label="Rate &amp; Review" onPress={handleRateReview} />
         <SettingsRow icon={QuestionSVG} label="Help &amp; Support" noBorder onPress={() => setPage('help')} />
       </SettingsCard>
