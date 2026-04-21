@@ -1,29 +1,37 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import useUserStore from '../../store/userStore'
+import EmailChangeModal from '../EmailChangeModal'
 
-function PersonIcon({ size = 32, color = '#6B6F8A' }) {
+function PersonIcon({ size = 32 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <circle cx="16" cy="11" r="5.5" stroke={color} strokeWidth="1.8"/>
-      <path d="M4 28c0-5.523 5.373-10 12-10s12 4.477 12 10" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
+      <circle cx="16" cy="11" r="5.5" stroke="var(--color-muted)" strokeWidth="1.8"/>
+      <path d="M4 28c0-5.523 5.373-10 12-10s12 4.477 12 10" stroke="var(--color-muted)" strokeWidth="1.8" strokeLinecap="round"/>
     </svg>
   )
 }
 
-function FieldInput({ label, value, onChange, type = 'text', readOnly = false, hint }) {
+function FieldInput({ label, value, onChange, type = 'text', readOnly = false, hint, action, onAction }) {
   return (
-    <div style={{ padding: '14px 16px', borderBottom: '1px solid #2E3250' }}>
-      <div style={{
-        fontSize: 11, fontWeight: 500, color: '#6B6F8A',
-        textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8,
-      }}>
-        {label}
+    <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--color-border)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {label}
+        </div>
+        {action && (
+          <button
+            onClick={onAction}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', padding: '2px 0', WebkitTapHighlightColor: 'transparent' }}
+          >
+            {action}
+          </button>
+        )}
       </div>
       {readOnly ? (
         <>
-          <div style={{ fontSize: 14, color: '#6B6F8A' }}>{value}</div>
-          {hint && <div style={{ fontSize: 11, color: '#4A4D6A', marginTop: 5 }}>{hint}</div>}
+          <div style={{ fontSize: 14, color: 'var(--color-muted)' }}>{value}</div>
+          {hint && <div style={{ fontSize: 11, color: 'var(--color-border)', marginTop: 5 }}>{hint}</div>}
         </>
       ) : (
         <input
@@ -31,15 +39,10 @@ function FieldInput({ label, value, onChange, type = 'text', readOnly = false, h
           value={value}
           onChange={(e) => onChange(e.target.value)}
           style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            borderBottom: '1px solid #E8C96A',
-            color: '#E8EAF0',
-            fontSize: 15,
-            padding: '4px 0 6px',
-            outline: 'none',
-            fontFamily: 'inherit',
+            width: '100%', background: 'transparent', border: 'none',
+            borderBottom: '1px solid var(--color-accent)',
+            color: 'var(--color-text)', fontSize: 15,
+            padding: '4px 0 6px', outline: 'none', fontFamily: 'inherit',
           }}
         />
       )}
@@ -56,6 +59,7 @@ export default function ProfileSettings({ onBack }) {
   const [bio, setBio] = useState(initialBio)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [showEmailModal, setShowEmailModal] = useState(false)
 
   const isDirty = displayName !== initialName || bio !== initialBio
 
@@ -76,27 +80,26 @@ export default function ProfileSettings({ onBack }) {
   }
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: '#1A1D2E', paddingBottom: 80 }}>
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 80 }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
         padding: 'calc(env(safe-area-inset-top, 0px) + 16px) 16px 16px',
-        borderBottom: '1px solid #2E3250',
+        borderBottom: '1px solid var(--color-border)',
       }}>
-        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#E8C96A', display: 'flex', alignItems: 'center' }}>
+        <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--color-accent)', display: 'flex', alignItems: 'center' }}>
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M13 4l-6 6 6 6" stroke="#E8C96A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M13 4l-6 6 6 6" stroke="var(--color-accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
-        <span style={{ fontSize: 18, fontWeight: 700, color: '#E8EAF0' }}>Profile</span>
+        <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>Profile</span>
         <button
           onClick={handleSave}
           disabled={!isDirty || saving}
           style={{
             background: 'none', border: 'none', cursor: isDirty ? 'pointer' : 'default',
             fontSize: 15, fontWeight: 600,
-            color: isDirty ? '#E8C96A' : '#4A4D6A',
+            color: isDirty ? 'var(--color-accent)' : 'var(--color-border)',
             padding: 4,
           }}
         >
@@ -108,34 +111,31 @@ export default function ProfileSettings({ onBack }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0 20px' }}>
         <div style={{
           width: 88, height: 88, borderRadius: '50%',
-          background: '#3A3D6A', border: '2px solid #E8C96A',
+          background: 'var(--color-raised)', border: '2px solid var(--color-accent)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <PersonIcon size={40} color="#6B6F8A" />
+          <PersonIcon size={40} />
         </div>
         <button
           onClick={() => console.log('[ProfileSettings] Change photo — Capacitor Camera to be wired')}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: '#E8C96A', fontSize: 14, fontWeight: 500, marginTop: 10,
-            WebkitTapHighlightColor: 'transparent',
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-accent)', fontSize: 14, fontWeight: 500, marginTop: 10, WebkitTapHighlightColor: 'transparent' }}
         >
           Change Photo
         </button>
       </div>
 
       {/* Form card */}
-      <div style={{ margin: '0 16px', background: '#252840', border: '1px solid #2E3250', borderRadius: 14, overflow: 'hidden' }}>
+      <div style={{ margin: '0 16px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 14, overflow: 'hidden' }}>
         <FieldInput label="Display Name" value={displayName} onChange={setDisplayName} />
         <FieldInput
           label="Email"
           value={user?.email || ''}
           readOnly
-          hint="Contact support to change your email address"
+          action="Change"
+          onAction={() => setShowEmailModal(true)}
         />
         <div style={{ padding: '14px 16px' }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: '#6B6F8A', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
             Bio
           </div>
           <textarea
@@ -145,7 +145,8 @@ export default function ProfileSettings({ onBack }) {
             placeholder="A short intro about yourself…"
             style={{
               width: '100%', background: 'transparent', border: 'none',
-              borderBottom: '1px solid #E8C96A', color: '#E8EAF0', fontSize: 14,
+              borderBottom: '1px solid var(--color-accent)',
+              color: 'var(--color-text)', fontSize: 14,
               padding: '4px 0 6px', outline: 'none', fontFamily: 'inherit',
               resize: 'none', lineHeight: 1.5,
             }}
@@ -154,7 +155,11 @@ export default function ProfileSettings({ onBack }) {
       </div>
 
       {error && (
-        <div style={{ margin: '12px 16px 0', color: '#E84B4B', fontSize: 13 }}>{error}</div>
+        <div style={{ margin: '12px 16px 0', color: 'var(--color-danger)', fontSize: 13 }}>{error}</div>
+      )}
+
+      {showEmailModal && (
+        <EmailChangeModal onClose={() => setShowEmailModal(false)} />
       )}
     </div>
   )

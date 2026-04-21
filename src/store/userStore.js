@@ -28,13 +28,24 @@ const useUserStore = create((set) => ({
   showAuthModal: false,
   setShowAuthModal: (show) => set({ showAuthModal: show }),
 
+  // Auth modal config — set before calling setShowAuthModal(true)
+  authModalDefaultTab: 'signin', // 'signin' | 'signup'
+  setAuthModalDefaultTab: (tab) => set({ authModalDefaultTab: tab }),
+
+  authModalOnSuccess: null, // optional callback fired after successful auth
+  setAuthModalOnSuccess: (fn) => set({ authModalOnSuccess: fn }),
+
   showUpgradeSheet: false,
   setShowUpgradeSheet: (show) => set({ showUpgradeSheet: show }),
 
   showOnboarding: false,
   setShowOnboarding: (show) => set({ showOnboarding: show }),
 
-  // Colour theme — 'dark' | 'light' | 'eire'
+  // Notification pre-prompt (shown after trigger events)
+  showNotifPrePrompt: false,
+  setShowNotifPrePrompt: (show) => set({ showNotifPrePrompt: show }),
+
+  // Colour theme — 'dark' | 'light'
   theme: 'dark',
   setTheme: (t) => set({ theme: t }),
 }))

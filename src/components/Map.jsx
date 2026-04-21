@@ -159,11 +159,11 @@ const WMS_SOURCES = {
 
 // ── Mineral locality layers — one per category ─────────────────────
 const MINERAL_LAYERS = [
-  { id: 'mineral-gold',      category: 'gold',      color: '#E8C96A' },
+  { id: 'mineral-gold',      category: 'gold',      color: 'var(--color-accent)' },
   { id: 'mineral-copper',    category: 'copper',    color: '#E8844A' },
   { id: 'mineral-lead',      category: 'lead',      color: '#9B9B9B' },
   { id: 'mineral-uranium',   category: 'uranium',   color: '#7FBA00' },
-  { id: 'mineral-quartz',    category: 'quartz',    color: '#E8EAF0' },
+  { id: 'mineral-quartz',    category: 'quartz',    color: 'var(--color-text)' },
   { id: 'mineral-silver',    category: 'silver',    color: '#C0C0C0' },
   { id: 'mineral-marble',    category: 'marble',    color: '#4AC0A0' },
   { id: 'mineral-fluorspar', category: 'fluorspar', color: '#A06BE8' },
@@ -406,7 +406,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       type: 'line',
       source: 'session-line-src',
       paint: {
-        'line-color': '#E8C96A',
+        'line-color': 'var(--color-accent)',
         'line-width': 3,
         'line-opacity': 0.9,
         'line-dasharray': [2, 3],
@@ -429,7 +429,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'session-trail',
       paint: {
         'circle-radius': 4,
-        'circle-color': '#E8C96A',
+        'circle-color': 'var(--color-accent)',
         'circle-stroke-color': 'rgba(0,0,0,0.3)',
         'circle-stroke-width': 1,
         'circle-opacity': 0.88,
@@ -451,7 +451,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'session-waypoints-src',
       paint: {
         'circle-radius': 8,
-        'circle-color': '#E8C96A',
+        'circle-color': 'var(--color-accent)',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2,
         'circle-opacity': 1,
@@ -476,7 +476,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
           'interpolate', ['linear'], ['zoom'],
           5, 6, 10, 10, 14, 14,
         ],
-        'circle-color': '#E8C96A',
+        'circle-color': 'var(--color-accent)',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2.5,
         'circle-opacity': 1,
@@ -497,7 +497,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       type: 'line',
       source: 'route-builder-src',
       paint: {
-        'line-color': '#E8C96A',
+        'line-color': 'var(--color-accent)',
         'line-width': 2.5,
         'line-opacity': 0.9,
         'line-dasharray': [4, 2],
@@ -518,7 +518,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'route-points-src',
       paint: {
         'circle-radius': 7,
-        'circle-color': '#E8C96A',
+        'circle-color': 'var(--color-accent)',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2,
         'circle-opacity': 1,
@@ -1052,8 +1052,8 @@ export default function Map() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            background: '#E8C96A',
-            color: '#1A1D2E',
+            background: 'var(--color-accent)',
+            color: 'var(--color-base)',
             border: 'none',
             borderRadius: 24,
             padding: '10px 20px',
@@ -1066,11 +1066,11 @@ export default function Map() {
           }}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <circle cx="8" cy="10" r="5" stroke="#1A1D2E" strokeWidth="1.4"/>
-            <path d="M6 1.5h4" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M8 1.5v2.5" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M8 10V7.5" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
-            <path d="M8 10l1.8 1.1" stroke="#1A1D2E" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="8" cy="10" r="5" stroke="var(--color-base)" strokeWidth="1.4"/>
+            <path d="M6 1.5h4" stroke="var(--color-base)" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 1.5v2.5" stroke="var(--color-base)" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 10V7.5" stroke="var(--color-base)" strokeWidth="1.4" strokeLinecap="round"/>
+            <path d="M8 10l1.8 1.1" stroke="var(--color-base)" strokeWidth="1.4" strokeLinecap="round"/>
           </svg>
           Go &amp; Track
         </button>

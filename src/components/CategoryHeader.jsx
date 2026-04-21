@@ -39,7 +39,7 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
   const { isTracking } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
 
-  const accent = module?.accent ?? '#E8C96A'
+  const accent = module?.accent ?? 'var(--color-accent)'
 
   function handleTrackPress() {
     if (!isPro || isGuest) {
@@ -152,7 +152,7 @@ export default function CategoryHeader({ onHome, onStartTracking }) {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                background: '#E84B4B',
+                background: 'var(--color-danger)',
                 animation: 'trackingPulse 1.2s ease-in-out infinite',
               }}
             />

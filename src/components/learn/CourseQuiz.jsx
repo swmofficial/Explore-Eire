@@ -54,7 +54,7 @@ export default function CourseQuiz({ quiz, chapterTitle, onBack, onComplete }) {
         <div style={{
           fontSize: 48,
           fontWeight: 800,
-          color: '#E8C96A',
+          color: 'var(--color-accent)',
         }}>
           {pct}%
         </div>
@@ -66,12 +66,12 @@ export default function CourseQuiz({ quiz, chapterTitle, onBack, onComplete }) {
           style={{
             marginTop: 12,
             padding: '16px 40px',
-            background: '#E8C96A',
+            background: 'var(--color-accent)',
             border: 'none',
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 700,
-            color: '#1A1D2E',
+            color: 'var(--color-base)',
             cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent',
           }}
@@ -108,11 +108,11 @@ export default function CourseQuiz({ quiz, chapterTitle, onBack, onComplete }) {
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 4l-6 6 6 6" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 4l-6 6 6 6" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#E8C96A' }}>Quiz</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--color-accent)' }}>Quiz</div>
           <div style={{ fontSize: 11, color: 'var(--color-muted)' }}>
             Question {index + 1} of {quiz.length}
           </div>
@@ -190,12 +190,12 @@ export default function CourseQuiz({ quiz, chapterTitle, onBack, onComplete }) {
             style={{
               width: '100%',
               padding: '16px',
-              background: selected !== null ? '#E8C96A' : 'var(--color-card)',
+              background: selected !== null ? 'var(--color-accent)' : 'var(--color-card)',
               border: 'none',
               borderRadius: 12,
               fontSize: 15,
               fontWeight: 700,
-              color: selected !== null ? '#1A1D2E' : 'var(--color-muted)',
+              color: selected !== null ? 'var(--color-base)' : 'var(--color-muted)',
               cursor: selected !== null ? 'pointer' : 'default',
               WebkitTapHighlightColor: 'transparent',
               transition: 'all 150ms ease',
@@ -209,12 +209,12 @@ export default function CourseQuiz({ quiz, chapterTitle, onBack, onComplete }) {
             style={{
               width: '100%',
               padding: '16px',
-              background: '#E8C96A',
+              background: 'var(--color-accent)',
               border: 'none',
               borderRadius: 12,
               fontSize: 15,
               fontWeight: 700,
-              color: '#1A1D2E',
+              color: 'var(--color-base)',
               cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
             }}

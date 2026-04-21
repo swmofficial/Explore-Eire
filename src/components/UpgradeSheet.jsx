@@ -127,7 +127,7 @@ export default function UpgradeSheet() {
                 key={feature}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10 }}
               >
-                <span style={{ color: '#E8C96A', fontSize: 14, lineHeight: 1, flexShrink: 0 }}>✓</span>
+                <span style={{ color: 'var(--color-accent)', fontSize: 14, lineHeight: 1, flexShrink: 0 }}>✓</span>
                 <span style={{ fontSize: 14, color: 'var(--color-primary)' }}>{feature}</span>
               </div>
             ))}
@@ -176,12 +176,12 @@ export default function UpgradeSheet() {
                 transition: 'opacity 150ms ease',
               }}
             >
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#E8C96A', marginBottom: 2 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)', marginBottom: 2 }}>
                 Annual
                 {loading === 'annual' && <Spinner />}
               </div>
               <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>€79/year</div>
-              <div style={{ fontSize: 10, color: '#4BE87A', marginTop: 2, fontWeight: 500 }}>Save 34%</div>
+              <div style={{ fontSize: 10, color: 'var(--color-success)', marginTop: 2, fontWeight: 500 }}>Save 34%</div>
             </button>
           </div>
 

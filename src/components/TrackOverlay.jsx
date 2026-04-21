@@ -78,7 +78,7 @@ function ElevGraph({ profile }) {
       <polyline
         points={coords}
         fill="none"
-        stroke="#E8C96A"
+        stroke="var(--color-accent)"
         strokeWidth="1.5"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -209,7 +209,7 @@ export default function TrackOverlay({ onStop, onSave }) {
             </div>
             <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
               <div style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, padding: '12px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#4BE87A', letterSpacing: '-0.02em' }}>{formatElev(summary.elevationGain)}</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-success)', letterSpacing: '-0.02em' }}>{formatElev(summary.elevationGain)}</div>
                 <div style={{ fontSize: 10, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 2 }}>Elev Gain</div>
               </div>
               <div style={{ flex: 1, background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 10, padding: '12px 8px', textAlign: 'center' }}>
@@ -238,7 +238,7 @@ export default function TrackOverlay({ onStop, onSave }) {
                 disabled={saving}
                 style={{
                   flex: 2, height: 48,
-                  background: saving ? 'rgba(232,201,106,0.5)' : '#E8C96A',
+                  background: saving ? 'rgba(232,201,106,0.5)' : 'var(--color-accent)',
                   border: 'none', borderRadius: 12,
                   fontSize: 14, fontWeight: 700,
                   color: '#0A0A0A', cursor: saving ? 'not-allowed' : 'pointer',
@@ -301,7 +301,7 @@ export default function TrackOverlay({ onStop, onSave }) {
             style={{
               width: 8, height: 8,
               borderRadius: '50%',
-              background: '#E84B4B',
+              background: 'var(--color-danger)',
               flexShrink: 0,
               animation: 'trackingPulse 1.2s ease-in-out infinite',
             }}
@@ -311,7 +311,7 @@ export default function TrackOverlay({ onStop, onSave }) {
           <span
             style={{
               fontSize: 14, fontWeight: 600,
-              color: '#E84B4B',
+              color: 'var(--color-danger)',
               fontVariantNumeric: 'tabular-nums',
               minWidth: 44,
               textAlign: 'right',
@@ -332,7 +332,7 @@ export default function TrackOverlay({ onStop, onSave }) {
               padding: '4px 12px',
               fontSize: 12,
               fontWeight: 700,
-              color: '#E84B4B',
+              color: 'var(--color-danger)',
               cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
               flexShrink: 0,
@@ -383,7 +383,7 @@ export default function TrackOverlay({ onStop, onSave }) {
               background: stopping ? 'rgba(232,75,75,0.4)' : 'rgba(232,75,75,0.15)',
               border: '1px solid rgba(232,75,75,0.5)',
               borderRadius: 12,
-              color: '#E84B4B',
+              color: 'var(--color-danger)',
               fontSize: 15, fontWeight: 700,
               cursor: stopping ? 'not-allowed' : 'pointer',
               WebkitTapHighlightColor: 'transparent',

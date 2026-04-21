@@ -21,6 +21,7 @@ import OfflineManager from './components/OfflineManager'
 import SubscriptionSuccess from './pages/SubscriptionSuccess'
 import SubscriptionCancel from './pages/SubscriptionCancel'
 import Onboarding from './components/Onboarding'
+import NotificationPrePrompt from './components/NotificationPrePrompt'
 
 const PATH = window.location.pathname
 
@@ -82,6 +83,7 @@ export default function App() {
         <LegalDisclaimerModal />
         <StatusToast />
         <OfflineManager />
+        <NotificationPrePrompt />
         {showOnboarding && (
           <Onboarding
             onComplete={() => setShowOnboarding(false)}

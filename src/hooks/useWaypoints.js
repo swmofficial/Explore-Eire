@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 import useMapStore from '../store/mapStore'
 import { triggerHaptic } from '../lib/haptics'
+import { triggerNotifPrePromptIfNeeded } from './useNotifications'
 
 // ── Photo upload helper ────────────────────────────────────────────
 async function uploadWaypointPhoto(file, userId) {
@@ -81,7 +82,14 @@ export function useWaypoints() {
         addToast({ message: 'Could not save waypoint', type: 'error' })
         return null
       }
-      setSavedWaypoints((prev) => [data, ...prev])
+      setSavedWaypoints((prev) => {
+        const updated = [data, ...prev]
+        // Trigger notification pre-prompt after saving the first ever waypoint
+        if (updated.length === 1) {
+          try { triggerNotifPrePromptIfNeeded() } catch (_) {}
+        }
+        return updated
+      })
       addToast({ message: 'Waypoint saved', type: 'success' })
       triggerHaptic('medium')
       return data

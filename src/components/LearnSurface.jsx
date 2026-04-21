@@ -61,7 +61,7 @@ export default function LearnSurface() {
   const [openArticle, setOpenArticle] = useState(null)
 
   const module = getModule(activeModule)
-  const accent = module?.accent ?? '#E8C96A'
+  const accent = module?.accent ?? 'var(--color-accent)'
 
   return (
     <div

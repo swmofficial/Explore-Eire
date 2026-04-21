@@ -37,7 +37,7 @@ function Toggle({ checked, onChange, disabled }) {
           width: 36,
           height: 20,
           borderRadius: 10,
-          background: checked && !disabled ? '#E8C96A' : 'var(--color-border)',
+          background: checked && !disabled ? 'var(--color-accent)' : 'var(--color-border)',
           transition: 'background 150ms ease',
           position: 'relative',
         }}
@@ -441,7 +441,7 @@ export default function LayerPanel() {
               style={{
                 width: '100%',
                 padding: '10px',
-                background: '#E8C96A',
+                background: 'var(--color-accent)',
                 color: '#0A0A0A',
                 border: 'none',
                 borderRadius: 8,

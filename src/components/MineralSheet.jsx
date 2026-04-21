@@ -5,11 +5,11 @@ import useMapStore from '../store/mapStore'
 
 // ── Category colour map ────────────────────────────────────────────
 const MINERAL_COLORS = {
-  gold:      '#E8C96A',
+  gold:      'var(--color-accent)',
   copper:    '#E8844A',
   lead:      '#9B9B9B',
   uranium:   '#7FBA00',
-  quartz:    '#E8EAF0',
+  quartz:    'var(--color-text)',
   silver:    '#C0C0C0',
   marble:    '#4AC0A0',
   fluorspar: '#A06BE8',

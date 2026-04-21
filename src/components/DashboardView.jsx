@@ -7,15 +7,15 @@ import { useFindsLog } from '../hooks/useFindsLog'
 function PickaxeIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <path d="M2 12L6 8" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M5.5 8.5L10 2" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M10 2L12 4" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
-      <path d="M8.5 3.5L5 7" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M2 12L6 8" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M5.5 8.5L10 2" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M10 2L12 4" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M8.5 3.5L5 7" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
     </svg>
   )
 }
 
-function PersonIcon({ size = 18, color = '#E8C96A' }) {
+function PersonIcon({ size = 18, color = 'var(--color-accent)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <circle cx="9" cy="6" r="3.2" stroke={color} strokeWidth="1.5"/>
@@ -24,7 +24,7 @@ function PersonIcon({ size = 18, color = '#E8C96A' }) {
   )
 }
 
-function CompassIcon({ size = 18, color = '#E8C96A' }) {
+function CompassIcon({ size = 18, color = 'var(--color-accent)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <circle cx="9" cy="9" r="7" stroke={color} strokeWidth="1.5"/>
@@ -33,7 +33,7 @@ function CompassIcon({ size = 18, color = '#E8C96A' }) {
   )
 }
 
-function ChevronRight({ color = '#E8C96A' }) {
+function ChevronRight({ color = 'var(--color-accent)' }) {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
       <path d="M5 3l4 4-4 4" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -41,7 +41,7 @@ function ChevronRight({ color = '#E8C96A' }) {
   )
 }
 
-function BookIcon({ size = 18, color = '#E8C96A' }) {
+function BookIcon({ size = 18, color = 'var(--color-accent)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <path d="M3 3h5a2.5 2.5 0 0 1 2.5 2.5V15a1.5 1.5 0 0 0-1.5-1.5H3V3z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
@@ -50,7 +50,7 @@ function BookIcon({ size = 18, color = '#E8C96A' }) {
   )
 }
 
-function MapPinIcon({ size = 18, color = '#E8C96A' }) {
+function MapPinIcon({ size = 18, color = 'var(--color-accent)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <path d="M9 2C6.24 2 4 4.24 4 7c0 3.94 5 9 5 9s5-5.06 5-9c0-2.76-2.24-5-5-5z" stroke={color} strokeWidth="1.5" fill={`${color}22`}/>
@@ -59,7 +59,7 @@ function MapPinIcon({ size = 18, color = '#E8C96A' }) {
   )
 }
 
-function SearchIcon({ size = 18, color = '#E8C96A' }) {
+function SearchIcon({ size = 18, color = 'var(--color-accent)' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="5" stroke={color} strokeWidth="1.5"/>
@@ -99,7 +99,7 @@ function ActivityCard({ icon, title, subtitle, right, onPress }) {
         alignItems: 'center',
         gap: 12,
         width: '100%',
-        background: '#252840',
+        background: 'var(--color-surface)',
         border: '1px solid #2E3250',
         borderRadius: 14,
         padding: '14px 16px',
@@ -111,10 +111,10 @@ function ActivityCard({ icon, title, subtitle, right, onPress }) {
     >
       <GoldCircle>{icon}</GoldCircle>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: '#E8EAF0', marginBottom: 2 }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 2 }}>
           {title}
         </div>
-        <div style={{ fontSize: 12, color: '#6B6F8A', lineHeight: 1.4 }}>
+        <div style={{ fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.4 }}>
           {subtitle}
         </div>
       </div>
@@ -129,7 +129,7 @@ function ActivityCard({ icon, title, subtitle, right, onPress }) {
 
 function StatNumber({ value }) {
   return (
-    <span style={{ fontSize: 20, fontWeight: 700, color: '#E8C96A' }}>
+    <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-accent)' }}>
       {value}
     </span>
   )
@@ -144,17 +144,17 @@ function ProgressBar({ percent }) {
         width: 60,
         height: 5,
         borderRadius: 3,
-        background: '#3A3D6A',
+        background: 'var(--color-raised)',
         overflow: 'hidden',
       }}>
         <div style={{
           width: `${percent}%`,
           height: '100%',
-          background: '#E8C96A',
+          background: 'var(--color-accent)',
           borderRadius: 3,
         }} />
       </div>
-      <span style={{ fontSize: 11, color: '#6B6F8A' }}>{percent}% complete</span>
+      <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{percent}% complete</span>
     </div>
   )
 }
@@ -180,7 +180,7 @@ export default function DashboardView({ onNavigate }) {
       position: 'absolute',
       inset: 0,
       overflowY: 'auto',
-      background: '#1A1D2E',
+      background: 'var(--color-base)',
       paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)',
       paddingBottom: 'calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 16px)',
       paddingLeft: 16,
@@ -189,7 +189,7 @@ export default function DashboardView({ onNavigate }) {
 
       {/* SECTION 1 — Greeting card */}
       <div style={{
-        background: '#252840',
+        background: 'var(--color-surface)',
         border: '1px solid #2E3250',
         borderRadius: 16,
         padding: 20,
@@ -202,14 +202,14 @@ export default function DashboardView({ onNavigate }) {
           marginBottom: 10,
         }}>
           <PickaxeIcon />
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#E8C96A', letterSpacing: '0.01em' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', letterSpacing: '0.01em' }}>
             Ireland's Prospecting Companion
           </span>
         </div>
-        <div style={{ fontSize: 22, fontWeight: 700, color: '#E8EAF0', marginBottom: 4 }}>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>
           Hi {displayName},
         </div>
-        <div style={{ fontSize: 14, color: '#6B6F8A' }}>
+        <div style={{ fontSize: 14, color: 'var(--color-muted)' }}>
           Welcome back to Explore Éire
         </div>
       </div>
@@ -234,10 +234,10 @@ export default function DashboardView({ onNavigate }) {
           <div style={{ marginBottom: 10 }}>
             <PersonIcon />
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#E8EAF0', marginBottom: 3 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', marginBottom: 3 }}>
             My Account
           </div>
-          <div style={{ fontSize: 12, color: '#6B6F8A' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             View your profile
           </div>
           <div style={{ position: 'absolute', bottom: 12, right: 12 }}>
@@ -263,10 +263,10 @@ export default function DashboardView({ onNavigate }) {
           <div style={{ marginBottom: 10 }}>
             <CompassIcon />
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#E8EAF0', marginBottom: 3 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', marginBottom: 3 }}>
             Explore Features
           </div>
-          <div style={{ fontSize: 12, color: '#6B6F8A' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             Discover the app
           </div>
           <div style={{ position: 'absolute', bottom: 12, right: 12 }}>
@@ -282,18 +282,18 @@ export default function DashboardView({ onNavigate }) {
         gap: 10,
         marginBottom: 16,
       }}>
-        <div style={{ flex: 1, height: 1, background: '#2E3250' }} />
+        <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
         <span style={{
           fontSize: 11,
           fontWeight: 500,
-          color: '#6B6F8A',
+          color: 'var(--color-muted)',
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
         }}>
           Your Activity
         </span>
-        <div style={{ flex: 1, height: 1, background: '#2E3250' }} />
+        <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
       </div>
 
       {/* SECTION 4 — Activity cards */}

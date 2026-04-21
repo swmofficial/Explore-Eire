@@ -1,7 +1,7 @@
 import { triggerHaptic } from '../lib/haptics'
 
-const ACTIVE_COLOR = '#E8C96A'
-const INACTIVE_COLOR = '#6B6F8A'
+const ACTIVE_COLOR = 'var(--color-accent)'
+const INACTIVE_COLOR = 'var(--color-muted)'
 
 function SettingsIcon({ color }) {
   return (
@@ -99,7 +99,7 @@ export default function BottomNav({ activeTab, onTabChange }) {
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id
         const isMap = tab.id === 'map'
-        const iconColor = isMap ? '#1A1D2E' : (isActive ? ACTIVE_COLOR : INACTIVE_COLOR)
+        const iconColor = isMap ? 'var(--color-base)' : (isActive ? ACTIVE_COLOR : INACTIVE_COLOR)
 
         if (isMap) {
           return (

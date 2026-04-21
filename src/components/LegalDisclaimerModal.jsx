@@ -133,7 +133,7 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
             style={{
               fontSize: 20,
               fontWeight: 600,
-              color: '#E8C96A',
+              color: 'var(--color-accent)',
               marginBottom: 6,
             }}
           >
@@ -159,7 +159,7 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
                 style={{
                   fontSize: 'clamp(13px, 3.5vw, 14px)',
                   fontWeight: 600,
-                  color: '#E8EAF0',
+                  color: 'var(--color-text)',
                   margin: '0 0 8px',
                 }}
               >
@@ -243,7 +243,7 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
                     height: 18,
                     marginTop: 1,
                     flexShrink: 0,
-                    accentColor: '#E8C96A',
+                    accentColor: 'var(--color-accent)',
                     cursor: 'pointer',
                   }}
                 />
@@ -267,7 +267,7 @@ export default function LegalDisclaimerModal({ forceShow = false, onClose }) {
                   fontSize: 16,
                   fontWeight: 600,
                   cursor: checked && !saving ? 'pointer' : 'not-allowed',
-                  background: checked ? '#E8C96A' : 'var(--color-raised)',
+                  background: checked ? 'var(--color-accent)' : 'var(--color-raised)',
                   color: checked ? '#0A0A0A' : 'var(--color-muted)',
                   transition: 'background 200ms ease, color 200ms ease',
                   WebkitTapHighlightColor: 'transparent',

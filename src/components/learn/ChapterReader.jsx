@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useProgress } from '../../hooks/useLearn'
 import CourseQuiz from './CourseQuiz'
+import { triggerNotifPrePromptIfNeeded } from '../../hooks/useNotifications'
 
 function ProgressDots({ total, current }) {
   return (
@@ -10,7 +11,7 @@ function ProgressDots({ total, current }) {
           width: i === current ? 20 : 6,
           height: 6,
           borderRadius: 3,
-          background: i === current ? '#E8C96A' : i < current ? 'rgba(232,201,106,0.4)' : 'var(--color-card-border)',
+          background: i === current ? 'var(--color-accent)' : i < current ? 'rgba(232,201,106,0.4)' : 'var(--color-card-border)',
           transition: 'all 220ms ease',
         }} />
       ))}
@@ -48,6 +49,8 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
   async function handleFinish(score) {
     setDone(true)
     await markChapterComplete(chapter.id, course.id, score)
+    // Trigger notification pre-prompt after first ever chapter completion
+    try { triggerNotifPrePromptIfNeeded() } catch (_) {}
   }
 
   if (showQuiz) {
@@ -88,12 +91,12 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
               onClick={onNext}
               style={{
                 padding: '16px',
-                background: '#E8C96A',
+                background: 'var(--color-accent)',
                 border: 'none',
                 borderRadius: 12,
                 fontSize: 15,
                 fontWeight: 700,
-                color: '#1A1D2E',
+                color: 'var(--color-base)',
                 cursor: 'pointer',
                 WebkitTapHighlightColor: 'transparent',
               }}
@@ -151,7 +154,7 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 4l-6 6 6 6" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 4l-6 6 6 6" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
         <div style={{ flex: 1, overflow: 'hidden' }}>
@@ -193,12 +196,12 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
           style={{
             width: '100%',
             padding: '16px',
-            background: '#E8C96A',
+            background: 'var(--color-accent)',
             border: 'none',
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 700,
-            color: '#1A1D2E',
+            color: 'var(--color-base)',
             cursor: 'pointer',
             WebkitTapHighlightColor: 'transparent',
           }}

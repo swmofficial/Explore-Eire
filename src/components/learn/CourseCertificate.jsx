@@ -61,7 +61,7 @@ export default function CourseCertificate({ course, onBack }) {
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 4l-6 6 6 6" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 4l-6 6 6 6" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
         <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)' }}>Certificate</span>
@@ -85,13 +85,13 @@ export default function CourseCertificate({ course, onBack }) {
           <div style={{ position: 'absolute', bottom: 0, right: 0, width: 60, height: 60, borderLeft: '2px solid rgba(232,201,106,0.3)', borderTop: '2px solid rgba(232,201,106,0.3)', borderRadius: '60px 0 0 0' }} />
 
           <div style={{ fontSize: 48, marginBottom: 12 }}>🏅</div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#E8C96A', marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-accent)', marginBottom: 16 }}>
             Certificate of Completion
           </div>
           <div style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 8 }}>
             This certifies that
           </div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: '#E8C96A', marginBottom: 8 }}>
+          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-accent)', marginBottom: 8 }}>
             {displayName}
           </div>
           <div style={{ fontSize: 13, color: 'var(--color-muted)', marginBottom: 12 }}>
@@ -117,7 +117,7 @@ export default function CourseCertificate({ course, onBack }) {
             borderRadius: 12,
             fontSize: 15,
             fontWeight: 700,
-            color: '#E8C96A',
+            color: 'var(--color-accent)',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -126,10 +126,10 @@ export default function CourseCertificate({ course, onBack }) {
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="18" cy="5" r="3" stroke="#E8C96A" strokeWidth="1.5"/>
-            <circle cx="6" cy="12" r="3" stroke="#E8C96A" strokeWidth="1.5"/>
-            <circle cx="18" cy="19" r="3" stroke="#E8C96A" strokeWidth="1.5"/>
-            <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="18" cy="5" r="3" stroke="var(--color-accent)" strokeWidth="1.5"/>
+            <circle cx="6" cy="12" r="3" stroke="var(--color-accent)" strokeWidth="1.5"/>
+            <circle cx="18" cy="19" r="3" stroke="var(--color-accent)" strokeWidth="1.5"/>
+            <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
           Share Achievement
         </button>

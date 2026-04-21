@@ -248,7 +248,7 @@ function FindRow({ find, onDelete }) {
         </div>
 
         {find.weight_g != null && (
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#E8C96A', flexShrink: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)', flexShrink: 0 }}>
             {find.weight_g}g
           </div>
         )}

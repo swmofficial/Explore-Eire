@@ -23,7 +23,7 @@ const GLASS = {
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
   cursor: 'pointer',
-  color: '#E8EAF0',
+  color: 'var(--color-text)',
   WebkitTapHighlightColor: 'transparent',
 }
 
@@ -57,10 +57,10 @@ function WaypointBtn({ onPress, activeSurface, dataSheetState }) {
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
         <path
           d="M10 2C7.24 2 5 4.24 5 7c0 3.94 5 11 5 11s5-7.06 5-11c0-2.76-2.24-5-5-5z"
-          stroke="#E8EAF0" strokeWidth="1.5" strokeLinejoin="round"
+          stroke="var(--color-text)" strokeWidth="1.5" strokeLinejoin="round"
         />
-        <circle cx="10" cy="7" r="1.8" fill="#E8EAF0"/>
-        <path d="M14.5 15v4M12.5 17h4" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="10" cy="7" r="1.8" fill="var(--color-text)"/>
+        <path d="M14.5 15v4M12.5 17h4" stroke="var(--color-accent)" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     </button>
   )
@@ -84,9 +84,9 @@ function LayersBtn({ onPress, activeSurface, dataSheetState }) {
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M2 6l8-4 8 4-8 4-8-4z" stroke="#E8EAF0" strokeWidth="1.5" strokeLinejoin="round"/>
-        <path d="M2 10l8 4 8-4" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M2 14l8 4 8-4" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2 6l8-4 8 4-8 4-8-4z" stroke="var(--color-text)" strokeWidth="1.5" strokeLinejoin="round"/>
+        <path d="M2 10l8 4 8-4" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M2 14l8 4 8-4" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
     </button>
   )
@@ -109,10 +109,10 @@ function BasemapBtn({ onPress, activeSurface, dataSheetState }) {
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="#E8EAF0" strokeWidth="1.5"/>
+        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="var(--color-text)" strokeWidth="1.5"/>
+        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="var(--color-text)" strokeWidth="1.5"/>
+        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="var(--color-text)" strokeWidth="1.5"/>
+        <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="var(--color-text)" strokeWidth="1.5"/>
       </svg>
     </button>
   )
@@ -136,8 +136,8 @@ function CentreOnMeBtn({ onPress, hasLocation, activeSurface, dataSheetState }) 
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="10" cy="10" r="3.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <path d="M10 2v3.5M10 14.5V18M2 10h3.5M14.5 10H18" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="10" cy="10" r="3.5" stroke="var(--color-text)" strokeWidth="1.5"/>
+        <path d="M10 2v3.5M10 14.5V18M2 10h3.5M14.5 10H18" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     </button>
   )

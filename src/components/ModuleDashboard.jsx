@@ -72,7 +72,7 @@ function DashboardHeader({ user }) {
         fontWeight: 600,
         letterSpacing: '0.35em',
         textTransform: 'uppercase',
-        color: '#E8C96A',
+        color: 'var(--color-accent)',
         marginBottom: 12,
       }}>
         Explore Eire
@@ -100,7 +100,7 @@ function DashboardHeader({ user }) {
         <p style={{
           marginTop: 6,
           fontSize: 12,
-          color: '#E8C96A',
+          color: 'var(--color-accent)',
           fontWeight: 500,
           marginBottom: 0,
         }}>
@@ -278,7 +278,7 @@ export default function ModuleDashboard({ onEnterModule }) {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-primary)' }}>Explorer</span>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#E8C96A' }}>€9.99/mo</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--color-accent)' }}>€9.99/mo</span>
               </div>
               <p style={{ fontSize: 12, color: 'var(--color-muted)', margin: 0, lineHeight: 1.4 }}>
                 All 5 modules · Offline maps · GPS tracking · 3D terrain
@@ -290,7 +290,7 @@ export default function ModuleDashboard({ onEnterModule }) {
               style={{
                 width: '100%',
                 padding: '14px 24px',
-                background: '#E8C96A',
+                background: 'var(--color-accent)',
                 color: '#0A0A0A',
                 border: 'none',
                 borderRadius: 12,
@@ -305,7 +305,7 @@ export default function ModuleDashboard({ onEnterModule }) {
 
             {user && (
               <p style={{ marginTop: 10, fontSize: 12, color: 'var(--color-muted)' }}>
-                Annual plan: <span style={{ color: '#E8C96A' }}>€79/year</span> — save 34%
+                Annual plan: <span style={{ color: 'var(--color-accent)' }}>€79/year</span> — save 34%
               </p>
             )}
           </>

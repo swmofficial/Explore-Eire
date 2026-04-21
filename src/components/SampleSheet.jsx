@@ -273,7 +273,7 @@ export default function SampleSheet() {
             style={{
               width: '100%',
               padding: '12px',
-              background: canSaveWaypoint ? '#E8C96A' : 'var(--color-surface)',
+              background: canSaveWaypoint ? 'var(--color-accent)' : 'var(--color-surface)',
               color: canSaveWaypoint ? '#0A0A0A' : 'var(--color-muted)',
               border: `1px solid ${canSaveWaypoint ? 'transparent' : 'var(--color-border)'}`,
               borderRadius: 10,

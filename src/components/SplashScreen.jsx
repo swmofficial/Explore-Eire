@@ -34,7 +34,7 @@ export default function SplashScreen({ onDone }) {
         style={{
           fontSize: 28,
           fontWeight: 700,
-          color: '#E8C96A',
+          color: 'var(--color-accent)',
           letterSpacing: '-0.02em',
         }}
       >

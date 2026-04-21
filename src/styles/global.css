@@ -151,22 +151,6 @@
   --glass-border: rgba(232, 201, 106, 0.4);
 }
 
-/* Eire — deep forest green */
-[data-theme="eire"] {
-  --color-void:    #0A1A0F;
-  --color-base:    #0F2318;
-  --color-surface: #163020;
-  --color-raised:  #1C321C;
-  --color-border:  #1E4028;
-  --color-card:    #163020;
-  --color-card-border: #1E4028;
-  --color-nav-bg:  #0A1A0F;
-  --color-muted:   #5A8A6A;
-  --color-primary: #D4F0DC;
-  --color-text:    #D4F0DC;
-  --color-accent:  #E8C96A;
-  --color-white:   #FFFFFF;
-}
 
 /* ------------------------------------------------------------
    Base Reset

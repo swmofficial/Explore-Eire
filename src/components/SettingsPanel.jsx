@@ -10,17 +10,12 @@ const THEMES = [
   {
     id: 'dark',
     label: 'Dark',
-    swatch: ['#0A0A0A', '#111214', '#E8C96A'],
+    swatch: ['#0A0A0A', '#111214', 'var(--color-accent)'],
   },
   {
     id: 'light',
     label: 'Light',
-    swatch: ['#FFFFFF', '#F3F4F6', '#E8C96A'],
-  },
-  {
-    id: 'eire',
-    label: 'Eire',
-    swatch: ['#0D1F0D', '#162816', '#E8C96A'],
+    swatch: ['#FFFFFF', '#F3F4F6', 'var(--color-accent)'],
   },
 ]
 
@@ -38,7 +33,7 @@ function ThemeOption({ themeConfig, active, onSelect }) {
         gap: 7,
         padding: '10px 6px',
         background: active ? 'var(--color-raised)' : 'var(--color-surface)',
-        border: `1.5px solid ${active ? '#E8C96A' : 'var(--color-border)'}`,
+        border: `1.5px solid ${active ? 'var(--color-accent)' : 'var(--color-border)'}`,
         borderRadius: 10,
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -64,7 +59,7 @@ function ThemeOption({ themeConfig, active, onSelect }) {
         style={{
           fontSize: 11,
           fontWeight: active ? 600 : 400,
-          color: active ? '#E8C96A' : 'var(--color-muted)',
+          color: active ? 'var(--color-accent)' : 'var(--color-muted)',
           letterSpacing: '0.04em',
         }}
       >
@@ -89,7 +84,7 @@ function Row({ label, value, onPress, chevron = true, danger = false }) {
       }}
       onClick={onPress}
     >
-      <span style={{ fontSize: 14, color: danger ? '#E84B4B' : 'var(--color-primary)', fontWeight: 400 }}>
+      <span style={{ fontSize: 14, color: danger ? 'var(--color-danger)' : 'var(--color-primary)', fontWeight: 400 }}>
         {label}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

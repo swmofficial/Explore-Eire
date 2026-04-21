@@ -244,7 +244,7 @@ export default function AddFindSheet({ onClose }) {
               padding: '15px 0',
               borderRadius: 14,
               border: 'none',
-              background: !title.trim() || submitting ? 'rgba(232,201,106,0.3)' : '#E8C96A',
+              background: !title.trim() || submitting ? 'rgba(232,201,106,0.3)' : 'var(--color-accent)',
               color: !title.trim() || submitting ? 'rgba(0,0,0,0.4)' : '#0A0A0A',
               fontSize: 16,
               fontWeight: 700,

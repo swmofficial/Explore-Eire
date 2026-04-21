@@ -24,13 +24,13 @@ function ChapterRow({ chapter, completed, locked, onTap }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: completed ? '#E8C96A' : 'var(--color-card)',
+        background: completed ? 'var(--color-accent)' : 'var(--color-card)',
         border: completed ? 'none' : '2px solid var(--color-card-border)',
         fontSize: 14,
       }}>
         {completed ? (
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M2.5 7l3 3 6-6" stroke="#1A1D2E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M2.5 7l3 3 6-6" stroke="var(--color-base)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ) : (
           <span style={{ color: 'var(--color-muted)', fontSize: 12, fontWeight: 700 }}>{chapter.position}</span>
@@ -46,7 +46,7 @@ function ChapterRow({ chapter, completed, locked, onTap }) {
       </div>
       {!locked && (
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M6 4l4 4-4 4" stroke="#6B6F8A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M6 4l4 4-4 4" stroke="var(--color-muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       )}
     </div>
@@ -96,7 +96,7 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center', WebkitTapHighlightColor: 'transparent' }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 4l-6 6 6 6" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 4l-6 6 6 6" stroke="var(--color-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
         <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -107,7 +107,7 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
       {/* Hero card */}
       <div style={{ padding: '24px 20px 16px', textAlign: 'center' }}>
         <div style={{ fontSize: 56, marginBottom: 12 }}>{course.cover_emoji}</div>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#E8C96A', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-accent)', marginBottom: 8 }}>
           {course.is_pro ? 'PRO · ' : ''}{course.module.toUpperCase()}
         </div>
         <div style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.6, marginBottom: 20 }}>
@@ -115,7 +115,7 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
         </div>
         {/* Progress bar */}
         <div style={{ background: 'var(--color-card)', borderRadius: 8, height: 6, overflow: 'hidden', marginBottom: 6 }}>
-          <div style={{ background: '#E8C96A', height: '100%', width: `${pct}%`, transition: 'width 400ms ease' }} />
+          <div style={{ background: 'var(--color-accent)', height: '100%', width: `${pct}%`, transition: 'width 400ms ease' }} />
         </div>
         <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
           {completedCount} of {chapters.length} chapters complete
@@ -135,7 +135,7 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
               borderRadius: 12,
               fontSize: 14,
               fontWeight: 700,
-              color: hasCert ? '#E8C96A' : '#1A1D2E',
+              color: hasCert ? 'var(--color-accent)' : 'var(--color-base)',
               cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
             }}

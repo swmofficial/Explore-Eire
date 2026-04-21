@@ -25,7 +25,7 @@ function ProgressBar({ value }) {
         style={{
           height: '100%',
           width: `${value}%`,
-          background: '#E8C96A',
+          background: 'var(--color-accent)',
           borderRadius: 3,
           transition: 'width 200ms ease',
         }}
@@ -94,7 +94,7 @@ function RegionRow({ region, onDelete }) {
             style={{
               padding: '5px 10px', borderRadius: 6,
               background: 'rgba(232,75,75,0.15)', border: '1px solid rgba(232,75,75,0.4)',
-              color: '#E84B4B', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              color: 'var(--color-danger)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
@@ -234,8 +234,8 @@ export default function OfflineManager() {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-              <path d="M1 3a1 1 0 011-1h4l2 3h8a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="#E8C96A" strokeWidth="1.4" strokeLinejoin="round"/>
-              <path d="M9 8v4M7 10h4" stroke="#E8C96A" strokeWidth="1.4" strokeLinecap="round"/>
+              <path d="M1 3a1 1 0 011-1h4l2 3h8a1 1 0 011 1v9a1 1 0 01-1 1H2a1 1 0 01-1-1V3z" stroke="var(--color-accent)" strokeWidth="1.4" strokeLinejoin="round"/>
+              <path d="M9 8v4M7 10h4" stroke="var(--color-accent)" strokeWidth="1.4" strokeLinecap="round"/>
             </svg>
             <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-primary)' }}>
               Download Maps
@@ -343,7 +343,7 @@ export default function OfflineManager() {
                 }}
               />
               {nameError && (
-                <div style={{ fontSize: 11, color: '#E84B4B', marginTop: 4 }}>{nameError}</div>
+                <div style={{ fontSize: 11, color: 'var(--color-danger)', marginTop: 4 }}>{nameError}</div>
               )}
             </div>
 
@@ -352,7 +352,7 @@ export default function OfflineManager() {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                   <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>Downloading…</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#E8C96A' }}>{progress}%</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-accent)' }}>{progress}%</span>
                 </div>
                 <ProgressBar value={progress} />
               </div>
@@ -362,7 +362,7 @@ export default function OfflineManager() {
                 disabled={!isOnline || !bbox}
                 style={{
                   width: '100%', height: 42,
-                  background: isOnline && bbox ? '#E8C96A' : 'var(--color-raised)',
+                  background: isOnline && bbox ? 'var(--color-accent)' : 'var(--color-raised)',
                   border: 'none', borderRadius: 8,
                   color: isOnline && bbox ? '#0A0A0A' : 'var(--color-muted)',
                   fontSize: 13, fontWeight: 700,
@@ -375,7 +375,7 @@ export default function OfflineManager() {
             )}
 
             {downloadError && (
-              <div style={{ marginTop: 8, fontSize: 11, color: '#E84B4B' }}>{downloadError}</div>
+              <div style={{ marginTop: 8, fontSize: 11, color: 'var(--color-danger)' }}>{downloadError}</div>
             )}
           </div>
 

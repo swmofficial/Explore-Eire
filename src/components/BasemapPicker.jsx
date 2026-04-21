@@ -4,8 +4,8 @@ import useMapStore from '../store/mapStore'
 
 const BASEMAP_CARDS = [
   { id: 'outdoor',   label: 'Outdoor',   thumbColor: '#1E3028' },
-  { id: 'satellite', label: 'Satellite', thumbColor: '#1A1D2E' },
-  { id: 'topo',      label: 'Topo',      thumbColor: '#252840' },
+  { id: 'satellite', label: 'Satellite', thumbColor: 'var(--color-base)' },
+  { id: 'topo',      label: 'Topo',      thumbColor: 'var(--color-surface)' },
 ]
 
 const styles = {
@@ -40,7 +40,7 @@ const styles = {
   title: {
     fontSize: 16,
     fontWeight: 500,
-    color: '#E8EAF0',
+    color: 'var(--color-text)',
     margin: 0,
   },
   closeBtn: {
@@ -86,7 +86,7 @@ const styles = {
   thumbLabel: (active) => ({
     fontSize: 12,
     fontWeight: 500,
-    color: active ? '#E8C96A' : '#E8EAF0',
+    color: active ? 'var(--color-accent)' : 'var(--color-text)',
     letterSpacing: '0.02em',
   }),
   divider: {
@@ -108,7 +108,7 @@ const styles = {
   terrainTitle: {
     fontSize: 14,
     fontWeight: 500,
-    color: '#E8EAF0',
+    color: 'var(--color-text)',
   },
   terrainSub: {
     fontSize: 12,
@@ -118,7 +118,7 @@ const styles = {
     width: 44,
     height: 26,
     borderRadius: 13,
-    background: active ? '#E8C96A' : '#2E3035',
+    background: active ? 'var(--color-accent)' : '#2E3035',
     border: 'none',
     cursor: 'pointer',
     position: 'relative',
@@ -205,8 +205,8 @@ function ThumbPattern({ id }) {
         viewBox="0 0 80 60"
         preserveAspectRatio="none"
       >
-        <polyline points="0,45 15,30 25,38 38,18 50,28 65,12 80,22" fill="none" stroke="#4BE87A" strokeWidth="2" />
-        <polyline points="0,55 20,42 35,50 55,35 80,40" fill="none" stroke="#4BE87A" strokeWidth="1" strokeOpacity="0.5" />
+        <polyline points="0,45 15,30 25,38 38,18 50,28 65,12 80,22" fill="none" stroke="var(--color-success)" strokeWidth="2" />
+        <polyline points="0,55 20,42 35,50 55,35 80,40" fill="none" stroke="var(--color-success)" strokeWidth="1" strokeOpacity="0.5" />
       </svg>
     )
   }

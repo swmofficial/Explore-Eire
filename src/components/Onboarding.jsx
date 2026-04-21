@@ -74,7 +74,7 @@ function GoldBtn({ onClick, children }) {
         padding: '16px 0',
         borderRadius: 16,
         border: 'none',
-        background: '#E8C96A',
+        background: 'var(--color-accent)',
         color: '#0A0A0A',
         fontSize: 17,
         fontWeight: 700,
@@ -132,7 +132,7 @@ function Welcome({ onNext }) {
     <Screen>
       <div />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-        <div style={{ fontSize: 32, fontWeight: 700, color: '#E8C96A', letterSpacing: '-0.02em' }}>
+        <div style={{ fontSize: 32, fontWeight: 700, color: 'var(--color-accent)', letterSpacing: '-0.02em' }}>
           Explore Eire
         </div>
         <div style={{ fontSize: 18, fontWeight: 400, color: '#9CA3AF' }}>
@@ -162,18 +162,18 @@ function Permissions({ onComplete }) {
   }
   return (
     <Screen>
-      <div style={{ fontSize: 22, fontWeight: 700, color: '#E8EAF0', letterSpacing: '-0.01em' }}>
+      <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--color-text)', letterSpacing: '-0.01em' }}>
         One permission to get started
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
         <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
           <path
             d="M24 4C16.268 4 10 10.268 10 18c0 10.5 14 26 14 26s14-15.5 14-26c0-7.732-6.268-14-14-14z"
-            stroke="#E8C96A"
+            stroke="var(--color-accent)"
             strokeWidth="2"
             fill="rgba(232,201,106,0.12)"
           />
-          <circle cx="24" cy="18" r="4" fill="#E8C96A" />
+          <circle cx="24" cy="18" r="4" fill="var(--color-accent)" />
         </svg>
         <div style={{ fontSize: 14, color: '#6B7280', lineHeight: 1.65, maxWidth: 280 }}>
           Explore Eire uses your location to show what's near you — gold samples, trails, and local conditions. We never share your location.
@@ -254,13 +254,13 @@ function CoachMark({ targetId, title, body, coachIndex, onNext }) {
         {arrow.dir === 'up' ? (
           <div style={{ position: 'absolute', top: -ARROW_H, left: arrow.x - 10, pointerEvents: 'none' }}>
             <svg width="20" height={ARROW_H} viewBox={`0 0 20 ${ARROW_H}`}>
-              <path d={`M10 0 L20 ${ARROW_H} L0 ${ARROW_H} Z`} fill="#E8C96A" />
+              <path d={`M10 0 L20 ${ARROW_H} L0 ${ARROW_H} Z`} fill="var(--color-accent)" />
             </svg>
           </div>
         ) : (
           <div style={{ position: 'absolute', bottom: -ARROW_H, left: arrow.x - 10, pointerEvents: 'none' }}>
             <svg width="20" height={ARROW_H} viewBox={`0 0 20 ${ARROW_H}`}>
-              <path d={`M10 ${ARROW_H} L20 0 L0 0 Z`} fill="#E8C96A" />
+              <path d={`M10 ${ARROW_H} L20 0 L0 0 Z`} fill="var(--color-accent)" />
             </svg>
           </div>
         )}
@@ -268,7 +268,7 @@ function CoachMark({ targetId, title, body, coachIndex, onNext }) {
         <div style={{ fontSize: 11, fontWeight: 500, color: '#6B7280', marginBottom: 8, letterSpacing: '0.04em' }}>
           {counter} of {COACH_STEPS.length + 1}
         </div>
-        <div style={{ fontSize: 16, fontWeight: 700, color: '#E8EAF0', marginBottom: 6, lineHeight: 1.3 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-text)', marginBottom: 6, lineHeight: 1.3 }}>
           {title}
         </div>
         <div style={{ fontSize: 13, color: '#9CA3AF', lineHeight: 1.55, marginBottom: 14 }}>
@@ -282,7 +282,7 @@ function CoachMark({ targetId, title, body, coachIndex, onNext }) {
             padding: '10px 20px',
             borderRadius: 20,
             border: 'none',
-            background: '#E8C96A',
+            background: 'var(--color-accent)',
             color: '#0A0A0A',
             fontSize: 14,
             fontWeight: 700,

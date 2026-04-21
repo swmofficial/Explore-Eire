@@ -189,7 +189,7 @@ function AddMode({ onClose, addWaypoint }) {
               </div>
             )}
             {!gpsLoading && !coords && (
-              <div style={{ fontSize: 12, color: '#E84B4B' }}>GPS unavailable</div>
+              <div style={{ fontSize: 12, color: 'var(--color-danger)' }}>GPS unavailable</div>
             )}
           </div>
 
@@ -276,7 +276,7 @@ function AddMode({ onClose, addWaypoint }) {
                   style={{
                     position: 'absolute', top: -6, right: -6,
                     width: 20, height: 20, borderRadius: '50%',
-                    background: '#E84B4B', border: 'none',
+                    background: 'var(--color-danger)', border: 'none',
                     color: '#fff', fontSize: 12, lineHeight: 1,
                     cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}
@@ -314,7 +314,7 @@ function AddMode({ onClose, addWaypoint }) {
             disabled={!canSave}
             style={{
               width: '100%', height: 48,
-              background: canSave ? '#E8C96A' : 'rgba(232,201,106,0.35)',
+              background: canSave ? 'var(--color-accent)' : 'rgba(232,201,106,0.35)',
               color: '#0A0A0A', border: 'none', borderRadius: 12,
               fontSize: 15, fontWeight: 600,
               cursor: canSave ? 'pointer' : 'not-allowed',
@@ -448,8 +448,8 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
                   style={{
                     flex: 1, height: 44,
                     background: 'transparent',
-                    color: deleting ? 'var(--color-muted)' : '#E84B4B',
-                    border: `1px solid ${deleting ? 'var(--color-border)' : '#E84B4B'}`,
+                    color: deleting ? 'var(--color-muted)' : 'var(--color-danger)',
+                    border: `1px solid ${deleting ? 'var(--color-border)' : 'var(--color-danger)'}`,
                     borderRadius: 10, fontSize: 14, fontWeight: 600,
                     cursor: deleting ? 'not-allowed' : 'pointer',
                     WebkitTapHighlightColor: 'transparent',
@@ -465,7 +465,7 @@ function ViewMode({ waypoint, onClose, deleteWaypoint }) {
               style={{
                 width: '100%', height: 48,
                 background: 'transparent',
-                color: '#E84B4B',
+                color: 'var(--color-danger)',
                 border: '1px solid #E84B4B',
                 borderRadius: 12, fontSize: 14, fontWeight: 600,
                 cursor: 'pointer',

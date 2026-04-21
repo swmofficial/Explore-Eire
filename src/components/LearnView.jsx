@@ -17,7 +17,7 @@ function Badge({ type }) {
     <span style={{
       fontSize: 11, fontWeight: 700, padding: '3px 10px',
       borderRadius: 99, background: 'rgba(74,158,107,0.18)',
-      color: '#4BE87A', border: '1px solid rgba(74,158,107,0.35)',
+      color: 'var(--color-success)', border: '1px solid rgba(74,158,107,0.35)',
       whiteSpace: 'nowrap', flexShrink: 0,
     }}>In Progress</span>
   )
@@ -25,7 +25,7 @@ function Badge({ type }) {
     <span style={{
       fontSize: 11, fontWeight: 700, padding: '3px 10px',
       borderRadius: 99, background: 'rgba(232,201,106,0.12)',
-      color: '#E8C96A', border: '1px solid rgba(232,201,106,0.35)',
+      color: 'var(--color-accent)', border: '1px solid rgba(232,201,106,0.35)',
       whiteSpace: 'nowrap', flexShrink: 0,
     }}>🔒 Pro Only</span>
   )
@@ -33,7 +33,7 @@ function Badge({ type }) {
     <span style={{
       fontSize: 11, fontWeight: 600, padding: '3px 10px',
       borderRadius: 99, background: 'transparent',
-      color: '#6B6F8A', border: '1px solid #2E3250',
+      color: 'var(--color-muted)', border: '1px solid #2E3250',
       whiteSpace: 'nowrap', flexShrink: 0,
     }}>Not Started</span>
   )
@@ -54,9 +54,9 @@ function CourseCard({ course, completedCount, onTap, isPro }) {
       style={{
         margin: '0 16px 14px',
         borderRadius: 16,
-        background: '#252840',
+        background: 'var(--color-surface)',
         border: '1px solid #2E3250',
-        borderLeft: isLocked ? '1px solid #2E3250' : `4px solid ${hasProgress ? '#E8C96A' : '#2E3250'}`,
+        borderLeft: isLocked ? '1px solid #2E3250' : `4px solid ${hasProgress ? 'var(--color-accent)' : 'var(--color-border)'}`,
         padding: '16px 16px 16px 14px',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -81,7 +81,7 @@ function CourseCard({ course, completedCount, onTap, isPro }) {
             </div>
             <Badge type={badgeType} />
           </div>
-          <div style={{ fontSize: 12, color: '#6B6F8A' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             {total} chapters · ~{mins} min
           </div>
         </div>
@@ -90,21 +90,21 @@ function CourseCard({ course, completedCount, onTap, isPro }) {
       {/* Progress section — unlocked courses only */}
       {!isLocked ? (
         <>
-          <div style={{ background: '#2E3250', borderRadius: 4, height: 4, overflow: 'hidden', marginBottom: 6 }}>
-            <div style={{ background: '#E8C96A', height: '100%', width: `${pct}%`, transition: 'width 400ms ease' }} />
+          <div style={{ background: 'var(--color-border)', borderRadius: 4, height: 4, overflow: 'hidden', marginBottom: 6 }}>
+            <div style={{ background: 'var(--color-accent)', height: '100%', width: `${pct}%`, transition: 'width 400ms ease' }} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 12, color: '#6B6F8A' }}>
+            <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
               {completedCount} of {total} chapters complete
             </span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: '#E8C96A' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-accent)' }}>
               {hasProgress ? 'Continue →' : 'Start →'}
             </span>
           </div>
         </>
       ) : (
         <div style={{ textAlign: 'center', paddingTop: 4 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#E8C96A' }}>Upgrade to Unlock</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)' }}>Upgrade to Unlock</span>
         </div>
       )}
     </div>
@@ -137,8 +137,8 @@ function ProgressSummaryCard({ courses, completedIds }) {
         { value: completedChapters, label: 'Chapters Done' },
       ].map((item, i, arr) => (
         <div key={i} style={{ flex: 1, textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid #2E3250' : 'none' }}>
-          <div style={{ fontSize: 26, fontWeight: 800, color: '#E8C96A', lineHeight: 1.1 }}>{item.value}</div>
-          <div style={{ fontSize: 11, color: '#6B6F8A', marginTop: 4 }}>{item.label}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-accent)', lineHeight: 1.1 }}>{item.value}</div>
+          <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 4 }}>{item.label}</div>
         </div>
       ))}
     </div>
@@ -225,7 +225,7 @@ export default function LearnView() {
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: '#1A1D2E',
+      background: 'var(--color-base)',
       zIndex: 1,
       display: 'flex',
       flexDirection: 'column',
@@ -241,15 +241,15 @@ export default function LearnView() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '8px 16px 4px' }}>
           <div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>Learning Hub</div>
-            <div style={{ fontSize: 13, color: '#6B6F8A', marginTop: 3 }}>Master the art of prospecting</div>
+            <div style={{ fontSize: 13, color: 'var(--color-muted)', marginTop: 3 }}>Master the art of prospecting</div>
           </div>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: '#252840', border: '1px solid #2E3250',
+            background: 'var(--color-surface)', border: '1px solid #2E3250',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', flexShrink: 0, marginTop: 4,
           }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B6F8A" strokeWidth="2.5" strokeLinecap="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-muted)" strokeWidth="2.5" strokeLinecap="round">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
           </div>
@@ -259,7 +259,7 @@ export default function LearnView() {
         <ProgressSummaryCard courses={courses} completedIds={completedIds} />
 
         {/* Section label */}
-        <div style={{ padding: '8px 16px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#6B6F8A' }}>
+        <div style={{ padding: '8px 16px 10px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-muted)' }}>
           Available Courses
         </div>
 
