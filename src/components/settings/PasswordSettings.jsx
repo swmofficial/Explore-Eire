@@ -27,6 +27,11 @@ function PasswordField({ label, value, onChange, error }) {
 
 export default function PasswordSettings({ onBack }) {
   const { user } = useUserStore()
+
+  const isOAuthUser =
+    user?.app_metadata?.provider === 'google' ||
+    user?.app_metadata?.provider === 'github'
+
   const [step, setStep] = useState(1) // 1 = re-auth, 2 = new password
   const [currentPwd, setCurrentPwd] = useState('')
   const [next, setNext] = useState('')
@@ -34,6 +39,45 @@ export default function PasswordSettings({ onBack }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+
+  if (isOAuthUser) {
+    return (
+      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 80 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: 'calc(env(safe-area-inset-top, 0px) + 16px) 16px 16px',
+          borderBottom: '1px solid var(--color-border)',
+        }}>
+          <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--color-accent)', display: 'flex', alignItems: 'center' }}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M13 4l-6 6 6 6" stroke="var(--color-accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>Password</span>
+          <div style={{ width: 28 }} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 32px 0', textAlign: 'center' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'var(--color-raised)', border: '1px solid var(--color-border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20,
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="11" width="16" height="11" rx="2.5" stroke="var(--color-muted)" strokeWidth="1.6"/>
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" stroke="var(--color-muted)" strokeWidth="1.6" strokeLinecap="round"/>
+              <circle cx="12" cy="16.5" r="1.2" fill="var(--color-muted)"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--color-text)', marginBottom: 10 }}>
+            Password not available
+          </div>
+          <div style={{ fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.6 }}>
+            Your account uses Google Sign-In. Password changes must be made through Google.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const mismatch = next && confirm && next !== confirm
   const tooShort = next && next.length < 8
