@@ -159,6 +159,7 @@ const TrashSVG = <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><pa
 export default function SettingsView({ onNavigate }) {
   const [page, setPage] = useState('home')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const { user, isGuest, isPro, theme, setTheme, setUser, setIsPro, setShowAuthModal, setAuthModalDefaultTab } = useUserStore()
 
   async function handleSignOut() {
@@ -271,7 +272,7 @@ export default function SettingsView({ onNavigate }) {
       {(user && !isGuest) && (
         <>
           <button
-            onClick={handleSignOut}
+            onClick={() => setShowSignOutConfirm(true)}
             style={{
               display: 'block', width: 'calc(100% - 32px)', margin: '24px 16px 0',
               background: 'transparent', border: '1px solid var(--color-danger)',
@@ -324,6 +325,37 @@ export default function SettingsView({ onNavigate }) {
 
       {showDeleteModal && (
         <DeleteAccountModal user={user} onClose={() => setShowDeleteModal(false)} />
+      )}
+
+      {showSignOutConfirm && (
+        <>
+          <div onClick={() => setShowSignOutConfirm(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, animation: 'backdropFadeIn 200ms ease-out' }} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+            zIndex: 201, width: 'min(92vw, 380px)',
+            background: 'var(--color-base)', border: '1px solid var(--color-border)',
+            borderRadius: 16, padding: '24px', animation: 'overlayFadeIn 200ms ease-out',
+          }}>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', textAlign: 'center', marginBottom: 10 }}>Sign out?</h2>
+            <p style={{ fontSize: 13, color: 'var(--color-muted)', textAlign: 'center', lineHeight: 1.6, marginBottom: 24 }}>
+              You'll need to sign back in to access your saved data.
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setShowSignOutConfirm(false)}
+                style={{ flex: 1, padding: '12px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 9, fontSize: 14, fontWeight: 600, color: 'var(--color-text)', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { handleSignOut(); setShowSignOutConfirm(false) }}
+                style={{ flex: 1, padding: '12px', background: 'transparent', border: '1px solid var(--color-danger)', borderRadius: 9, fontSize: 14, fontWeight: 700, color: 'var(--color-danger)', cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )
