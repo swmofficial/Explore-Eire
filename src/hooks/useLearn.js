@@ -112,6 +112,32 @@ const CHAPTERS = {
 
 // ─── Hook implementations ─────────────────────────────────────────
 
+export function useCourseSummary() {
+  const { completedIds } = useProgress()
+  let totalChapters = 0
+  let completedChapters = 0
+  let inProgressCount = 0
+
+  for (const course of COURSES) {
+    const chapters = CHAPTERS[course.id] ?? []
+    const done = chapters.filter(ch => completedIds.has(ch.id)).length
+
+    totalChapters += chapters.length
+    completedChapters += done
+
+    if (done > 0 && done < chapters.length) {
+      inProgressCount++
+    }
+  }
+
+  const overallPercent =
+    totalChapters > 0
+      ? Math.round((completedChapters / totalChapters) * 100)
+      : 0
+
+  return { inProgressCount, overallPercent }
+}
+
 export function useCourses() {
   return { courses: COURSES, loading: false }
 }

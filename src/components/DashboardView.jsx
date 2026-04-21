@@ -1,6 +1,7 @@
 import useUserStore from '../store/userStore'
 import { useWaypoints } from '../hooks/useWaypoints'
 import { useFindsLog } from '../hooks/useFindsLog'
+import { useCourseSummary } from '../hooks/useLearn'
 
 // ── Icon helpers ───────────────────────────────────────────────────
 
@@ -165,6 +166,7 @@ export default function DashboardView({ onNavigate }) {
   const { user } = useUserStore()
   const { savedWaypoints } = useWaypoints()
   const { finds } = useFindsLog()
+  const { inProgressCount, overallPercent } = useCourseSummary()
 
   const displayName =
     user?.user_metadata?.display_name ||
@@ -303,9 +305,11 @@ export default function DashboardView({ onNavigate }) {
         icon={<BookIcon />}
         title="My Courses"
         subtitle={
-          <span>2 courses in progress</span>
+          inProgressCount > 0
+            ? `${inProgressCount} course${inProgressCount === 1 ? '' : 's'} in progress`
+            : 'No courses started yet'
         }
-        right={<ProgressBar percent={35} />}
+        right={<ProgressBar percent={overallPercent} />}
         onPress={() => onNavigate('learn')}
       />
 
