@@ -67,6 +67,16 @@ export function useFindsLog() {
       const { addToast } = useMapStore.getState()
       if (!user || isGuest) return
 
+      const { isPro } = useUserStore.getState()
+
+      if (!isPro && finds.length >= 10) {
+        addToast({
+          message: 'Find limit reached — upgrade to Pro for unlimited',
+          type: 'warning',
+        })
+        return
+      }
+
       const photo_url = await uploadFindPhoto(photoFile, user.id)
 
       const row = {
