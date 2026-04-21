@@ -173,6 +173,22 @@ export function useTracks() {
       addToast({ message: 'Sign in to save tracks', type: 'warning' })
       return false
     }
+
+    const { isPro } = useUserStore.getState()
+
+    const { count } = await supabase
+      .from('tracks')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if (!isPro && count >= 3) {
+      addToast({
+        message: 'Session limit reached — upgrade to Pro to save unlimited tracks',
+        type: 'warning',
+      })
+      return false
+    }
+
     if (!summary || summary.trail.length < 2) {
       addToast({ message: 'Track too short to save', type: 'warning' })
       return false
