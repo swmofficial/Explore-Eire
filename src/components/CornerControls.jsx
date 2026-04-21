@@ -1,17 +1,19 @@
-// CornerControls.jsx — 4 floating glass buttons, safe-area aware.
+// CornerControls.jsx — 4 corner glass buttons, safe-area aware.
 // Layout:
-//   Top-left:     ⚙ Settings
-//   Top-right:    ≡ Layers  → opens DataSheet to half state
-//   Bottom-left:  🗺 Basemap
-//   Bottom-centre:📷 Camera (64×64)
+//   Top-left:     📍 Waypoint  → add waypoint (Settings moved to BottomNav)
+//   Top-right:    ≡  Layers    → opens LayerPanel
+//   Bottom-left:  🗺  Basemap  → opens BasemapPicker
+//   Bottom-right: ✛  Centre   → fly to user location
 //
-// Bottom buttons are raised 76px (60px collapsed sheet + 16px gap)
-// so they are always visible above the DataSheet.
+// zIndex logic:
+// - Sheet collapsed → buttons at 42 (above nav at 40, visible)
+// - Sheet half/full → buttons drop to 18 (below DataSheet wrapper at 20)
+//   This makes them disappear cleanly behind the sheet with zero flicker.
+
 import useMapStore from '../store/mapStore'
 import useUserStore from '../store/userStore'
 import useModuleStore from '../store/moduleStore'
 
-// Shared glass button style
 const GLASS = {
   display: 'flex',
   alignItems: 'center',
@@ -25,18 +27,22 @@ const GLASS = {
   WebkitTapHighlightColor: 'transparent',
 }
 
-// Category header height + gap below it
 const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 16px)'
 const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
-// Raised above BottomNav: 64px nav height + 16px gap + safe-area
 const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 64px + 60px + 16px)'
 
-function SettingsBtn({ onPress, activeSurface }) {
+function cornerZ(activeSurface, dataSheetState) {
+  if (activeSurface !== 'map') return 5
+  return dataSheetState === 'collapsed' ? 42 : 18
+}
+
+function WaypointBtn({ onPress, activeSurface, dataSheetState }) {
   return (
     <button
+      id="tour-camera-btn"
       onClick={onPress}
-      aria-label="Settings"
+      aria-label="Add waypoint"
       style={{
         ...GLASS,
         position: 'absolute',
@@ -45,45 +51,22 @@ function SettingsBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 42,
+        zIndex: cornerZ(activeSurface, dataSheetState),
       }}
     >
-      {/* Gear / cog icon */}
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    </button>
-  )
-}
-
-function CentreOnMeBtn({ onPress, hasLocation, activeSurface }) {
-  return (
-    <button
-      onClick={onPress}
-      aria-label="Centre on my location"
-      style={{
-        ...GLASS,
-        position: 'absolute',
-        bottom: BOTTOM_OFFSET,
-        right: SIDE_OFFSET_R,
-        width: 52,
-        height: 52,
-        borderRadius: 12,
-        opacity: hasLocation ? 1 : 0.45,
-        zIndex: activeSurface !== 'map' ? 5 : 42,
-      }}
-    >
-      {/* Crosshair icon */}
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="10" cy="10" r="3.5" stroke="#E8EAF0" strokeWidth="1.5"/>
-        <path d="M10 2v3.5M10 14.5V18M2 10h3.5M14.5 10H18" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round"/>
+        <path
+          d="M10 2C7.24 2 5 4.24 5 7c0 3.94 5 11 5 11s5-7.06 5-11c0-2.76-2.24-5-5-5z"
+          stroke="#E8EAF0" strokeWidth="1.5" strokeLinejoin="round"
+        />
+        <circle cx="10" cy="7" r="1.8" fill="#E8EAF0"/>
+        <path d="M14.5 15v4M12.5 17h4" stroke="#E8C96A" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     </button>
   )
 }
 
-function LayersBtn({ onPress, activeSurface }) {
+function LayersBtn({ onPress, activeSurface, dataSheetState }) {
   return (
     <button
       id="tour-layers-btn"
@@ -97,7 +80,7 @@ function LayersBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 42,
+        zIndex: cornerZ(activeSurface, dataSheetState),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -109,7 +92,7 @@ function LayersBtn({ onPress, activeSurface }) {
   )
 }
 
-function BasemapBtn({ onPress, activeSurface }) {
+function BasemapBtn({ onPress, activeSurface, dataSheetState }) {
   return (
     <button
       onClick={onPress}
@@ -122,7 +105,7 @@ function BasemapBtn({ onPress, activeSurface }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: activeSurface !== 'map' ? 5 : 42,
+        zIndex: cornerZ(activeSurface, dataSheetState),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -135,34 +118,26 @@ function BasemapBtn({ onPress, activeSurface }) {
   )
 }
 
-function CameraBtn({ onPress, dataSheetState, activeSurface }) {
-  const zIndex = activeSurface !== 'map' ? 5 : dataSheetState === 'collapsed' ? 42 : 10
+function CentreOnMeBtn({ onPress, hasLocation, activeSurface, dataSheetState }) {
   return (
     <button
-      id="tour-camera-btn"
       onClick={onPress}
-      aria-label="Add waypoint with camera"
+      aria-label="Centre on my location"
       style={{
         ...GLASS,
-        position: 'fixed',
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px + 16px)',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 64,
-        height: 64,
-        borderRadius: 16,
-        zIndex,
-        border: '1px solid #2E3250',
+        position: 'absolute',
+        bottom: BOTTOM_OFFSET,
+        right: SIDE_OFFSET_R,
+        width: 52,
+        height: 52,
+        borderRadius: 12,
+        opacity: hasLocation ? 1 : 0.45,
+        zIndex: cornerZ(activeSurface, dataSheetState),
       }}
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
-          stroke="#E8EAF0"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <circle cx="12" cy="13" r="4" stroke="#E8EAF0" strokeWidth="1.5"/>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="3.5" stroke="#E8EAF0" strokeWidth="1.5"/>
+        <path d="M10 2v3.5M10 14.5V18M2 10h3.5M14.5 10H18" stroke="#E8EAF0" strokeWidth="1.5" strokeLinecap="round"/>
       </svg>
     </button>
   )
@@ -170,11 +145,9 @@ function CameraBtn({ onPress, dataSheetState, activeSurface }) {
 
 export default function CornerControls() {
   const {
-    setSettingsPanelOpen,
     setBasemapPickerOpen,
     setLayerPanelOpen,
     setWaypointSheet,
-    setAddFindSheetOpen,
     dataSheetState,
     mapInstance,
     userLocation,
@@ -182,11 +155,7 @@ export default function CornerControls() {
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
   const { activeSurface } = useModuleStore()
 
-  function handleLayersPress() {
-    setLayerPanelOpen(true)
-  }
-
-  function handleCameraPress() {
+  function handleWaypointPress() {
     if (!isPro || isGuest) { setShowUpgradeSheet(true); return }
     setWaypointSheet({ mode: 'add' })
   }
@@ -198,11 +167,27 @@ export default function CornerControls() {
 
   return (
     <>
-      <SettingsBtn onPress={() => setSettingsPanelOpen(true)} activeSurface={activeSurface} />
-      <LayersBtn onPress={handleLayersPress} activeSurface={activeSurface} />
-      <BasemapBtn onPress={() => setBasemapPickerOpen(true)} activeSurface={activeSurface} />
-      <CameraBtn onPress={handleCameraPress} dataSheetState={dataSheetState} activeSurface={activeSurface} />
-      <CentreOnMeBtn onPress={handleCentreOnMe} hasLocation={!!userLocation} activeSurface={activeSurface} />
+      <WaypointBtn
+        onPress={handleWaypointPress}
+        activeSurface={activeSurface}
+        dataSheetState={dataSheetState}
+      />
+      <LayersBtn
+        onPress={() => setLayerPanelOpen(true)}
+        activeSurface={activeSurface}
+        dataSheetState={dataSheetState}
+      />
+      <BasemapBtn
+        onPress={() => setBasemapPickerOpen(true)}
+        activeSurface={activeSurface}
+        dataSheetState={dataSheetState}
+      />
+      <CentreOnMeBtn
+        onPress={handleCentreOnMe}
+        hasLocation={!!userLocation}
+        activeSurface={activeSurface}
+        dataSheetState={dataSheetState}
+      />
     </>
   )
 }
