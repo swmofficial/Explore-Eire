@@ -32,12 +32,13 @@ const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
 const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 64px + 60px + 16px)'
 
-function cornerZ(activeSurface, dataSheetState) {
+function cornerZ(activeSurface, dataSheetState, anySheetOpen) {
   if (activeSurface !== 'map') return 5
-  return dataSheetState === 'collapsed' ? 42 : 18
+  if (anySheetOpen || dataSheetState !== 'collapsed') return 18
+  return 42
 }
 
-function WaypointBtn({ onPress, activeSurface, dataSheetState }) {
+function WaypointBtn({ onPress, activeSurface, dataSheetState, anySheetOpen }) {
   return (
     <button
       id="tour-camera-btn"
@@ -51,7 +52,7 @@ function WaypointBtn({ onPress, activeSurface, dataSheetState }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: cornerZ(activeSurface, dataSheetState),
+        zIndex: cornerZ(activeSurface, dataSheetState, anySheetOpen),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -66,7 +67,7 @@ function WaypointBtn({ onPress, activeSurface, dataSheetState }) {
   )
 }
 
-function LayersBtn({ onPress, activeSurface, dataSheetState }) {
+function LayersBtn({ onPress, activeSurface, dataSheetState, anySheetOpen }) {
   return (
     <button
       id="tour-layers-btn"
@@ -80,7 +81,7 @@ function LayersBtn({ onPress, activeSurface, dataSheetState }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: cornerZ(activeSurface, dataSheetState),
+        zIndex: cornerZ(activeSurface, dataSheetState, anySheetOpen),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -92,7 +93,7 @@ function LayersBtn({ onPress, activeSurface, dataSheetState }) {
   )
 }
 
-function BasemapBtn({ onPress, activeSurface, dataSheetState }) {
+function BasemapBtn({ onPress, activeSurface, dataSheetState, anySheetOpen }) {
   return (
     <button
       onClick={onPress}
@@ -105,7 +106,7 @@ function BasemapBtn({ onPress, activeSurface, dataSheetState }) {
         width: 52,
         height: 52,
         borderRadius: 12,
-        zIndex: cornerZ(activeSurface, dataSheetState),
+        zIndex: cornerZ(activeSurface, dataSheetState, anySheetOpen),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -118,7 +119,7 @@ function BasemapBtn({ onPress, activeSurface, dataSheetState }) {
   )
 }
 
-function CentreOnMeBtn({ onPress, hasLocation, activeSurface, dataSheetState }) {
+function CentreOnMeBtn({ onPress, hasLocation, activeSurface, dataSheetState, anySheetOpen }) {
   return (
     <button
       onClick={onPress}
@@ -132,7 +133,7 @@ function CentreOnMeBtn({ onPress, hasLocation, activeSurface, dataSheetState }) 
         height: 52,
         borderRadius: 12,
         opacity: hasLocation ? 1 : 0.45,
-        zIndex: cornerZ(activeSurface, dataSheetState),
+        zIndex: cornerZ(activeSurface, dataSheetState, anySheetOpen),
       }}
     >
       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -151,9 +152,14 @@ export default function CornerControls() {
     dataSheetState,
     mapInstance,
     userLocation,
+    waypointSheet,
+    selectedSample,
+    selectedMineral,
   } = useMapStore()
   const { isPro, isGuest, setShowUpgradeSheet } = useUserStore()
   const { activeSurface } = useModuleStore()
+
+  const anySheetOpen = !!waypointSheet || !!selectedSample || !!selectedMineral
 
   function handleWaypointPress() {
     if (!isPro || isGuest) { setShowUpgradeSheet(true); return }
@@ -171,22 +177,26 @@ export default function CornerControls() {
         onPress={handleWaypointPress}
         activeSurface={activeSurface}
         dataSheetState={dataSheetState}
+        anySheetOpen={anySheetOpen}
       />
       <LayersBtn
         onPress={() => setLayerPanelOpen(true)}
         activeSurface={activeSurface}
         dataSheetState={dataSheetState}
+        anySheetOpen={anySheetOpen}
       />
       <BasemapBtn
         onPress={() => setBasemapPickerOpen(true)}
         activeSurface={activeSurface}
         dataSheetState={dataSheetState}
+        anySheetOpen={anySheetOpen}
       />
       <CentreOnMeBtn
         onPress={handleCentreOnMe}
         hasLocation={!!userLocation}
         activeSurface={activeSurface}
         dataSheetState={dataSheetState}
+        anySheetOpen={anySheetOpen}
       />
     </>
   )
