@@ -1048,7 +1048,7 @@ export default function Map() {
             top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 30,
+            zIndex: 35,
             display: 'flex',
             alignItems: 'center',
             gap: 8,
