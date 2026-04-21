@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
+import { useUserTier } from '../hooks/useUserTier'
 import ProfileSettings from './settings/ProfileSettings'
 import PasswordSettings from './settings/PasswordSettings'
 import NotificationSettings from './settings/NotificationSettings'
@@ -161,6 +162,7 @@ export default function SettingsView({ onNavigate }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
   const { user, isGuest, isPro, theme, setTheme, setUser, setIsPro, setShowAuthModal, setAuthModalDefaultTab } = useUserStore()
+  const { tier } = useUserTier()
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -205,7 +207,14 @@ export default function SettingsView({ onNavigate }) {
       {/* Premium banner */}
       <div style={{ padding: '20px 16px 0' }}>
         <button
-          onClick={() => setPage('premium')}
+          onClick={() => {
+            if (tier === 'guest') {
+              setAuthModalDefaultTab('signup')
+              setShowAuthModal(true)
+            } else {
+              setPage('premium')
+            }
+          }}
           style={{
             width: '100%',
             background: isPro
@@ -220,9 +229,15 @@ export default function SettingsView({ onNavigate }) {
             <path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z" stroke="#1A1D2E" strokeWidth="1.6" strokeLinejoin="round" fill="rgba(26,29,46,0.3)"/>
           </svg>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#1A1D2E', marginBottom: 3 }}>Premium Membership</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#1A1D2E', marginBottom: 3 }}>
+              {tier === 'guest' ? 'Create a Free Account' : tier === 'pro' ? 'Pro Member' : 'Explorer — Free Plan'}
+            </div>
             <div style={{ fontSize: 13, color: '#2A2000' }}>
-              {isPro ? 'All features unlocked' : 'Unlock all layers, courses & offline maps'}
+              {tier === 'guest'
+                ? 'Save waypoints, track sessions & more'
+                : tier === 'pro'
+                ? 'All features unlocked'
+                : 'Upgrade to unlock all layers, courses & offline maps'}
             </div>
           </div>
           {isPro ? (
