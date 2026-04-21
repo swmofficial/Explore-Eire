@@ -1045,7 +1045,7 @@ export default function Map() {
           aria-label="Go & Track"
           style={{
             position: 'fixed',
-            top: 'calc(env(safe-area-inset-top, 0px) + 56px)',
+            top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 30,

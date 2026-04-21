@@ -26,11 +26,11 @@ const GLASS = {
 }
 
 // Category header height + gap below it
-const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 44px + 12px)'
+const TOP_OFFSET    = 'calc(env(safe-area-inset-top, 0px) + 16px)'
 const SIDE_OFFSET_L = 'calc(env(safe-area-inset-left, 0px) + 16px)'
 const SIDE_OFFSET_R = 'calc(env(safe-area-inset-right, 0px) + 16px)'
 // Raised above BottomNav: 64px nav height + 16px gap + safe-area
-const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 64px + 16px)'
+const BOTTOM_OFFSET = 'calc(env(safe-area-inset-bottom, 0px) + 64px + 60px + 16px)'
 
 function SettingsBtn({ onPress, activeSurface }) {
   return (
