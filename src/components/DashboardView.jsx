@@ -100,7 +100,7 @@ function ActivityCard({ icon, title, subtitle, right, onPress }) {
         gap: 12,
         width: '100%',
         background: 'var(--color-surface)',
-        border: '1px solid #2E3250',
+        border: '1px solid var(--color-border)',
         borderRadius: 14,
         padding: '14px 16px',
         marginBottom: 10,
@@ -190,7 +190,7 @@ export default function DashboardView({ onNavigate }) {
       {/* SECTION 1 — Greeting card */}
       <div style={{
         background: 'var(--color-surface)',
-        border: '1px solid #2E3250',
+        border: '1px solid var(--color-border)',
         borderRadius: 16,
         padding: 20,
         marginBottom: 16,
@@ -221,8 +221,8 @@ export default function DashboardView({ onNavigate }) {
           onClick={() => onNavigate('profile')}
           style={{
             flex: 1,
-            background: '#1E2240',
-            border: '1px solid #3A3D6A',
+            background: 'var(--color-card-alt)',
+            border: '1px solid var(--color-border)',
             borderRadius: 14,
             padding: 16,
             cursor: 'pointer',
@@ -250,8 +250,8 @@ export default function DashboardView({ onNavigate }) {
           onClick={() => onNavigate('learn')}
           style={{
             flex: 1,
-            background: '#1E2240',
-            border: '1px solid #3A3D6A',
+            background: 'var(--color-card-alt)',
+            border: '1px solid var(--color-border)',
             borderRadius: 14,
             padding: 16,
             cursor: 'pointer',

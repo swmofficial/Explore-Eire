@@ -236,7 +236,21 @@ export default function SettingsView({ onNavigate }) {
       <GroupLabel>Account</GroupLabel>
       <SettingsCard>
         <SettingsRow icon={PersonSVG} label="Profile" onPress={() => setPage('profile')} />
-        <SettingsRow icon={LockSVG} label="Password" onPress={() => setPage('password')} />
+        {user && !isGuest ? (
+          <SettingsRow icon={LockSVG} label="Password" onPress={() => setPage('password')} />
+        ) : (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '14px 16px', borderBottom: '1px solid var(--color-border)',
+            opacity: 0.4, pointerEvents: 'none',
+          }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(232,201,106,0.1)', border: '1px solid rgba(232,201,106,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              {LockSVG}
+            </div>
+            <span style={{ flex: 1, fontSize: 15, fontWeight: 500, color: 'var(--color-text)' }}>Password</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="5.5" width="8" height="5.5" rx="1.5" stroke="var(--color-muted)" strokeWidth="1.2"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" stroke="var(--color-muted)" strokeWidth="1.2"/></svg>
+          </div>
+        )}
         <SettingsRow icon={BellSVG} label="Notifications" onPress={() => setPage('notifications')} />
         <SettingsRow
           icon={MoonSVG}

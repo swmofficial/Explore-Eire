@@ -139,6 +139,7 @@
   --color-border:  #E0E3EF;
   --color-card:    #F5F6FA;
   --color-card-border: #E0E3EF;
+  --color-card-alt: #EBEDF5;
   --color-nav-bg:  #FFFFFF;
   --color-muted:   #8A8FAA;
   --color-primary: #1A1D2E;
@@ -172,6 +173,13 @@ html, body {
   font-weight: var(--text-body-weight);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Prevent pinch-zoom on non-map UI; map canvas overrides with its own handlers */
+  touch-action: pan-x pan-y;
+}
+
+/* Prevent iOS auto-zoom on input focus (iOS zooms if font-size < 16px) */
+input, textarea, select {
+  font-size: 16px !important;
 }
 
 #root {

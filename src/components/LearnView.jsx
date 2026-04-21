@@ -33,7 +33,7 @@ function Badge({ type }) {
     <span style={{
       fontSize: 11, fontWeight: 600, padding: '3px 10px',
       borderRadius: 99, background: 'transparent',
-      color: 'var(--color-muted)', border: '1px solid #2E3250',
+      color: 'var(--color-muted)', border: '1px solid var(--color-border)',
       whiteSpace: 'nowrap', flexShrink: 0,
     }}>Not Started</span>
   )
@@ -55,8 +55,8 @@ function CourseCard({ course, completedCount, onTap, isPro }) {
         margin: '0 16px 14px',
         borderRadius: 16,
         background: 'var(--color-surface)',
-        border: '1px solid #2E3250',
-        borderLeft: isLocked ? '1px solid #2E3250' : `4px solid ${hasProgress ? 'var(--color-accent)' : 'var(--color-border)'}`,
+        border: '1px solid var(--color-border)',
+        borderLeft: isLocked ? '1px solid var(--color-border)' : `4px solid ${hasProgress ? 'var(--color-accent)' : 'var(--color-border)'}`,
         padding: '16px 16px 16px 14px',
         cursor: 'pointer',
         WebkitTapHighlightColor: 'transparent',
@@ -76,7 +76,7 @@ function CourseCard({ course, completedCount, onTap, isPro }) {
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
-            <div style={{ fontSize: 15, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.3 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', lineHeight: 1.3 }}>
               {course.title}
             </div>
             <Badge type={badgeType} />
@@ -126,8 +126,8 @@ function ProgressSummaryCard({ courses, completedIds }) {
     <div style={{
       margin: '12px 16px',
       borderRadius: 16,
-      background: 'linear-gradient(135deg, #1E2240, #252840)',
-      border: '1px solid rgba(232,201,106,0.2)',
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
       padding: '18px 0',
       display: 'flex',
     }}>
@@ -136,7 +136,7 @@ function ProgressSummaryCard({ courses, completedIds }) {
         { value: `${pct}%`, label: 'Complete' },
         { value: completedChapters, label: 'Chapters Done' },
       ].map((item, i, arr) => (
-        <div key={i} style={{ flex: 1, textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid #2E3250' : 'none' }}>
+        <div key={i} style={{ flex: 1, textAlign: 'center', borderRight: i < arr.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
           <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--color-accent)', lineHeight: 1.1 }}>{item.value}</div>
           <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 4 }}>{item.label}</div>
         </div>
@@ -240,12 +240,12 @@ export default function LearnView() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '8px 16px 4px' }}>
           <div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#FFFFFF', lineHeight: 1.2 }}>Learning Hub</div>
+            <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-text)', lineHeight: 1.2 }}>Learning Hub</div>
             <div style={{ fontSize: 13, color: 'var(--color-muted)', marginTop: 3 }}>Master the art of prospecting</div>
           </div>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
-            background: 'var(--color-surface)', border: '1px solid #2E3250',
+            background: 'var(--color-surface)', border: '1px solid var(--color-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             cursor: 'pointer', flexShrink: 0, marginTop: 4,
           }}>
