@@ -1,0 +1,52 @@
+name: UX Test Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  ux-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for Vercel preview
+        run: npx wait-on $VERCEL_PREVIEW_URL --timeout 120000
+        env:
+          VERCEL_PREVIEW_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+
+      - name: Run Playwright UX tests
+        run: npx playwright test --reporter=json > playwright-report.json || true
+        env:
+          BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+
+      - name: Collect git diff
+        run: git diff HEAD~5..HEAD --stat > git-diff.txt
+
+      - name: Send to Gemini for analysis
+        run: node .github/scripts/gemini-analysis.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Commit agent report
+        run: |
+          git config user.name "ux-agent"
+          git config user.email "ux-agent@exploreeire.ie"
+          git add AGENT_REPORTS/
+          git commit -m "[ux] automated report $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
+          git push origin dev
