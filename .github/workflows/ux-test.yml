@@ -1,4 +1,4 @@
-name: UX Test Pipeline
+name: UX Test Pipeline — Tier 1
 
 on:
   push:
@@ -11,11 +11,13 @@ permissions:
 jobs:
   ux-test:
     runs-on: ubuntu-latest
+    outputs:
+      trigger_audit: ${{ steps.streak.outputs.trigger_audit }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 10
+          fetch-depth: 20
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,23 +30,31 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Get test targets from git diff
+        run: node .github/scripts/get-test-targets.js
+
+      - name: Debug URL
+        run: |
+          curl -I "${{ secrets.VERCEL_PREVIEW_URL }}" || echo "URL not reachable"
+
       - name: Wait for Vercel preview
         run: |
           echo "Waiting 90s for Vercel to build..."
           sleep 90
           echo "DEPLOYMENT_URL=${{ secrets.VERCEL_PREVIEW_URL }}" >> $GITHUB_ENV
 
-      - name: Debug URL
-        run: |
-          echo "BASE_URL is: ${{ secrets.VERCEL_PREVIEW_URL }}"
-          curl -I "${{ secrets.VERCEL_PREVIEW_URL }}" || echo "URL not reachable"
-
       - name: Collect Vercel build logs
         continue-on-error: true
         run: echo "Vercel build logs — future improvement" > vercel-build-logs.txt
 
-      - name: Run Playwright UX tests
-        run: npx playwright test --reporter=json > playwright-report.json || true
+      - name: Run Playwright UX tests (smart targets only)
+        run: |
+          TARGETS=$(cat test-targets.txt | tr '\n' ' ')
+          echo "Running specs: $TARGETS"
+          npx playwright test $TARGETS --reporter=json > playwright-report.json || true
         env:
           BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
 
@@ -59,13 +69,37 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Commit agent report
+      - name: Check Playwright results and update streak
+        id: streak
+        run: |
+          FAILED=$(node -e "
+            const fs = require('fs');
+            try {
+              const r = JSON.parse(fs.readFileSync('playwright-report.json'));
+              console.log(r.stats?.unexpected > 0 ? 'fail' : 'pass');
+            } catch { console.log('fail'); }
+          ")
+          echo "Playwright result: $FAILED"
+          OUTPUT=$(node .github/scripts/update-streak.js $FAILED)
+          echo "$OUTPUT"
+          if echo "$OUTPUT" | grep -q "TRIGGER_AUDIT"; then
+            echo "trigger_audit=true" >> $GITHUB_OUTPUT
+          else
+            echo "trigger_audit=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit agent report and streak
         continue-on-error: true
         run: |
           git config user.name "ux-agent"
           git config user.email "ux-agent@exploreeire.ie"
           git add AGENT_REPORTS/
-          git commit -m "[ux] automated report $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
+          git commit -m "[ux] tier1 report $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
           git push origin dev || echo "Push failed — will retry on next run"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  trigger-audit:
+    needs: ux-test
+    if: needs.ux-test.outputs.trigger_audit == 'true'
+    uses: ./.github/workflows/ux-audit.yml
