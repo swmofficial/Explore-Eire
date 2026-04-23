@@ -44,7 +44,7 @@ jobs:
         run: git log --oneline -20 > git-log.txt
 
       - name: Collect git diff
-        run: git diff HEAD~10..HEAD --stat > git-diff.txt
+        run: git log --oneline -10 | tail -1 | awk '{print $1}' | xargs -I {} git diff {}..HEAD --stat > git-diff.txt || git diff HEAD --stat > git-diff.txt
 
       - name: Send audit to Gemini
         run: node .github/scripts/gemini-audit.js
