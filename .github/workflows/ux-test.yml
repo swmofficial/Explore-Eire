@@ -39,6 +39,20 @@ jobs:
           echo "BASE_URL is: ${{ secrets.VERCEL_PREVIEW_URL }}"
           curl -I "${{ secrets.VERCEL_PREVIEW_URL }}" || echo "URL not reachable"
 
+      - name: Collect Vercel build logs
+        run: |
+          DEPLOYMENT=$(curl -s "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&target=preview" \
+            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
+            node -e "const d=[];process.stdin.on('data',c=>d.push(c));process.stdin.on('end',()=>{const r=JSON.parse(d.join(''));console.log(r.deployments[0]?.uid||'');});")
+          if [ -n "$DEPLOYMENT" ]; then
+            curl -s "https://api.vercel.com/v2/deployments/$DEPLOYMENT/events?limit=100" \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" | \
+              node -e "const d=[];process.stdin.on('data',c=>d.push(c));process.stdin.on('end',()=>{const r=JSON.parse(d.join(''));r.forEach(e=>e.type==='stdout'&&console.log(e.payload?.text||''));});" \
+              > vercel-build-logs.txt 2>&1 || echo "Could not fetch build logs" > vercel-build-logs.txt
+          else
+            echo "No deployment found" > vercel-build-logs.txt
+          fi
+
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
         env:

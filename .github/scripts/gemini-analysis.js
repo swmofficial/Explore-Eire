@@ -21,6 +21,10 @@ const commitLog = fs.existsSync('git-log.txt')
   ? fs.readFileSync('git-log.txt', 'utf8')
   : 'No commit log found.';
 
+const vercelLogs = fs.existsSync('vercel-build-logs.txt')
+  ? fs.readFileSync('vercel-build-logs.txt', 'utf8').slice(0, 10000)
+  : 'No Vercel build logs found.';
+
 const claudeMd = fs.existsSync('CLAUDE.md')
   ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 8000)
   : '';
@@ -63,6 +67,9 @@ ${playwrightReport.slice(0, 20000)}
 
 COMMIT LOG (last 20):
 ${commitLog}
+
+VERCEL BUILD LOGS:
+${vercelLogs}
 
 PROJECT MEMORY:
 ${claudeMd}`;
