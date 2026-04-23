@@ -28,53 +28,11 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Wait for Vercel deployment
-        id: vercel_deploy
+      - name: Wait for Vercel preview
         run: |
-          SHORT_SHA=$(git rev-parse --short ${{ github.sha }})
-          echo "Polling Vercel for deployment of commit $SHORT_SHA..."
-          FOUND_URL=""
-          for i in $(seq 1 30); do
-            RESPONSE=$(curl -s \
-              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=20")
-
-            # Primary: match by short SHA
-            MATCH=$(echo "$RESPONSE" | jq -r --arg sha "$SHORT_SHA" \
-              '.deployments[] | select(.meta.githubCommitSha != null and (.meta.githubCommitSha | startswith($sha))) | {state: .state, url: .url} | @base64' | head -1)
-
-            # Fallback after 10 attempts: grab most recent deployment on dev branch
-            if [ -z "$MATCH" ] && [ "$i" -gt 10 ]; then
-              echo "Attempt $i: SHA match failed, falling back to most recent dev deployment..."
-              MATCH=$(echo "$RESPONSE" | jq -r \
-                '.deployments[] | select(.meta.githubCommitRef == "dev" or .meta.githubBranch == "dev") | {state: .state, url: .url} | @base64' | head -1)
-            fi
-
-            if [ -z "$MATCH" ]; then
-              echo "Attempt $i: no deployment found yet, waiting 10s..."
-              sleep 10
-              continue
-            fi
-
-            STATE=$(echo "$MATCH" | base64 -d | jq -r '.state')
-            URL=$(echo "$MATCH" | base64 -d | jq -r '.url')
-            echo "Attempt $i: state=$STATE url=$URL"
-
-            if [ "$STATE" = "READY" ]; then
-              echo "DEPLOYMENT_URL=https://$URL" >> $GITHUB_ENV
-              echo "Deployment ready: https://$URL"
-              exit 0
-            elif [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
-              echo "Deployment failed with state: $STATE"
-              exit 1
-            fi
-            sleep 10
-          done
-          echo "Timed out waiting for Vercel deployment"
-          exit 1
+          echo "Waiting 90s for Vercel to build..."
+          sleep 90
+          echo "DEPLOYMENT_URL=${{ secrets.VERCEL_PREVIEW_URL }}" >> $GITHUB_ENV
 
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
