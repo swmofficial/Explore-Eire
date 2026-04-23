@@ -7,6 +7,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:5173',
     screenshot: 'on',
     video: 'retain-on-failure',
+    viewport: { width: 390, height: 844 },
   },
   reporter: [['json', { outputFile: 'playwright-report.json' }]],
 });
