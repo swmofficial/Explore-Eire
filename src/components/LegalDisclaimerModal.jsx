@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 
-const LEGAL_SECTIONS = [
+export const LEGAL_SECTIONS = [
   {
     id: 'two-day-rule',
     title: 'The Two-Day Rule',

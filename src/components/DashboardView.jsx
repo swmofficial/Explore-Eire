@@ -35,6 +35,34 @@ function CompassIcon({ size = 18, color = 'var(--color-accent)' }) {
   )
 }
 
+function ShoppingBagIcon({ size = 18, color = 'var(--color-accent)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M3.5 5.5h11l-1.5 9h-8l-1.5-9z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M6.5 5.5V4a2.5 2.5 0 0 1 5 0v1.5" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
+function DownloadCloudIcon({ size = 18, color = 'var(--color-accent)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M13.5 11.5a3 3 0 0 0-2.5-5.45A4.5 4.5 0 1 0 5 11.5" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M9 11v4M7 13l2 2 2-2" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
+function TrophyIcon({ size = 18, color = 'var(--color-accent)' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M5 3h8v6a4 4 0 0 1-8 0V3z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M5 5H2.5a1.5 1.5 0 0 0 0 3H5M13 5h2.5a1.5 1.5 0 0 1 0 3H13" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M9 13v2M6 15h6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 function ChevronRight({ color = 'var(--color-accent)' }) {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
@@ -249,9 +277,10 @@ export default function DashboardView({ onNavigate }) {
           </div>
         </button>
 
-        {/* Explore Features */}
+        {/* Visit our Store */}
+        {/* TODO: swap window.open for a native WebView sheet when available */}
         <button
-          onClick={() => onNavigate('learn')}
+          onClick={() => window.open('https://exploreeire.ie/store', '_blank')}
           style={{
             flex: 1,
             background: 'var(--color-card-alt)',
@@ -265,13 +294,13 @@ export default function DashboardView({ onNavigate }) {
           }}
         >
           <div style={{ marginBottom: 10 }}>
-            <CompassIcon />
+            <ShoppingBagIcon />
           </div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', marginBottom: 3 }}>
-            Explore Features
+            Visit our Store
           </div>
           <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-            Discover the app
+            Browse Irish outdoors gear
           </div>
           <div style={{ position: 'absolute', bottom: 12, right: 12 }}>
             <ChevronRight />
@@ -295,64 +324,87 @@ export default function DashboardView({ onNavigate }) {
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
         }}>
-          Your Activity
+          Explore Features
         </span>
         <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
       </div>
 
-      {/* SECTION 4 — Activity cards */}
+      {/* SECTION 4 — Activity cards (independently scrollable) */}
+      <div style={{ overflowY: 'auto', maxHeight: 340, paddingRight: 4 }}>
 
-      {/* Card 1 — My Courses */}
-      <ActivityCard
-        icon={<BookIcon />}
-        title="My Courses"
-        subtitle={
-          inProgressCount > 0
-            ? `${inProgressCount} course${inProgressCount === 1 ? '' : 's'} in progress`
-            : 'No courses started yet'
-        }
-        right={<ProgressBar percent={overallPercent} />}
-        onPress={() => onNavigate('learn')}
-      />
+        {/* Card 1 — My Courses */}
+        <ActivityCard
+          icon={<BookIcon />}
+          title="My Courses"
+          subtitle={
+            inProgressCount > 0
+              ? `${inProgressCount} course${inProgressCount === 1 ? '' : 's'} in progress`
+              : 'No courses started yet'
+          }
+          right={<ProgressBar percent={overallPercent} />}
+          onPress={() => onNavigate('learn')}
+        />
 
-      {/* Card 2 — My Waypoints */}
-      <ActivityCard
-        icon={<MapPinIcon />}
-        title="My Waypoints"
-        subtitle={
-          waypointCount > 0
-            ? `${waypointCount} waypoint${waypointCount === 1 ? '' : 's'} saved`
-            : 'No waypoints yet — add one on the map'
-        }
-        right={waypointCount > 0 ? <StatNumber value={waypointCount} /> : null}
-        onPress={() => onNavigate('map')}
-      />
+        {/* Card 2 — My Waypoints */}
+        <ActivityCard
+          icon={<MapPinIcon />}
+          title="My Waypoints"
+          subtitle={
+            waypointCount > 0
+              ? `${waypointCount} waypoint${waypointCount === 1 ? '' : 's'} saved`
+              : 'No waypoints yet — add one on the map'
+          }
+          right={waypointCount > 0 ? <StatNumber value={waypointCount} /> : null}
+          onPress={() => onNavigate('map')}
+        />
 
-      {/* Card 3 — Field Log */}
-      <ActivityCard
-        icon={<SearchIcon />}
-        title="Field Log"
-        subtitle={
-          findsCount > 0
-            ? `${findsCount} find${findsCount === 1 ? '' : 's'} recorded`
-            : 'No finds recorded yet'
-        }
-        right={findsCount > 0 ? <StatNumber value={findsCount} /> : null}
-        onPress={() => onNavigate('profile')}
-      />
+        {/* Card 3 — Field Log */}
+        <ActivityCard
+          icon={<SearchIcon />}
+          title="Field Log"
+          subtitle={
+            findsCount > 0
+              ? `${findsCount} find${findsCount === 1 ? '' : 's'} recorded`
+              : 'No finds recorded yet'
+          }
+          right={findsCount > 0 ? <StatNumber value={findsCount} /> : null}
+          onPress={() => onNavigate('profile')}
+        />
 
-      {/* Card 4 — My Sessions */}
-      <ActivityCard
-        icon={<CompassIcon />}
-        title="My Sessions"
-        subtitle={
-          savedTrackCount > 0
-            ? `${savedTrackCount} session${savedTrackCount === 1 ? '' : 's'} recorded`
-            : 'No sessions yet — tap Go & Track on the map'
-        }
-        right={savedTrackCount > 0 ? <StatNumber value={savedTrackCount} /> : null}
-        onPress={() => onNavigate('profile')}
-      />
+        {/* Card 4 — My Sessions */}
+        <ActivityCard
+          icon={<CompassIcon />}
+          title="My Sessions"
+          subtitle={
+            savedTrackCount > 0
+              ? `${savedTrackCount} session${savedTrackCount === 1 ? '' : 's'} recorded`
+              : 'No sessions yet — tap Go & Track on the map'
+          }
+          right={savedTrackCount > 0 ? <StatNumber value={savedTrackCount} /> : null}
+          onPress={() => onNavigate('profile')}
+        />
+
+        {/* Card 5 — Offline Maps */}
+        <ActivityCard
+          icon={<DownloadCloudIcon />}
+          title="Offline Maps"
+          subtitle="No offline areas saved"
+          right={null}
+          onPress={() => onNavigate('map')}
+        />
+
+        {/* Card 6 — Achievements (coming soon) */}
+        <div style={{ opacity: 0.5, cursor: 'default' }}>
+          <ActivityCard
+            icon={<TrophyIcon />}
+            title="Achievements"
+            subtitle="Coming soon"
+            right={null}
+            onPress={null}
+          />
+        </div>
+
+      </div>
 
     </div>
   )

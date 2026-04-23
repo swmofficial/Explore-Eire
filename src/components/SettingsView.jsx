@@ -7,6 +7,8 @@ import PasswordSettings from './settings/PasswordSettings'
 import NotificationSettings from './settings/NotificationSettings'
 import PremiumSettings from './settings/PremiumSettings'
 import HelpSupport from './settings/HelpSupport'
+import PrivacyPolicy from './settings/PrivacyPolicy'
+import TermsOfService from './settings/TermsOfService'
 
 // ── Shared primitives ──────────────────────────────────────────────
 
@@ -191,6 +193,8 @@ export default function SettingsView({ onNavigate }) {
   if (page === 'notifications') return <NotificationSettings onBack={() => setPage('home')} />
   if (page === 'premium')       return <PremiumSettings onBack={() => setPage('home')} />
   if (page === 'help')          return <HelpSupport onBack={() => setPage('home')} />
+  if (page === 'privacy')       return <PrivacyPolicy onBack={() => setPage('home')} />
+  if (page === 'terms')         return <TermsOfService onBack={() => setPage('home')} />
 
   return (
     <div style={{
@@ -281,8 +285,8 @@ export default function SettingsView({ onNavigate }) {
       {/* MORE group */}
       <GroupLabel>More</GroupLabel>
       <SettingsCard>
-        <SettingsRow icon={ShieldSVG} label="Privacy Policy" onPress={() => window.open('https://exploreeire.ie/privacy', '_blank')} />
-        <SettingsRow icon={DocSVG} label="Terms of Service" onPress={() => window.open('https://exploreeire.ie/terms', '_blank')} />
+        <SettingsRow icon={ShieldSVG} label="Privacy Policy" onPress={() => setPage('privacy')} />
+        <SettingsRow icon={DocSVG} label="Terms of Service" onPress={() => setPage('terms')} />
         <SettingsRow icon={StarSVG} label="Rate &amp; Review" onPress={handleRateReview} />
         <SettingsRow icon={QuestionSVG} label="Help &amp; Support" noBorder onPress={() => setPage('help')} />
       </SettingsCard>
