@@ -17,6 +17,10 @@ const gitDiff = fs.existsSync('git-diff.txt')
   ? fs.readFileSync('git-diff.txt', 'utf8')
   : 'No git diff found.';
 
+const commitLog = fs.existsSync('git-log.txt')
+  ? fs.readFileSync('git-log.txt', 'utf8')
+  : 'No commit log found.';
+
 const claudeMd = fs.existsSync('CLAUDE.md')
   ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 8000)
   : '';
@@ -55,7 +59,10 @@ GIT DIFF:
 ${gitDiff}
 
 PLAYWRIGHT RESULTS:
-${playwrightReport.slice(0, 6000)}
+${playwrightReport.slice(0, 20000)}
+
+COMMIT LOG (last 20):
+${commitLog}
 
 PROJECT MEMORY:
 ${claudeMd}`;

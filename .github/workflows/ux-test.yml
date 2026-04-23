@@ -44,6 +44,9 @@ jobs:
         env:
           BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
 
+      - name: Collect git log
+        run: git log --oneline -20 > git-log.txt
+
       - name: Collect git diff
         run: git diff HEAD~5..HEAD --stat > git-diff.txt
 
