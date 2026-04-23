@@ -34,6 +34,11 @@ jobs:
           sleep 90
           echo "DEPLOYMENT_URL=${{ secrets.VERCEL_PREVIEW_URL }}" >> $GITHUB_ENV
 
+      - name: Debug URL
+        run: |
+          echo "BASE_URL is: ${{ secrets.VERCEL_PREVIEW_URL }}"
+          curl -I "${{ secrets.VERCEL_PREVIEW_URL }}" || echo "URL not reachable"
+
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
         env:
