@@ -102,4 +102,7 @@ jobs:
   trigger-audit:
     needs: ux-test
     if: needs.ux-test.outputs.trigger_audit == 'true'
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ./.github/workflows/ux-audit.yml
