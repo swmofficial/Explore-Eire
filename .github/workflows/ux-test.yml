@@ -28,15 +28,45 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Wait for Vercel preview
-        run: npx wait-on $VERCEL_PREVIEW_URL --timeout 120000
-        env:
-          VERCEL_PREVIEW_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+      - name: Wait for Vercel deployment
+        id: vercel_deploy
+        run: |
+          SHA="${{ github.sha }}"
+          echo "Polling Vercel for deployment of commit $SHA..."
+          for i in $(seq 1 30); do
+            RESPONSE=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=5")
+            DEPLOYMENT=$(echo "$RESPONSE" | node -e "
+              const data = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+              const d = (data.deployments || []).find(d => d.meta && d.meta.githubCommitSha && d.meta.githubCommitSha.startsWith('$SHA'.slice(0,12)));
+              if (d) process.stdout.write(JSON.stringify({uid: d.uid, state: d.state, url: d.url}));
+            ")
+            if [ -z "$DEPLOYMENT" ]; then
+              echo "Attempt $i: no deployment found yet, waiting 10s..."
+              sleep 10
+              continue
+            fi
+            STATE=$(echo "$DEPLOYMENT" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).state)")
+            URL=$(echo "$DEPLOYMENT" | node -e "process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).url)")
+            echo "Attempt $i: state=$STATE url=$URL"
+            if [ "$STATE" = "READY" ]; then
+              echo "DEPLOYMENT_URL=https://$URL" >> $GITHUB_ENV
+              echo "Deployment ready: https://$URL"
+              exit 0
+            elif [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
+              echo "Deployment failed with state: $STATE"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo "Timed out waiting for Vercel deployment"
+          exit 1
 
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
         env:
-          BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+          BASE_URL: ${{ env.DEPLOYMENT_URL }}
 
       - name: Collect git diff
         run: git diff HEAD~5..HEAD --stat > git-diff.txt
