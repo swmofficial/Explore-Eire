@@ -4,6 +4,7 @@
 // are handled by checking window.location.pathname on mount.
 import { useState, useEffect } from 'react'
 import useUserStore from './store/userStore'
+import useModuleStore from './store/moduleStore'
 import { useAuth } from './hooks/useAuth'
 import { useSubscription } from './hooks/useSubscription'
 import MapView from './components/Map'
@@ -33,6 +34,12 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false)
   const [activeTab, setActiveTab] = useState('dashboard')
   const { theme, showOnboarding, setShowOnboarding } = useUserStore()
+  const { setActiveSurface } = useModuleStore()
+
+  // Sync activeSurface with active tab so CornerControls hide on non-map tabs
+  useEffect(() => {
+    setActiveSurface(activeTab === 'map' ? 'map' : 'none')
+  }, [activeTab])
 
   // Initialise onboarding state once on mount from localStorage
   useEffect(() => {

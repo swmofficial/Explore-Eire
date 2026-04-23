@@ -42,7 +42,7 @@ export default function PasswordSettings({ onBack }) {
 
   if (isOAuthUser) {
     return (
-      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 80 }}>
+      <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: 'calc(env(safe-area-inset-top, 0px) + 16px) 16px 16px',
@@ -112,7 +112,7 @@ export default function PasswordSettings({ onBack }) {
   const canSubmitStep2 = next && confirm && !mismatch && !tooShort
 
   return (
-    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 80 }}>
+    <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', background: 'var(--color-base)', paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)' }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

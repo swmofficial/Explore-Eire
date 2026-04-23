@@ -204,7 +204,7 @@ export default function LayerPanel() {
             position: 'fixed',
             inset: 0,
             background: 'rgba(0,0,0,0.5)',
-            zIndex: 29,
+            zIndex: 44,
             animation: 'backdropFadeIn 200ms ease-out',
           }}
         />
@@ -220,7 +220,7 @@ export default function LayerPanel() {
           width: 'min(80vw, 320px)',
           background: 'var(--color-base)',
           borderLeft: '1px solid var(--color-border)',
-          zIndex: 30,
+          zIndex: 45,
           display: 'flex',
           flexDirection: 'column',
           transform: layerPanelOpen ? 'translateX(0)' : 'translateX(100%)',

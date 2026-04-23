@@ -69,7 +69,8 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
   return (
     <div style={{
       position: 'fixed',
-      inset: 0,
+      top: 0, left: 0, right: 0,
+      bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
       background: 'var(--color-base)',
       zIndex: 30,
       display: 'flex',
@@ -163,7 +164,7 @@ export default function CourseDetail({ course, onBack, onSelectChapter, onShowCe
             />
           ))
         )}
-        <div style={{ height: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }} />
+        <div style={{ height: 24 }} />
       </div>
     </div>
   )

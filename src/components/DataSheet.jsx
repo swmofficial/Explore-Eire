@@ -498,7 +498,7 @@ export default function DataSheet() {
         right: 0,
         bottom: 0,
         height: 'calc(100% - 120px)',
-        pointerEvents: 'all',
+        pointerEvents: isCollapsed ? 'none' : 'all',
         background: 'var(--color-base)',
         borderTop: '1px solid var(--color-border)',
         borderRadius: 'var(--radius-sheet) var(--radius-sheet) 0 0',
@@ -525,6 +525,7 @@ export default function DataSheet() {
           WebkitTapHighlightColor: 'transparent',
           userSelect: 'none',
           touchAction: 'none',
+          pointerEvents: 'auto',
         }}
       >
         {/* Handle bar — 32×4px */}

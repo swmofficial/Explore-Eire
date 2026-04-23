@@ -68,7 +68,8 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
     return (
       <div style={{
         position: 'fixed',
-        inset: 0,
+        top: 0, left: 0, right: 0,
+        bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
         background: 'var(--color-base)',
         zIndex: 40,
         display: 'flex',
@@ -131,7 +132,8 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
   return (
     <div style={{
       position: 'fixed',
-      inset: 0,
+      top: 0, left: 0, right: 0,
+      bottom: 'calc(64px + env(safe-area-inset-bottom, 0px))',
       background: 'var(--color-base)',
       zIndex: 40,
       display: 'flex',
@@ -187,7 +189,6 @@ export default function ChapterReader({ chapter, course, onBack, onNext, isLast 
       {/* Next button */}
       <div style={{
         padding: '16px 24px',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)',
         flexShrink: 0,
         borderTop: '1px solid var(--color-card-border)',
       }}>

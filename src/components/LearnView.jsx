@@ -235,7 +235,7 @@ export default function LearnView() {
         overflowY: 'auto',
         flex: 1,
         WebkitOverflowScrolling: 'touch',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 16px)',
       }}>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '8px 16px 4px' }}>
