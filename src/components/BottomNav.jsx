@@ -80,7 +80,7 @@ export default function BottomNav({ activeTab, onTabChange }) {
   }
 
   return (
-    <div
+    <nav
       style={{
         position: 'fixed',
         bottom: 0,
@@ -167,6 +167,6 @@ export default function BottomNav({ activeTab, onTabChange }) {
           </button>
         )
       })}
-    </div>
+    </nav>
   )
 }
