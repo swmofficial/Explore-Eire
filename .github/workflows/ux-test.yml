@@ -37,7 +37,7 @@ jobs:
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
         env:
-          BASE_URL: ${{ env.DEPLOYMENT_URL }}
+          BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
 
       - name: Collect git diff
         run: git diff HEAD~5..HEAD --stat > git-diff.txt
