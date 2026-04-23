@@ -41,31 +41,7 @@ jobs:
 
       - name: Collect Vercel build logs
         continue-on-error: true
-        run: |
-          curl -s "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=5" \
-            -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-            > vercel-deployments.json
-          DEPLOYMENT=$(node -e "
-            const d = require('./vercel-deployments.json');
-            const dep = d.deployments?.find(d => d.meta?.githubBranch === 'dev' || d.url?.includes('dev'));
-            console.log(dep?.uid || d.deployments?.[0]?.uid || '');
-          ")
-          if [ -n "$DEPLOYMENT" ]; then
-            curl -s "https://api.vercel.com/v2/deployments/$DEPLOYMENT/events?limit=100" \
-              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              > vercel-events.json
-            node -e "
-              const events = require('./vercel-events.json');
-              const logs = Array.isArray(events)
-                ? events.filter(e => e.type === 'stdout' || e.type === 'stderr')
-                        .map(e => e.payload?.text || '')
-                        .join('\n')
-                : JSON.stringify(events);
-              require('fs').writeFileSync('vercel-build-logs.txt', logs);
-            "
-          else
-            echo "No deployment found" > vercel-build-logs.txt
-          fi
+        run: echo "Vercel build logs — future improvement" > vercel-build-logs.txt
 
       - name: Run Playwright UX tests
         run: npx playwright test --reporter=json > playwright-report.json || true
