@@ -372,3 +372,28 @@ explore-eire/
 6. Archaeology module — NMS data integration
 7. Coastal module — data sourcing required first
 8. Plausible analytics
+
+---
+
+## Multi-Agent System
+
+This repo is worked on by two Claude Code agents running in parallel.
+See AGENTS.md for full rules, ownership boundaries and workflow.
+
+### Agent Ownership
+- agent/ui-components → components, styles, pages
+- agent/map-backend   → hooks, stores, lib, api
+
+### Shared File Contract
+Shared files require an INTENT declaration before modification.
+See AGENTS.md for the full INTENT protocol.
+
+---
+
+## Agent Log
+> Both agents append session summaries here. Newest first.
+
+---
+
+## INTENT Blocks
+> Active coordination declarations between agents. See AGENTS.md for protocol.
