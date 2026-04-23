@@ -4,19 +4,16 @@ import fs from 'fs';
 const diff = execSync('git diff HEAD~1 --name-only').toString().trim().split('\n');
 
 const map = [
-  // Planned specs (not yet created — map to app.spec.js until built):
-  // mobile.spec.js, map.spec.js, sheets.spec.js, dashboard.spec.js,
-  // module.spec.js, settings.spec.js, learn.spec.js, paywall.spec.js
-  { patterns: ['src/components/BottomNav', 'src/App', 'src/main', 'src/styles/global.css'], specs: ['app.spec.js'] },
+  { patterns: ['src/components/BottomNav', 'src/App', 'src/main', 'src/styles/global.css'], specs: ['app.spec.js', 'mobile.spec.js'] },
   { patterns: ['src/components/Auth', 'src/hooks/useAuth', 'src/lib/supabase'], specs: ['auth.spec.js'] },
-  { patterns: ['src/components/Map', 'src/lib/mapConfig', 'src/lib/layerCategories', 'src/hooks/useGold', 'src/hooks/useMineralLocalities'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/DataSheet', 'src/components/SampleSheet', 'src/components/MineralSheet', 'src/components/FindSheet'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/Dashboard', 'src/store/moduleStore'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/Module', 'src/store/moduleStore'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/Settings', 'src/components/Legal'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/Learn', 'src/hooks/useLearn'], specs: ['app.spec.js'] },
-  { patterns: ['src/components/Upgrade', 'src/hooks/useSubscription', 'src/hooks/useUserTier'], specs: ['app.spec.js'] },
-  { patterns: ['src/store/mapStore', 'src/store/userStore'], specs: ['app.spec.js', 'auth.spec.js'] },
+  { patterns: ['src/components/Map', 'src/lib/mapConfig', 'src/lib/layerCategories', 'src/hooks/useGold', 'src/hooks/useMineralLocalities'], specs: ['map.spec.js'] },
+  { patterns: ['src/components/DataSheet', 'src/components/SampleSheet', 'src/components/MineralSheet', 'src/components/FindSheet'], specs: ['sheets.spec.js'] },
+  { patterns: ['src/components/Dashboard', 'src/store/moduleStore'], specs: ['dashboard.spec.js', 'module.spec.js'] },
+  { patterns: ['src/components/Module'], specs: ['module.spec.js'] },
+  { patterns: ['src/components/Settings', 'src/components/Legal'], specs: ['settings.spec.js'] },
+  { patterns: ['src/components/Learn', 'src/hooks/useLearn'], specs: ['learn.spec.js'] },
+  { patterns: ['src/components/Upgrade', 'src/hooks/useSubscription', 'src/hooks/useUserTier'], specs: ['paywall.spec.js'] },
+  { patterns: ['src/store/mapStore', 'src/store/userStore'], specs: ['map.spec.js', 'sheets.spec.js', 'auth.spec.js'] },
 ];
 
 const targets = new Set();
