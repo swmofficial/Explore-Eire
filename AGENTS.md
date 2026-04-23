@@ -1,15 +1,60 @@
 # Explore Eire — Agent Rules
 > Read this file at the start of every session, after CLAUDE.md and ARCHITECTURE.md.
+> Do not write a single line of code until you have read all three files.
 
 ## Agent Roles
 
-### agent/ui-components
-Owns: src/components/, src/styles/, src/pages/, index.html
-Commit prefix: [ui]
+### Instance 1 — Architect (agent/architect branch)
+Role: Context expansion, code review, prompt enrichment, architecture decisions
+Responsibilities:
+- Read AGENT_REPORTS/ at session start
+- Enrich Gemini reports with full project context
+- Fill gaps in Gemini prompts using CLAUDE.md + ARCHITECTURE.md knowledge
+- Review Instance 2 PRs before merge — check against bug register
+- Write enriched actionable prompts back to AGENT_REPORTS/pending/
+- Make architecture decisions on shared/seam files
+- Never implements features directly
+Commit prefix: [arch]
+Branch: agent/architect
 
-### agent/map-backend
-Owns: src/hooks/, src/lib/, src/store/, api/, scripts/, public/sw.js
-Commit prefix: [map]
+### Instance 2 — Implementer (agent/implementer branch)
+Role: Feature implementation, bug fixes, code execution
+Responsibilities:
+- Read AGENT_REPORTS/pending/ at session start for enriched prompts
+- Implement exactly what the enriched prompts specify
+- Follow CLAUDE.md bug register — never reintroduce known bugs
+- Follow ARCHITECTURE.md design system exactly
+- Commit to own branch, open PR to dev when done
+- Never makes architecture decisions independently
+Commit prefix: [impl]
+Branch: agent/implementer
+
+## AGENT_REPORTS Structure
+AGENT_REPORTS/
+├── report-YYYY-MM-DD.md          ← raw Gemini reports (auto-written by pipeline)
+└── pending/                      ← enriched prompts ready for Instance 2 to action
+    └── task-YYYY-MM-DD-NNN.md    ← one file per task
+
+## Pending Task File Format
+Each file in AGENT_REPORTS/pending/ follows this structure:
+
+  # Task [NNN] — [short title]
+  Date: YYYY-MM-DD
+  Status: PENDING | IN_PROGRESS | DONE
+  Source: [Gemini report filename or human]
+  Branch: agent/implementer
+
+  ## Context
+  [Full project context Instance 1 has added]
+
+  ## Task
+  [Exact implementation instructions]
+
+  ## Constraints
+  [Relevant bug register rules, design system rules, file ownership rules]
+
+  ## Definition of Done
+  [How Instance 2 knows the task is complete]
 
 ## Shared Files — Require INTENT Declaration
 These files are read by both agents. Neither agent may modify them without first
@@ -24,42 +69,41 @@ declaring an INTENT block in CLAUDE.md:
   src/styles/global.css
   vite.config.js
   package.json
+  CLAUDE.md
+  AGENTS.md
 
 ## INTENT Protocol
-
 Before modifying any shared file, append this block to CLAUDE.md:
 
-  ## INTENT — [agent-name] — [YYYY-MM-DD]
+  ## INTENT — [instance-name] — [YYYY-MM-DD]
   File: [filename]
   Change: [one sentence]
-  Affects: [what the other agent needs to know]
+  Affects: [what the other instance needs to know]
   Status: OPEN
 
-After your PR merges, update Status to CLOSED.
-If you see an OPEN INTENT from the other agent on the same file — stop immediately
-and leave a comment on the PR flagging the conflict for human review.
+Set status to CLOSED after PR merges.
+If you see an OPEN INTENT from the other instance on the same file — 
+stop immediately and flag for human review.
 
-## Workflow Rules
+## Workflow
 
-1. Always pull from dev before starting a new session
-2. Work only on your own branch — never commit to dev or main directly
-3. Before pushing, pull dev and merge into your branch locally, resolve conflicts
-4. Open a PR from your branch into dev when work is complete
-5. main is protected — only humans merge dev into main via PR
-6. Prefix every commit with your agent tag: [ui] or [map]
-7. Write a session summary to CLAUDE.md under ## Agent Log after every session
-8. Never commit: node_modules/, .env, dist/, .DS_Store
-9. Never modify CLAUDE.md structural sections — only append to ## Agent Log and ## INTENT blocks
-10. Read the full bug register in CLAUDE.md before every session — 44 known bugs, do not reintroduce them
+1. Pipeline runs on every push to dev → Gemini writes to AGENT_REPORTS/
+2. Instance 1 reads raw report → enriches → writes to AGENT_REPORTS/pending/
+3. Instance 2 reads pending/ → implements → commits to agent/implementer
+4. Instance 2 opens PR to dev
+5. Instance 1 reviews PR against bug register + design system
+6. Human approves and merges to dev
+7. dev auto-deploys to Vercel preview
+8. Pipeline runs again → loop continues
 
-## Branch Protection (human sets this in GitHub UI)
-  main — require PR, require 1 review, no direct push
-  dev  — require PR, no direct push
+## Branch Protection
+main  — human PR only, no direct push ever
+dev   — human PR only, no direct push ever
+agent/architect    — Instance 1 only
+agent/implementer  — Instance 2 only
 
-## UX Testing Pipeline
-On every push to dev, GitHub Actions will:
-  1. Trigger Vercel preview deploy
-  2. Run Playwright against the preview URL
-  3. Send screenshots + logs + git diff to Gemini 2.5 Pro for analysis
-  4. Write findings + actionable prompts to AGENT_REPORTS/ directory
-  5. Agents read AGENT_REPORTS/ at session start and action flagged items
+## Commit Rules
+- Always prefix commits with instance tag: [arch] or [impl]
+- Never commit: node_modules/, .env, dist/, .DS_Store
+- Keep commits atomic — one logical change per commit
+- Write session summary to CLAUDE.md under ## Agent Log after every session
