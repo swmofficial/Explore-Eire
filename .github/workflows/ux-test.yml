@@ -53,11 +53,12 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Commit agent report
+        continue-on-error: true
         run: |
           git config user.name "ux-agent"
           git config user.email "ux-agent@exploreeire.ie"
           git add AGENT_REPORTS/
           git commit -m "[ux] automated report $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
-          git push origin dev
+          git push origin dev || echo "Push failed — will retry on next run"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
