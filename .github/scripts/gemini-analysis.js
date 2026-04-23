@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 
 const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) throw new Error('GEMINI_API_KEY is not set or empty');
+
 const reportDir = 'AGENT_REPORTS';
 const date = new Date().toISOString().split('T')[0];
 
@@ -69,7 +71,15 @@ const response = await fetch(
   }
 );
 
-const data = await response.json();
+const rawBody = await response.text();
+console.log(`Gemini API status: ${response.status}`);
+console.log(`Gemini API response body: ${rawBody}`);
+
+if (!response.ok) {
+  throw new Error(`Gemini API error ${response.status}: ${rawBody}`);
+}
+
+const data = JSON.parse(rawBody);
 const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Gemini returned no response.';
 
 const outPath = path.join(reportDir, `report-${date}.md`);
