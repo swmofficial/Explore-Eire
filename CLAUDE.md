@@ -397,3 +397,9 @@ See AGENTS.md for the full INTENT protocol.
 
 ## INTENT Blocks
 > Active coordination declarations between agents. See AGENTS.md for protocol.
+
+## INTENT — agent/implementer — 2026-04-23
+File: src/components/Map.jsx
+Change: Replace var(--color-accent) and var(--color-text) in MapLibre paint objects with static hex values #E8C96A and #E8EAF0
+Affects: No functional change — purely resolves MapLibre parse errors. Architect approved.
+Status: OPEN
