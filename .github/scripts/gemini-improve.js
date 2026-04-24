@@ -22,7 +22,11 @@ const commitLog = fs.existsSync('git-log.txt')
   : 'No commit log found.';
 
 const claudeMd = fs.existsSync('CLAUDE.md')
-  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 8000)
+  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 4000)
+  : '';
+
+const roadmap = fs.existsSync('BRAIN/ROADMAP.md')
+  ? fs.readFileSync('BRAIN/ROADMAP.md', 'utf8').slice(0, 4000)
   : '';
 
 const prompt = `You are a product strategist and UX consultant for Explore Eire, an Irish outdoor app built in React + Vite + MapLibre + Supabase. The app targets Irish outdoor enthusiasts with modules for gold prospecting, hiking, field sports, archaeology, and coastal exploration. Business model: free tier → Explorer €9.99/month → Annual €79/year.
@@ -70,8 +74,11 @@ ${commitLog}
 PLAYWRIGHT RESULTS:
 ${playwrightReport.slice(0, 20000)}
 
-PROJECT MEMORY:
-${claudeMd}`;
+PROJECT MEMORY (design system + infrastructure):
+${claudeMd}
+
+PRODUCT ROADMAP & VISION:
+${roadmap}`;
 
 const response = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,

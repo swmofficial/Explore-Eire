@@ -26,7 +26,11 @@ const vercelLogs = fs.existsSync('vercel-build-logs.txt')
   : 'No Vercel build logs found.';
 
 const claudeMd = fs.existsSync('CLAUDE.md')
-  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 8000)
+  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 4000)
+  : '';
+
+const bugRegister = fs.existsSync('BRAIN/BUGS.md')
+  ? fs.readFileSync('BRAIN/BUGS.md', 'utf8').slice(0, 8000)
   : '';
 
 const prompt = `You are a QA architect for Explore Eire, an Irish outdoor app built in React + Vite + MapLibre + Supabase.
@@ -71,8 +75,11 @@ ${commitLog}
 VERCEL BUILD LOGS:
 ${vercelLogs}
 
-PROJECT MEMORY:
-${claudeMd}`;
+PROJECT MEMORY (infrastructure + agent rules):
+${claudeMd}
+
+BUG REGISTER (do not reintroduce these — check every finding against this list):
+${bugRegister}`;
 
 const response = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,

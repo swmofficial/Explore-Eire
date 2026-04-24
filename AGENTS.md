@@ -74,6 +74,10 @@ declaring an INTENT block in CLAUDE.md:
   package.json
   CLAUDE.md
   AGENTS.md
+  BRAIN/ROADMAP.md
+  BRAIN/DECISIONS.md
+  BRAIN/BUGS.md
+  BRAIN/STRUCTURE.md
 
 ## INTENT Protocol
 Before modifying any shared file, append this block to CLAUDE.md:
@@ -110,3 +114,10 @@ agent/implementer  — Instance 2 only
 - Never commit: node_modules/, .env, dist/, .DS_Store
 - Keep commits atomic — one logical change per commit
 - Write session summary to CLAUDE.md under ## Agent Log after every session
+
+## CLAUDE.md Maintenance
+- CLAUDE.md must stay under 6000 characters at all times
+- Architect updates BRAIN/ROADMAP.md at the end of every session
+- Bug register lives in BRAIN/BUGS.md — both agents read it at session start
+- Neither agent adds roadmap, decision, or bug content directly to CLAUDE.md
+- Gemini sees CLAUDE.md (core) + ROADMAP.md (improve runs) + BUGS.md (analysis/audit)

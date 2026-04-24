@@ -22,7 +22,11 @@ const commitLog = fs.existsSync('git-log.txt')
   : 'No commit log found.';
 
 const claudeMd = fs.existsSync('CLAUDE.md')
-  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 8000)
+  ? fs.readFileSync('CLAUDE.md', 'utf8').slice(0, 4000)
+  : '';
+
+const bugRegister = fs.existsSync('BRAIN/BUGS.md')
+  ? fs.readFileSync('BRAIN/BUGS.md', 'utf8').slice(0, 8000)
   : '';
 
 const auditSpecDir = 'tests/audit';
@@ -68,8 +72,11 @@ ${specContents.slice(0, 15000)}
 AUDIT RESULTS:
 ${auditReport.slice(0, 20000)}
 
-PROJECT MEMORY:
-${claudeMd}`;
+PROJECT MEMORY (infrastructure + agent rules):
+${claudeMd}
+
+BUG REGISTER (critical rules — correlate every failure against these):
+${bugRegister}`;
 
 const response = await fetch(
   `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
