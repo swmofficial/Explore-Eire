@@ -84,28 +84,28 @@ Status: CLOSED — merged 2026-04-23 (commit 360a79e)
 File: CLAUDE.md
 Change: Restructure into lean core file; move bug register, structure, roadmap, decisions to BRAIN/ directory
 Affects: Both agents must now read BRAIN/BUGS.md and BRAIN/STRUCTURE.md at session start. Gemini scripts updated to inject BRAIN/ files.
-Status: OPEN
+Status: CLOSED — merged 2026-04-24 (commit d64dc93)
 
 ## INTENT — agent/implementer — 2026-04-24
 File: AGENTS.md
 Change: Add BRAIN/ files to shared files list and add CLAUDE.md maintenance rules section
 Affects: Both agents must treat BRAIN/ files as shared files requiring INTENT declarations
-Status: OPEN
+Status: CLOSED — merged 2026-04-24 (commit d64dc93)
 
 ## INTENT — agent/implementer — 2026-04-24
 File: .github/scripts/gemini-improve.js
 Change: Add BRAIN/ROADMAP.md read and inject into Gemini prompt; reduce CLAUDE.md slice from 8000 to 4000 chars
 Affects: Gemini improve runs will now include roadmap context
-Status: OPEN
+Status: CLOSED — merged 2026-04-24 (commit d64dc93)
 
 ## INTENT — agent/implementer — 2026-04-24
 File: .github/scripts/gemini-analysis.js
 Change: Add BRAIN/BUGS.md read and inject into Gemini prompt; reduce CLAUDE.md slice from 8000 to 4000 chars
 Affects: Gemini analysis runs will now include full bug register
-Status: OPEN
+Status: CLOSED — merged 2026-04-24 (commit d64dc93)
 
 ## INTENT — agent/implementer — 2026-04-24
 File: .github/scripts/gemini-audit.js
 Change: Add BRAIN/BUGS.md read and inject into Gemini prompt; reduce CLAUDE.md slice from 8000 to 4000 chars
 Affects: Gemini audit runs will now include full bug register for correlation
-Status: OPEN
+Status: CLOSED — merged 2026-04-24 (commit d64dc93)
