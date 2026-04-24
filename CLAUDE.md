@@ -380,6 +380,14 @@ explore-eire/
 This repo is worked on by two Claude Code agents running in parallel.
 See AGENTS.md for full rules, ownership boundaries and workflow.
 
+### Architect Session Start — Read in this order
+1. CLAUDE.md
+2. AGENT_REPORTS/STATUS.md
+3. ARCHITECTURE.md
+4. AGENTS.md
+5. AGENT_REPORTS/failure-streak.json
+6. All files in AGENT_REPORTS/ newest first
+
 ### Agent Ownership
 - agent/ui-components → components, styles, pages
 - agent/map-backend   → hooks, stores, lib, api
@@ -403,3 +411,15 @@ File: src/components/Map.jsx
 Change: Replace var(--color-accent) and var(--color-text) in MapLibre paint objects with static hex values #E8C96A and #E8EAF0
 Affects: No functional change — purely resolves MapLibre parse errors. Architect approved.
 Status: CLOSED — merged 2026-04-23 (commit 360a79e)
+
+## INTENT — agent/architect — 2026-04-24
+File: AGENTS.md
+Change: Add STATUS.md read/write responsibilities to both agent roles, update Workflow step 2
+Affects: Implementer must write STATUS.md at session end
+Status: OPEN
+
+## INTENT — agent/architect — 2026-04-24
+File: CLAUDE.md
+Change: Add Architect Session Start reading order including STATUS.md as step 2
+Affects: Architect session start flow
+Status: OPEN

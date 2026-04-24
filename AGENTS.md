@@ -7,6 +7,7 @@
 ### Instance 1 — Architect (agent/architect branch)
 Role: Context expansion, code review, prompt enrichment, architecture decisions
 Responsibilities:
+- Read AGENT_REPORTS/STATUS.md first at session start, before reading pending/
 - Read AGENT_REPORTS/ at session start
 - Enrich Gemini reports with full project context
 - Fill gaps in Gemini prompts using CLAUDE.md + ARCHITECTURE.md knowledge
@@ -26,6 +27,8 @@ Responsibilities:
 - Follow ARCHITECTURE.md design system exactly
 - Commit to own branch, open PR to dev when done
 - Never makes architecture decisions independently
+- At the end of every session, append a status block to AGENT_REPORTS/STATUS.md
+  using the format defined in that file
 Commit prefix: [impl]
 Branch: agent/implementer
 
@@ -88,7 +91,7 @@ stop immediately and flag for human review.
 ## Workflow
 
 1. Pipeline runs on every push to dev → Gemini writes to AGENT_REPORTS/
-2. Instance 1 reads raw report → enriches → writes to AGENT_REPORTS/pending/
+2. Instance 1 reads STATUS.md → reads raw reports → enriches → writes to AGENT_REPORTS/pending/
 3. Instance 2 reads pending/ → implements → commits to agent/implementer
 4. Instance 2 opens PR to dev
 5. Instance 1 reviews PR against bug register + design system
