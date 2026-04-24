@@ -10,3 +10,7 @@ android/app/src/main/assets/capacitor.config.json
 # Xcode user state
 *.xcuserstate
 xcuserdata/
+
+# Pipeline artifacts
+models.json
+vercel-build-logs.txt
