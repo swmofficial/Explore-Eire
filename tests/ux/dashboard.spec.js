@@ -5,13 +5,18 @@ test.beforeEach(async ({ page }) => {
   page.on('console', m => { if (m.type() === 'error') page._errors.push(m.text()); });
   page.on('pageerror', e => page._errors.push(e.message));
   await page.goto('/');
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(2500);
+  // App starts on dashboard — clicking is idempotent but explicit
+  await page.getByRole('button', { name: 'Dashboard' }).click();
+  await page.waitForTimeout(1500);
 });
 
-test('dashboard tab visible in nav', async ({ page }) => {
+test('dashboard surface renders', async ({ page }) => {
   await page.screenshot({ path: 'tests/ux/screenshots/dashboard-01.png' });
+  const nav = page.locator('nav').first();
+  await expect(nav).toBeVisible();
 });
 
-test('no dashboard errors on load', async ({ page }) => {
+test('no dashboard errors on navigation', async ({ page }) => {
   expect(page._errors).toHaveLength(0);
 });

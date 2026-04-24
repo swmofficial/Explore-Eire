@@ -46,3 +46,55 @@ test('map container is present', async ({ page }) => {
   await page.waitForTimeout(3000);
   await page.screenshot({ path: 'tests/ux/screenshots/04-map.png', fullPage: true });
 });
+
+test('dashboard tab navigates without errors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  const errorsBefore = page._consoleErrors.length;
+  await page.getByRole('button', { name: 'Dashboard' }).click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'tests/ux/screenshots/tab-dashboard.png' });
+  expect(page._consoleErrors.length).toBe(errorsBefore);
+});
+
+test('map tab navigates without errors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  const errorsBefore = page._consoleErrors.length;
+  await page.getByRole('button', { name: 'Map' }).click();
+  await page.waitForTimeout(2500);
+  const canvas = page.locator('canvas').first();
+  await expect(canvas).toBeVisible();
+  await page.screenshot({ path: 'tests/ux/screenshots/tab-map.png' });
+  expect(page._consoleErrors.length).toBe(errorsBefore);
+});
+
+test('learn tab navigates without errors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  const errorsBefore = page._consoleErrors.length;
+  await page.getByRole('button', { name: 'Learn' }).click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'tests/ux/screenshots/tab-learn.png' });
+  expect(page._consoleErrors.length).toBe(errorsBefore);
+});
+
+test('settings tab navigates without errors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  const errorsBefore = page._consoleErrors.length;
+  await page.getByRole('button', { name: 'Settings' }).click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'tests/ux/screenshots/tab-settings.png' });
+  expect(page._consoleErrors.length).toBe(errorsBefore);
+});
+
+test('profile tab navigates without errors', async ({ page }) => {
+  await page.goto('/');
+  await page.waitForTimeout(2500);
+  const errorsBefore = page._consoleErrors.length;
+  await page.getByRole('button', { name: 'Profile' }).click();
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: 'tests/ux/screenshots/tab-profile.png' });
+  expect(page._consoleErrors.length).toBe(errorsBefore);
+});

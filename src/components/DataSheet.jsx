@@ -480,6 +480,7 @@ export default function DataSheet() {
   return (
     // Outer: full-screen anchor — no background, no pointer events, just a stacking context
     <div
+      data-testid="datasheet"
       style={{
         position: 'fixed',
         left: 0,

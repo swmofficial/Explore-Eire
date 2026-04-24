@@ -4,6 +4,27 @@
 
 ---
 
+## Session: 2026-04-24 (run 3)
+Agent: Implementer
+Status: DONE
+
+### Completed
+- task-2026-04-24-007 — Expanded app.spec.js: 5 tab navigation smoke tests added (9 total)
+- task-2026-04-24-008 — Added data-testid="datasheet" to DataSheet.jsx outer wrapper; rewrote sheets.spec.js (4 tests, navigates to map tab first)
+- task-2026-04-24-009 — Rewrote settings.spec.js, dashboard.spec.js, learn.spec.js — each now navigates to its surface in beforeEach before asserting
+
+### Skipped
+- None
+
+### Blockers
+- None
+
+### Notes
+- All changes are test-only except data-testid on DataSheet outer wrapper (zero functional impact)
+- DataSheet data-testid added to outer wrapper only (preserves two-layer architecture per bug #32)
+
+---
+
 ## Session: 2026-04-24 (run 2)
 Agent: Implementer
 Status: DONE
