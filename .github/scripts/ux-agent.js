@@ -143,7 +143,7 @@ const screenshotNote = screenshotParts.length > 0
 
 // Trim large inputs to stay within context limits
 const trimmedPlaywright = playwrightResults.slice(0, 30000);
-const trimmedStateMap = stateMap.slice(0, 15000);
+const trimmedStateMap = stateMap.slice(0, 10000);
 const trimmedUxContext = uxContext.slice(0, 8000);
 const trimmedPreviousFindings = previousFindings.slice(0, 5000);
 
@@ -271,7 +271,7 @@ const requestBody = {
   systemInstruction: { parts: [{ text: systemPrompt }] },
   contents: [{ parts: contentParts }],
   generationConfig: {
-    maxOutputTokens: 4096,
+    maxOutputTokens: 8192,
     temperature: 0.2, // low temperature for analytical precision
   }
 };
