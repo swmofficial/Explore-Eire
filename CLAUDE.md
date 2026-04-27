@@ -372,3 +372,9 @@ explore-eire/
 6. Archaeology module — NMS data integration
 7. Coastal module — data sourcing required first
 8. Plausible analytics
+
+## INTENT — agent/implementer — 2026-04-27
+File: AGENTS.md
+Change: Add resolved/ task lifecycle, feedback loop rules, UX Agent workflow steps
+Affects: Architect must read updated resolution protocol. No functional code changes.
+Status: OPEN
