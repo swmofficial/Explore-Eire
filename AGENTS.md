@@ -34,9 +34,13 @@ Branch: agent/implementer
 
 ## AGENT_REPORTS Structure
 AGENT_REPORTS/
-├── report-YYYY-MM-DD.md          ← raw Gemini reports (auto-written by pipeline)
-└── pending/                      ← enriched prompts ready for Instance 2 to action
-    └── task-YYYY-MM-DD-NNN.md    ← one file per task
+├── report-YYYY-MM-DD.md          ← raw Gemini/UX Agent reports (auto-written by pipeline)
+├── ux-findings/                  ← UX Agent structured findings (auto-written)
+│   └── ux-findings-YYYY-MM-DD.md
+├── pending/                      ← enriched prompts ready for Instance 2 to action
+│   └── task-YYYY-MM-DD-NNN.md
+└── resolved/                     ← completed tasks with resolution verdict
+    └── task-YYYY-MM-DD-NNN.md    ← moved here from pending/ after resolution
 
 ## Pending Task File Format
 Each file in AGENT_REPORTS/pending/ follows this structure:
@@ -44,7 +48,7 @@ Each file in AGENT_REPORTS/pending/ follows this structure:
   # Task [NNN] — [short title]
   Date: YYYY-MM-DD
   Status: PENDING | IN_PROGRESS | DONE
-  Source: [Gemini report filename or human]
+  Source: [Gemini report filename or human or ux-findings-YYYY-MM-DD.md]
   Branch: agent/implementer
 
   ## Context
@@ -58,6 +62,48 @@ Each file in AGENT_REPORTS/pending/ follows this structure:
 
   ## Definition of Done
   [How Instance 2 knows the task is complete]
+
+## Task Resolution — Closing The Feedback Loop
+
+When a task is DONE, the Implementer MUST add a Resolution section before
+the task file is moved from pending/ to resolved/:
+
+  ## Resolution
+  Verdict: CONFIRMED | MISDIAGNOSED | PHANTOM | SUPERSEDED
+  Commit: [commit hash of fix, or N/A if phantom]
+  Notes: [one sentence explanation]
+
+Verdict definitions:
+- CONFIRMED — the finding was real, the root cause was correct, the fix worked
+- MISDIAGNOSED — the finding was real but the root cause was wrong (state actual cause)
+- PHANTOM — the issue does not exist in the app (state why the agent was wrong)
+- SUPERSEDED — made obsolete by a different change (reference the superseding task/commit)
+
+After adding the Resolution section:
+1. Move the file from pending/ to resolved/
+2. The UX Agent reads resolved/ on every run and uses verdicts as calibration data
+3. PHANTOM verdicts teach the agent what patterns to stop flagging
+4. CONFIRMED verdicts teach the agent what patterns to prioritise
+
+This feedback loop is mandatory. Without it the UX Agent cannot improve.
+Skipping resolution = the agent keeps producing the same phantoms forever.
+
+### Resolution Examples
+
+  ## Resolution
+  Verdict: CONFIRMED
+  Commit: 360a79e
+  Notes: CSS variables in MapLibre paint objects replaced with static hex — console errors resolved.
+
+  ## Resolution
+  Verdict: PHANTOM
+  Commit: N/A
+  Notes: BottomNav haptic feedback was already working. Agent inferred regression from file change but haptics.js was untouched.
+
+  ## Resolution
+  Verdict: MISDIAGNOSED
+  Commit: abc1234
+  Notes: Issue was real (map layers disappeared) but root cause was basemap switch not calling addDataLayers, not the CSS variable change the agent blamed.
 
 ## Shared Files — Require INTENT Declaration
 These files are read by both agents. Neither agent may modify them without first
@@ -94,14 +140,16 @@ stop immediately and flag for human review.
 
 ## Workflow
 
-1. Pipeline runs on every push to dev → Gemini writes to AGENT_REPORTS/
-2. Instance 1 reads STATUS.md → reads raw reports → enriches → writes to AGENT_REPORTS/pending/
+1. Pipeline runs on every push to dev → UX Agent writes to AGENT_REPORTS/ux-findings/
+2. Instance 1 reads UX Agent findings → enriches → writes to AGENT_REPORTS/pending/
 3. Instance 2 reads pending/ → implements → commits to agent/implementer
-4. Instance 2 opens PR to dev
-5. Instance 1 reviews PR against bug register + design system
-6. Human approves and merges to dev
-7. dev auto-deploys to Vercel preview
-8. Pipeline runs again → loop continues
+4. Instance 2 adds ## Resolution section to the task file
+5. Instance 2 moves resolved tasks from pending/ to resolved/
+6. Instance 2 opens PR to dev
+7. Instance 1 reviews PR against bug register + design system
+8. Human approves and merges to dev
+9. dev auto-deploys to Vercel preview
+10. Pipeline runs again → UX Agent reads resolved/ for calibration → loop continues
 
 ## Branch Protection
 main  — human PR only, no direct push ever
