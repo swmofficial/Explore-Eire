@@ -377,4 +377,4 @@ explore-eire/
 File: AGENTS.md
 Change: Add resolved/ task lifecycle, feedback loop rules, UX Agent workflow steps
 Affects: Architect must read updated resolution protocol. No functional code changes.
-Status: OPEN
+Status: CLOSED — merged 2026-04-27 (commit 68e0ffe)
