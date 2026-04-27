@@ -3,9 +3,6 @@ name: UX Audit Pipeline — Tier 2
 on:
   workflow_call:
   workflow_dispatch:
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: write
@@ -81,6 +78,6 @@ jobs:
           mkdir -p AGENT_REPORTS/audits
           git add AGENT_REPORTS/
           git commit -m "[ux] full audit $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
-          git push origin dev || echo "Push failed"
+          git push origin main || echo "Push failed"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

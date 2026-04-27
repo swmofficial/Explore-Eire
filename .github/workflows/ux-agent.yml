@@ -3,7 +3,7 @@ name: UX Agent Pipeline
 on:
   push:
     branches:
-      - dev
+      - main
 
 permissions:
   contents: write
@@ -86,7 +86,7 @@ jobs:
           git config user.email "ux-agent@exploreeire.ie"
           git add AGENT_REPORTS/ BRAIN/
           git commit -m "[ux-agent] findings $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
-          git push origin dev || echo "Push failed — will retry on next run"
+          git push origin main || echo "Push failed — will retry on next run"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

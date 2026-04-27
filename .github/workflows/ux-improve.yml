@@ -57,5 +57,5 @@ jobs:
           git config user.name "GitHub Actions"
           git add AGENT_REPORTS/improvements/
           git diff --cached --quiet || git commit -m "[infra] weekly improvement report $(date +%Y-%m-%d)"
-          git pull origin dev --rebase && git push origin dev || true
+          git pull origin main --rebase && git push origin main || true
         continue-on-error: true
