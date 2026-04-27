@@ -381,8 +381,8 @@ This repo is worked on by two Claude Code agents running in parallel.
 See AGENTS.md for full rules, ownership boundaries and workflow.
 
 ### Agent Ownership
-- agent/ui-components → components, styles, pages
-- agent/map-backend   → hooks, stores, lib, api
+- Architect (Instance 1) → context, enrichment, architecture decisions
+- Implementer (Instance 2) → all implementation, commits directly to main
 
 ### Shared File Contract
 Shared files require an INTENT declaration before modification.
