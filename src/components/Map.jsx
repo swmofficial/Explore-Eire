@@ -159,11 +159,11 @@ const WMS_SOURCES = {
 
 // ── Mineral locality layers — one per category ─────────────────────
 const MINERAL_LAYERS = [
-  { id: 'mineral-gold',      category: 'gold',      color: 'var(--color-accent)' },
+  { id: 'mineral-gold',      category: 'gold',      color: '#E8C96A' },
   { id: 'mineral-copper',    category: 'copper',    color: '#E8844A' },
   { id: 'mineral-lead',      category: 'lead',      color: '#9B9B9B' },
   { id: 'mineral-uranium',   category: 'uranium',   color: '#7FBA00' },
-  { id: 'mineral-quartz',    category: 'quartz',    color: 'var(--color-text)' },
+  { id: 'mineral-quartz',    category: 'quartz',    color: '#E8EAF0' },
   { id: 'mineral-silver',    category: 'silver',    color: '#C0C0C0' },
   { id: 'mineral-marble',    category: 'marble',    color: '#4AC0A0' },
   { id: 'mineral-fluorspar', category: 'fluorspar', color: '#A06BE8' },
@@ -406,7 +406,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       type: 'line',
       source: 'session-line-src',
       paint: {
-        'line-color': 'var(--color-accent)',
+        'line-color': '#E8C96A',
         'line-width': 3,
         'line-opacity': 0.9,
         'line-dasharray': [2, 3],
@@ -429,7 +429,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'session-trail',
       paint: {
         'circle-radius': 4,
-        'circle-color': 'var(--color-accent)',
+        'circle-color': '#E8C96A',
         'circle-stroke-color': 'rgba(0,0,0,0.3)',
         'circle-stroke-width': 1,
         'circle-opacity': 0.88,
@@ -451,7 +451,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'session-waypoints-src',
       paint: {
         'circle-radius': 8,
-        'circle-color': 'var(--color-accent)',
+        'circle-color': '#E8C96A',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2,
         'circle-opacity': 1,
@@ -476,7 +476,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
           'interpolate', ['linear'], ['zoom'],
           5, 6, 10, 10, 14, 14,
         ],
-        'circle-color': 'var(--color-accent)',
+        'circle-color': '#E8C96A',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2.5,
         'circle-opacity': 1,
@@ -497,7 +497,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       type: 'line',
       source: 'route-builder-src',
       paint: {
-        'line-color': 'var(--color-accent)',
+        'line-color': '#E8C96A',
         'line-width': 2.5,
         'line-opacity': 0.9,
         'line-dasharray': [4, 2],
@@ -518,7 +518,7 @@ function addDataLayers(map, initialSamples = [], initialSavedWaypoints = []) {
       source: 'route-points-src',
       paint: {
         'circle-radius': 7,
-        'circle-color': 'var(--color-accent)',
+        'circle-color': '#E8C96A',
         'circle-stroke-color': '#FFFFFF',
         'circle-stroke-width': 2,
         'circle-opacity': 1,
@@ -1052,7 +1052,7 @@ export default function Map() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            background: 'var(--color-accent)',
+            background: '#E8C96A',
             color: 'var(--color-base)',
             border: 'none',
             borderRadius: 24,

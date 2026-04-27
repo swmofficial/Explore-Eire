@@ -1,0 +1,89 @@
+name: UX Audit Pipeline — Tier 2
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  full-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for Vercel
+        run: sleep 30
+
+      - name: Run full audit suite
+        run: |
+          npx playwright test tests/audit/ --reporter=json > audit-report.json || true
+        env:
+          BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+
+      - name: Collect git log
+        run: git log --oneline -20 > git-log.txt
+
+      - name: Collect git diff
+        run: |
+          git diff HEAD~10..HEAD --stat 2>/dev/null > git-diff.txt || \
+          git diff HEAD~5..HEAD --stat 2>/dev/null > git-diff.txt || \
+          git diff HEAD~1..HEAD --stat > git-diff.txt
+
+      - name: Send audit to Gemini
+        run: node .github/scripts/gemini-audit.js
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      - name: Check for critical failures
+        id: critical
+        run: |
+          CRITICAL=$(node -e "
+            const fs = require('fs');
+            try {
+              const report = fs.readFileSync('AGENT_REPORTS/audits/latest-audit.md', 'utf8');
+              console.log(report.toLowerCase().includes('severity: critical') ? 'true' : 'false');
+            } catch { console.log('false'); }
+          ")
+          echo "has_critical=$CRITICAL" >> $GITHUB_OUTPUT
+
+      - name: Block PR on critical failures
+        if: steps.critical.outputs.has_critical == 'true' && github.event_name == 'pull_request'
+        run: |
+          echo "CRITICAL failures found in audit — PR blocked"
+          exit 1
+
+      - name: Reset failure streak on successful audit
+        run: node .github/scripts/update-streak.js pass
+        continue-on-error: true
+
+      - name: Commit audit report
+        continue-on-error: true
+        run: |
+          git config user.name "ux-agent"
+          git config user.email "ux-agent@exploreeire.ie"
+          mkdir -p AGENT_REPORTS/audits
+          git add AGENT_REPORTS/
+          git commit -m "[ux] full audit $(date +%Y-%m-%d-%H%M)" || echo "Nothing to commit"
+          git push origin dev || echo "Push failed"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
