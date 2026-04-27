@@ -1,9 +1,7 @@
 name: UX Test Pipeline — Tier 1
 
 on:
-  push:
-    branches:
-      - dev
+  workflow_dispatch:
 
 permissions:
   contents: write

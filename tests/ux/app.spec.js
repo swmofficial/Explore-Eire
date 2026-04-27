@@ -61,7 +61,7 @@ test('map tab navigates without errors', async ({ page }) => {
   await page.goto('/');
   await page.waitForTimeout(2500);
   const errorsBefore = page._consoleErrors.length;
-  await page.getByRole('button', { name: 'Map' }).click();
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
   await page.waitForTimeout(2500);
   const canvas = page.locator('canvas').first();
   await expect(canvas).toBeVisible();
