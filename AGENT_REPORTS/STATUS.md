@@ -219,3 +219,23 @@ Branch: agent/implementer → PR to dev
 - Streak: 2 failures. One more triggers Tier 2 audit. The Map selector fix should bring next run to pass.
 - ux-test.yml is preserved but no longer auto-fires. ux-agent.yml is now the sole pipeline on dev push.
 - No Stripe env vars set in Vercel yet — payments remain non-live.
+
+---
+
+## Session: 2026-04-28 (implementer)
+Commits: 8182f75, 2c70af7, 9f184cb
+Branch: main (direct)
+
+### Completed
+- [impl] task-005 CONFIRMED — useAuth.js: preserve isPro on offline JWT expiry (event === 'SIGNED_OUT' || navigator.onLine guard)
+- [impl] task-006 CONFIRMED — mapStore.js: sessionTrail persisted to ee_session_trail localStorage key (IIFE init + write on append + remove on clear)
+- [impl] task-007 CONFIRMED — Vercel wait increased 90s→180s; P3/V3 Save buttons now await not.toBeDisabled(); V2/V10 offline tests use page.goto instead of page.reload
+
+### Pending
+- None. pending/ is clear of 2026-04-28 tasks.
+
+### Notes
+- V10 root cause was two-part: persist middleware (task-001) wrote the value correctly, but useAuth immediately overwrote it. Both layers now correct.
+- V1 data now survives reload; resume-session UX (prompting user to continue) is deferred to a future task.
+- V4 force:true was already present in pro.spec.js before this session — no change needed for task-007C.
+- Vercel pipeline should now test the correct deployment and pro pass rate should improve (target ≥ 6/9).
