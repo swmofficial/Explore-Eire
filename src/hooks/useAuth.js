@@ -4,6 +4,7 @@
 import { useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
+import useMapStore from '../store/mapStore'
 
 export function useAuth() {
   const { setUser, setIsPro, setSubscriptionStatus, setLegalAccepted, setShowLegalDisclaimer } =
@@ -57,6 +58,9 @@ export function useAuth() {
     if (profile?.is_pro) {
       setIsPro(true)
     }
+
+    // Clear any guest-session waypoints so they don't mix with saved Supabase waypoints
+    useMapStore.getState().clearGuestWaypoints()
 
     // Now safe to expose the user — legal state is already hydrated
     setUser(user)
