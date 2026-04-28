@@ -13,6 +13,9 @@ Responsibilities:
 - Write enriched actionable prompts to AGENT_REPORTS/pending/
 - Make architecture decisions on shared/seam files
 - Never implements features directly
+- Pro tier annotations (pro-badge-count, pro-feature-accessible, upgrade-shown)
+  indicate bugs not capability proofs — always triage these as potential fixes
+- Never skip a finding without logging the reason in STATUS.md
 Commit prefix: [arch]
 Branch: main (direct push)
 
