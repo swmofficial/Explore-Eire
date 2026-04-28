@@ -127,12 +127,14 @@ test('guest V13 — learn header stats are recomputed on every tab switch (state
     description: JSON.stringify({ before: stats1, after: stats2 }),
   });
 
-  // For a guest with no progress, both numbers should be 0/0/0. That is
-  // the expected baseline — this test documents the values seen so the
-  // UX Agent has a numeric anchor for any subsequent finding about
-  // chapter-page state loss (which is the actual V13 manifestation that
-  // requires authenticated users).
-  expect(stats2).toBeTruthy();
+  // Fix-proof assertion: after task-003 keep-alive, stats must be stable
+  // across a tab switch. For a guest both values should be 0/0 both times.
+  if (stats1 && !stats1.error && stats2 && !stats2.error) {
+    expect(stats2.courses).toBe(stats1.courses);
+    expect(stats2.completePct).toBe(stats1.completePct);
+  } else {
+    expect(stats2).toBeTruthy();
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────
@@ -187,7 +189,7 @@ test('guest V7 — theme resets to default on reload (preference-loss proof)', a
 
 test('guest V9 — basemap resets to satellite on reload (preference-loss proof)', async ({ page }) => {
   await page.getByRole('button', { name: 'Map', exact: true }).click();
-  await page.waitForTimeout(2000);
+  await page.locator('canvas').waitFor({ state: 'visible', timeout: 15000 });
   await tierScreenshot(page, TIER, 'v9-1-map-default');
 
   // Try to flip basemap via the BasemapPicker. Open it from the corner
@@ -227,7 +229,7 @@ test('guest V9 — basemap resets to satellite on reload (preference-loss proof)
   await page.reload();
   await waitForAppReady(page);
   await page.getByRole('button', { name: 'Map', exact: true }).click();
-  await page.waitForTimeout(2000);
+  await page.locator('canvas').waitFor({ state: 'visible', timeout: 15000 });
   await tierScreenshot(page, TIER, 'v9-3-after-reload');
 
   test.info().annotations.push({

@@ -154,8 +154,9 @@ test.describe('pro suite', () => {
 
     // WaypointSheet exposes a name input and a notes textarea (verified
     // against WaypointSheet.jsx — placeholders "Waypoint name" and
-    // "Notes, observations…"). Save validation may require the name.
+    // "Notes, observations…"). Save button is disabled until name is filled.
     const nameInput = page.getByPlaceholder(/waypoint name/i).first();
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     if (await nameInput.isVisible().catch(() => false)) {
       await nameInput.fill(`ux-agent-test ${Date.now()}`);
     } else {
@@ -225,7 +226,9 @@ test.describe('pro suite', () => {
       description: preWarning ? 'yes' : 'no (V14 confirmed)',
     });
 
+    // Fill name before clicking Save — button is disabled until a name is entered.
     const nameInput = page.getByPlaceholder(/waypoint name/i).first();
+    await nameInput.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
     if (await nameInput.isVisible().catch(() => false)) {
       await nameInput.fill(`v3-offline-${Date.now()}`);
     }
@@ -424,11 +427,17 @@ test.describe('pro suite', () => {
     }
     await tierScreenshot(page, TIER, 'v4-1-stopped');
 
-    // Cut the network, then tap Save.
+    // Fill track name before going offline — Save button is disabled until a name is entered.
+    const nameInput = page.getByPlaceholder(/waypoint name|track name|name/i).first();
+    if (await nameInput.isVisible().catch(() => false)) {
+      await nameInput.fill(`v4-track-${Date.now()}`);
+    }
+
+    // Cut the network, then tap Save. force:true bypasses nav SVG intercept.
     await context.setOffline(true);
     const saveBtn = page.getByRole('button', { name: /^save/i }).first();
     if (await saveBtn.isVisible().catch(() => false)) {
-      await saveBtn.click();
+      await saveBtn.click({ force: true });
       await page.waitForTimeout(2500);
     }
     await tierScreenshot(page, TIER, 'v4-2-after-offline-save');

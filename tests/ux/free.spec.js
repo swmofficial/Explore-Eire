@@ -201,7 +201,15 @@ test('free V13 — learn tab state loss across tab switch (handover reference jo
     type: 'state-loss-evidence',
     description: JSON.stringify({ before: stats1, after: stats2 }),
   });
-  expect(stats2).toBeTruthy();
+
+  // Fix-proof assertion: after task-003 keep-alive, stats must be stable
+  // across a tab switch.
+  if (stats1 && !stats1.error && stats2 && !stats2.error) {
+    expect(stats2.courses).toBe(stats1.courses);
+    expect(stats2.completePct).toBe(stats1.completePct);
+  } else {
+    expect(stats2).toBeTruthy();
+  }
 });
 
 // ─────────────────────────────────────────────────────────────────────
@@ -277,7 +285,7 @@ test('free V7 — theme resets on reload for authenticated user', async ({ page 
 
 test('free V8 — layer preferences reset to defaults on reload', async ({ page }) => {
   await page.getByRole('button', { name: 'Map', exact: true }).click();
-  await page.waitForTimeout(2500);
+  await page.locator('canvas').waitFor({ state: 'visible', timeout: 15000 });
   await page.locator('#tour-layers-btn').first().click();
   await page.waitForTimeout(500);
   await tierScreenshot(page, TIER, 'v8-1-panel-default');
@@ -294,7 +302,7 @@ test('free V8 — layer preferences reset to defaults on reload', async ({ page 
   await page.reload();
   await waitForAppReady(page);
   await page.getByRole('button', { name: 'Map', exact: true }).click();
-  await page.waitForTimeout(2000);
+  await page.locator('canvas').waitFor({ state: 'visible', timeout: 15000 });
   await page.locator('#tour-layers-btn').first().click();
   await page.waitForTimeout(500);
   await tierScreenshot(page, TIER, 'v8-3-panel-after-reload');
