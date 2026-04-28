@@ -16,6 +16,7 @@ Responsibilities:
 - Pro tier annotations (pro-badge-count, pro-feature-accessible, upgrade-shown)
   indicate bugs not capability proofs — always triage these as potential fixes
 - Never skip a finding without logging the reason in STATUS.md
+- Before diagnosing any failed fix, read the actual source file. Never trust the report alone.
 Commit prefix: [arch]
 Branch: main (direct push)
 
