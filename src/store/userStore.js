@@ -49,15 +49,21 @@ const useUserStore = create(
       setShowNotifPrePrompt: (show) => set({ showNotifPrePrompt: show }),
 
       // Colour theme — 'dark' | 'light'
-      theme: 'dark',
-      setTheme: (t) => set({ theme: t }),
+      // Persisted via ee_theme (manual pattern — Zustand persist not reliable
+      // for this field in the deployed environment; see task-008 notes).
+      theme: (() => {
+        try { return localStorage.getItem('ee_theme') || 'dark' } catch { return 'dark' }
+      })(),
+      setTheme: (t) => {
+        try { localStorage.setItem('ee_theme', t) } catch {}
+        set({ theme: t })
+      },
     }),
     {
       name: 'ee-user-prefs',
       // Persist only preference/subscription fields — never UI open-states,
       // callbacks, or auth objects (user contains tokens).
       partialize: (state) => ({
-        theme: state.theme,
         isPro: state.isPro,
         subscriptionStatus: state.subscriptionStatus,
       }),

@@ -138,3 +138,9 @@ File: App.jsx
 Change: Replace conditional rendering of non-map tabs with always-mounted CSS display toggling.
 Affects: DashboardView, SettingsView, LearnView, ProfileView are always mounted; only visibility changes via display:none.
 Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
+File: src/store/userStore.js
+Change: Remove theme from persist partialize; add IIFE init and localStorage.setItem in setTheme. Same manual pattern as sessionWaypoints.
+Affects: theme now persists via ee_theme localStorage key instead of ee-user-prefs. Any code reading userStore.theme is unaffected — store API is identical.
+Status: CLOSED
