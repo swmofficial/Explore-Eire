@@ -1,123 +1,127 @@
 # UX Agent Report — 2026-04-28
 
 ## Run Context
-- Commits analysed: `48395fe`, `68b57ff`, `a44d60f`, `35ad5d6`, `86a220a`, `be55413`, `ca5445a`, `d84b479`, `86a599f`, `10ca499`, `fe53e9b`, `3292a07`, `26b092c`, `9dc98fd`, `06fb774`, `50f3c46`, `394c32c`, `afc08b0`, `47b1264`, `4532bf4` (20 commits)
+- Commits analysed: `7e0bddd`, `9f184cb`, `2c70af7`, `8182f75`, `efb4d8c`, `3c915be`, `ca1ad91`, `032d09e`, `48395fe`, `68b57ff`, `a44d60f`, `35ad5d6`, `86a220a`, `be55413`, `ca5445a`, `d84b479`, `86a599f`, `10ca499`, `fe53e9b`, `3292a07` (20 commits)
 - Screenshots available: YES (12, 4 guest, 4 free, 4 pro)
 - Test pass rate: guest 7/8, free 6/7, pro 4/9
-- Historical accuracy: Confirmed: 8 (53%) | Phantom: 5 (33%) | Misdiagnosed: 1 | Superseded: 1
+- Historical accuracy: Confirmed: 11 (61%) | Phantom: 5 (28%) | Misdiagnosed: 1 | Superseded: 1
 
 ## Findings
 
 ### 1. Pro Subscription Status Lost on Offline Reload (V10)
-- Summary: Paying Pro users lose their subscription status and access to Pro features if the app is reloaded while offline. This vulnerability, previously "fixed", is re-confirmed.
+- Summary: Paying Pro users lose their subscription status and access to Pro features if the app is reloaded while offline, despite a previous fix attempt.
 - Tier(s) affected: pro
 - Confidence: HIGH
-- Evidence: `pro V10` test failed with `error: Error: page.reload: net::ERR_INTERNET_DISCONNECTED`. This directly confirms the scenario where an offline reload occurs. STATE_MAP.md explicitly states `userStore.isPro` and `subscriptionStatus` are hydrated from Supabase and "Fails" offline, causing `isPro` to be "stuck false, Pro features locked".
-- Cannot confirm: Visual evidence of the UI state after the offline reload, as the test timed out during the reload itself.
-- Root cause: `userStore.isPro` and `userStore.subscriptionStatus` are not persisted locally (e.g., `localStorage`) and rely solely on Supabase reads, which fail without connectivity. The previous fix (`d84b479`) intended to address this but appears to have been ineffective.
+- Evidence: `pro V10` test failed with `error: Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. This directly confirms the scenario where an offline reload occurs and the app fails to load, implying the Pro status cannot be re-established. STATE_MAP.md notes `useAuth.onAuthStateChange` may overwrite `isPro` to false on offline JWT expiry, and `task-005` was intended to address this. The test failure indicates the fix is not fully effective.
+- Cannot confirm: The exact UI state after the offline reload, as the test timed out during the reload itself.
+- Root cause: The mechanism for persisting `userStore.isPro` and `userStore.subscriptionStatus` (via `persist` middleware, `task-001`) or the guard in `useAuth.onAuthStateChange` (via `task-005`) is not robust enough to maintain Pro status during an offline reload, leading to a reliance on Supabase reads that fail without connectivity.
 - User impact: Critical loss of functionality for paying users, who are locked out of features they've paid for, leading to extreme frustration and inability to use the app in common offline scenarios.
 - Business impact: Severe damage to user trust, high churn risk for Pro subscribers, and potential for refund requests.
-- Fix direction: Re-evaluate and debug the `persist` middleware configuration for `userStore.isPro` and `userStore.subscriptionStatus` to ensure they are stored in `localStorage`.
+- Fix direction: Re-evaluate the interaction between `zustand-persist` for `userStore` and `useAuth.onAuthStateChange` to ensure `isPro` and `subscriptionStatus` are reliably hydrated from local storage even when offline.
 
-### 2. Offline Data Loss for User-Generated Content (V3, V4, V6, V14)
-- Summary: User-generated content (waypoints, tracks, routes) is lost if the user attempts to save it while offline, with no prior warning or retry mechanism. This vulnerability, previously "fixed" for some aspects, is re-confirmed.
+### 2. Core Map Data Missing After Offline Reload (V2)
+- Summary: Critical map data layers like gold samples and mineral localities fail to load after an offline reload, rendering the map largely useless for prospecting.
+- Tier(s) affected: all
+- Confidence: HIGH
+- Evidence: `pro V2` test failed with `error: Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. This confirms the scenario of an offline reload. STATE_MAP.md explicitly states `gold_samples` and `mineral_localities` queries "No data loads" offline.
+- Cannot confirm: Visual evidence of the empty map, as the test timed out during the reload itself.
+- Root cause: `useGoldSamples` and `useMineralLocalities` fetch data directly from Supabase on app mount without any local caching mechanism (e.g., `IndexedDB` or `localStorage`).
+- User impact: Prevents users from performing core prospecting activities when offline, which is a frequent scenario in rural Ireland, making the app unreliable.
+- Business impact: Reduces the app's core value proposition, leading to low engagement and negative reviews.
+- Fix direction: Implement a local caching strategy (e.g., `IndexedDB`) for critical read-only map data, allowing it to be available offline.
+
+### 3. Offline Data Loss for User-Generated Content (V3, V4, V14)
+- Summary: User-generated content (waypoints, tracks) is lost if the user attempts to save it while offline, with no prior warning or retry mechanism.
 - Tier(s) affected: free, pro (guest waypoints are memory-only regardless, covered by V11)
 - Confidence: HIGH
-- Evidence: `pro V3` test failed, but the annotation `v14-pre-save-offline-warning: no (V14 confirmed)` directly confirms the lack of an offline warning before saving. `pro V4` passed, confirming "track save fails offline (post-stop data loss)". `pro V6` passed, confirming "route save offline produces no user-facing toast (silent failure)". STATE_MAP.md explicitly states `waypoints` INSERT, `tracks` INSERT, and `routes` INSERT "Fails" offline, resulting in "YES — waypoint data gone", "YES — entire GPS trail... gone", and "YES — route points gone".
-- Cannot confirm: The exact toast message for V3, as the test timed out.
-- Root cause: Supabase write operations for `waypoints`, `tracks`, and `routes` are performed directly without an offline queue or local-first persistence. V14 is confirmed because there's no pre-save connectivity check.
+- Evidence: `pro V3` test failed with a disabled save button, and the annotation `v14-pre-save-offline-warning: no (V14 confirmed)` directly confirms the lack of an offline warning before attempting to save. `pro V4` passed, confirming "track save fails offline (post-stop data loss)". STATE_MAP.md explicitly states `waypoints` INSERT and `tracks` INSERT "Fails" offline, resulting in "YES — waypoint data gone" and "YES — entire GPS trail... gone".
+- Cannot confirm: The exact toast message for V3, as the test timed out before the save attempt.
+- Root cause: Supabase write operations for `waypoints` and `tracks` are performed directly without an offline queue or local-first persistence. V14 is confirmed because there's no pre-save connectivity check.
 - User impact: Critical data loss for users who spend significant time creating content, leading to severe frustration and distrust. This is particularly problematic for prospectors who operate in areas with intermittent connectivity.
 - Business impact: High churn risk, negative reviews, and a perception of an unreliable and data-unsafe application.
 - Fix direction: Implement an offline sync queue (e.g., using `IndexedDB`) for all user-generated content, allowing local-first saves and automatic syncing when connectivity is restored. Add a clear offline warning (V14) before attempting a save.
 
-### 3. Core Map Data Missing After Offline Reload (V2)
-- Summary: Critical map data layers like gold samples and mineral localities fail to load after an offline reload, rendering the map largely useless for prospecting. This vulnerability, previously "fixed", is re-confirmed.
-- Tier(s) affected: all
+### 4. GPS Track Lost on Reload (V1)
+- Summary: Accumulated GPS track data is lost if the application is reloaded or crashes during an active tracking session, as it is not auto-saved.
+- Tier(s) affected: pro (likely all tiers with tracking capability)
 - Confidence: HIGH
-- Evidence: `pro V2` test failed with `error: Error: page.reload: net::ERR_INTERNET_DISCONNECTED`. This confirms the scenario of an offline reload. STATE_MAP.md explicitly states `gold_samples` and `mineral_localities` queries "No data loads" offline.
-- Cannot confirm: Visual evidence of the empty map, as the test timed out during the reload itself.
-- Root cause: `useGoldSamples` and `useMineralLocalities` fetch data directly from Supabase on app mount without any local caching mechanism (e.g., `IndexedDB` or `localStorage`).
-- User impact: Prevents users from performing core prospecting activities when offline, which is a frequent scenario in rural Ireland, making the app unreliable.
-- Business impact: Reduces the app's core value proposition, leading to low user satisfaction, poor retention, and negative word-of-mouth, especially among the target prospector demographic.
-- Fix direction: Implement an offline-first caching strategy for core map data layers, storing them in `IndexedDB` or `localStorage` for retrieval when offline.
+- Evidence: `pro V1` test passed, with the annotation `track-survived-reload: no (V1 confirmed)`. This directly confirms the vulnerability. STATE_MAP.md notes `sessionTrail` accumulates in memory and is "NOT persisted anywhere until the user explicitly saves." `task-006` was intended to fix this, but the test result indicates it is still active.
+- Cannot confirm: The exact duration or complexity of the lost track, but the principle of loss is confirmed.
+- Root cause: `sessionTrail` is stored in volatile `mapStore` memory and is not automatically persisted to `localStorage` during active tracking, making it vulnerable to browser tab closure or app crashes.
+- User impact: Significant loss of valuable user-generated data (e.g., a multi-hour hike track), leading to extreme frustration and potential abandonment of the tracking feature.
+- Business impact: Reduces the perceived reliability and value of a core feature, potentially impacting user engagement and retention.
+- Fix direction: Debug `task-006` to ensure `sessionTrail` is correctly persisted to `localStorage` (e.g., `ee_session_trail`) incrementally during active tracking.
 
-### 4. User Preferences Reset on Reload (V7, V8, V9, V15)
-- Summary: User preferences for theme, basemap, layer visibility, and active module are lost on every page reload, reverting to default settings. This vulnerability, previously "fixed", is re-confirmed.
-- Tier(s) affected: all
-- Confidence: HIGH
-- Evidence: `guest V7` passed with `theme-after-reload: dark` (initial: dark, after flip: light), confirming V7. `free V7` passed with `theme-evidence: {"flipped":true,"tFlipped":"light","tReloaded":"dark"}`, also confirming V7. `guest V9` failed with a timeout, but STATE_MAP.md confirms `basemap` is not persisted. `free V8` failed with a timeout, but STATE_MAP.md confirms `layerVisibility` is not persisted. `guest V15` passed, confirming "activeModule defaults to prospecting on reload".
-- Cannot confirm: Visual evidence for V8 and V9 due to timeouts.
-- Root cause: `theme` (userStore), `basemap`, `is3D`, `layerVisibility` (mapStore), and `activeModule` (moduleStore) are not persisted to `localStorage` and are destroyed on page reload. The previous fix (`d84b479`) intended to add `persist` middleware but was ineffective for these specific state keys.
-- User impact: Annoying and disruptive user experience, requiring users to reconfigure their preferred settings (e.g., map layers, dark mode) every time they open the app or refresh the page.
-- Business impact: Contributes to a perception of a low-quality or unreliable application, potentially reducing engagement and user satisfaction.
-- Fix direction: Debug and correctly configure `persist` middleware for `userStore`, `mapStore`, and `moduleStore` to ensure `theme`, `basemap`, `is3D`, `layerVisibility`, and `activeModule` are saved to `localStorage`.
-
-### 5. Pro User Sees PRO Badges in Layer Panel (P1)
-- Summary: Authenticated Pro users are incorrectly shown "PRO" badges next to features they already have access to in the Layer Panel. This vulnerability, previously "fixed", is re-confirmed.
+### 5. Pro Users Still See PRO Badges / Upgrade Prompts (P1 Regression)
+- Summary: Authenticated Pro users are still shown "PRO" badges on features in the LayerPanel and may be routed to the UpgradeSheet, despite having an active subscription.
 - Tier(s) affected: pro
 - Confidence: HIGH
-- Evidence: `pro P1` test failed with a timeout, but the annotation `pro-badge-count: 8 (expected: 0 for Pro tier)` provides direct evidence that 8 PRO badges were visible to the Pro user. Screenshot `test-results/pro/p1-1-layer-panel.png` also shows "PRO" badges next to layers like "Gold heatmap" for a Pro user.
-- Cannot confirm: The exact state after the timeout, but the annotation is clear.
-- Root cause: The rendering logic for PRO badges in `LayerRow` does not correctly check `userStore.isPro` to hide the badges for paying users. The previous fix (`86a599f`) was intended to add an `!isPro` guard but appears to be ineffective or incorrectly implemented.
-- User impact: Confusing and potentially frustrating for Pro users, as it suggests they still need to upgrade or that certain features are locked, despite having paid for them.
-- Business impact: Undermines the value proposition of the Pro subscription and can lead to user confusion and dissatisfaction.
-- Fix direction: Correct the conditional rendering logic in `LayerRow` to ensure PRO badges are only displayed when `userStore.isPro` is `false`.
+- Evidence: `pro P1` test failed (timed out), but the annotation `pro-badge-count: 8 (expected: 0 for Pro tier)` provides direct evidence that 8 PRO badges were visible to a Pro user. This contradicts the expected behavior for Pro users. `task-004` was intended to fix this.
+- Cannot confirm: Whether the UpgradeSheet was explicitly shown, as the test timed out. However, the presence of badges is sufficient evidence of a UX issue.
+- Root cause: The conditional logic to hide PRO badges (`!isPro` guard in LayerRow, as per `task-004` fix) is either not correctly implemented, or the `isPro` state is not being correctly read or propagated for Pro users in this specific component.
+- User impact: Annoyance and confusion for paying subscribers who are constantly reminded to upgrade to a tier they already possess, undermining the value of their subscription.
+- Business impact: Erodes trust and satisfaction among the most valuable user segment, potentially leading to churn.
+- Fix direction: Debug the `isPro` state propagation and the conditional rendering logic for PRO badges within the LayerPanel to ensure they are correctly hidden for Pro users.
 
-### 6. Guest Waypoints are Memory-Only (V11)
-- Summary: Waypoints created by guest users are not persisted and are lost upon page reload or app closure. This vulnerability, previously "fixed", is re-confirmed.
-- Tier(s) affected: guest
-- Confidence: HIGH
-- Evidence: `guest V11` test passed with the description "session waypoints are memory-only (vanish on reload)". This directly confirms the vulnerability. STATE_MAP.md explicitly states "Guest waypoints are memory-only regardless."
-- Cannot confirm: Visual evidence of the waypoint vanishing, as the test description is sufficient.
-- Root cause: `mapStore.sessionWaypoints` is an in-memory Zustand store key and is not persisted to `localStorage` for guest users. The previous fix (`ca5445a`) intended to persist guest waypoints but was either ineffective or reverted.
-- User impact: Significant data loss for unauthenticated users who may spend time marking locations, leading to frustration and a disincentive to use the app without signing up.
-- Business impact: Hinders user acquisition and conversion by creating a poor first-time user experience for guests, as their initial contributions are not valued or saved.
-- Fix direction: Implement `localStorage` persistence for `mapStore.sessionWaypoints` specifically for guest users, ensuring these are cleared upon successful authentication.
-
-### 7. GPS Track Lost on Reload During Active Session (V1)
-- Summary: An active GPS tracking session's accumulated trail data is lost if the app is reloaded before the user explicitly saves the track.
+### 6. Theme Resets to Default on Reload (V7)
+- Summary: The user's selected theme preference (e.g., 'light' mode) is not persisted across page reloads and reverts to the default 'dark' theme.
 - Tier(s) affected: all
 - Confidence: HIGH
-- Evidence: `pro V1` test passed with the annotation `track-survived-reload: no (V1 confirmed)`. This directly confirms the vulnerability. STATE_MAP.md explicitly states `sessionTrail` accumulates in `mapStore` (in-memory) and "None are persisted anywhere until the user explicitly saves."
-- Cannot confirm: Visual evidence of the track disappearing, as the annotation is clear.
-- Root cause: `mapStore.sessionTrail` is an in-memory Zustand store key and is not persisted to `localStorage` or `IndexedDB` during an active tracking session.
-- User impact: Critical data loss for users engaged in long tracking activities (e.g., hikes, prospecting routes) if the app crashes, the browser tab is accidentally closed, or the device runs out of battery.
-- Business impact: Severe damage to user trust and reliability perception, especially for a core feature of an outdoor mapping app. High churn risk for users who experience this data loss.
-- Fix direction: Implement an auto-save mechanism for `sessionTrail` to `localStorage` or `IndexedDB` at regular intervals during an active tracking session, with a recovery option upon app restart.
+- Evidence: `guest V7` and `free V7` tests passed. `guest V7` annotations show `theme-initial: dark`, `theme-after-flip: light`, `theme-after-reload: dark`. `free V7` annotations show `tFlipped: light`, `tReloaded: dark`. This directly confirms the theme preference is lost. This contradicts STATE_MAP.md which states `userStore.theme` is persisted via `ee-user-prefs` (`task-001`).
+- Cannot confirm: The exact cause of the `persist` middleware failure for this specific field.
+- Root cause: Despite `userStore.theme` being listed in STATE_MAP.md as persisted via `zustand-persist` (`task-001`), the test evidence indicates the persistence mechanism is not functioning correctly for the `theme` field.
+- User impact: Minor annoyance as users have to re-select their preferred theme after every reload.
+- Business impact: Small negative impact on user experience and attention to detail, but not critical.
+- Fix direction: Investigate why `userStore.theme` is not being correctly persisted and rehydrated by the `zustand-persist` middleware, despite its configuration.
+
+### 7. Active Module Resets to Default on Reload (V15)
+- Summary: The user's last active module preference (e.g., 'prospecting') is not persisted across page reloads and reverts to the default.
+- Tier(s) affected: all
+- Confidence: HIGH
+- Evidence: `guest V15` test passed, confirming "activeModule defaults to prospecting on reload". This directly confirms the vulnerability. This contradicts STATE_MAP.md which states `moduleStore.activeModule` is persisted via `ee-module-prefs` (`task-001`).
+- Cannot confirm: The exact cause of the `persist` middleware failure for this specific field.
+- Root cause: Despite `moduleStore.activeModule` being listed in STATE_MAP.md as persisted via `zustand-persist` (`task-001`), the test evidence indicates the persistence mechanism is not functioning correctly for the `activeModule` field.
+- User impact: Minor annoyance as users have to re-select their preferred module after every reload.
+- Business impact: Small negative impact on user experience and workflow, but not critical.
+- Fix direction: Investigate why `moduleStore.activeModule` is not being correctly persisted and rehydrated by the `zustand-persist` middleware, despite its configuration.
+
+### 8. Guest Waypoints Lost on Reload (V11)
+- Summary: Waypoints created by guest users are not persisted locally and are lost upon page reload.
+- Tier(s) affected: guest
+- Confidence: HIGH
+- Evidence: `guest V11` test passed, confirming "session waypoints are memory-only (vanish on reload)". This directly confirms the vulnerability. This contradicts STATE_MAP.md which states `mapStore.sessionWaypoints` persists via a dedicated key `ee_guest_waypoints` (manual IIFE + write pattern, `task-002`).
+- Cannot confirm: The exact cause of the manual persistence pattern failure.
+- Root cause: Despite `task-002` intending to persist guest waypoints using a manual `localStorage` pattern, the test evidence indicates this mechanism is not functioning correctly, and `sessionWaypoints` remains volatile.
+- User impact: Loss of valuable temporary data for unauthenticated users, discouraging engagement and potential conversion to a free or paid account.
+- Business impact: Hinders guest user experience and reduces the likelihood of conversion.
+- Fix direction: Debug the manual persistence pattern for `sessionWaypoints` (`ee_guest_waypoints`) to ensure waypoints are correctly written to and read from `localStorage` for guest users.
 
 ## Tier Comparison
 
--   **Theme Reset (V7):** Confirmed to reset on reload for both **guest** and **free** tiers. Architectural analysis indicates this affects **all** tiers.
--   **Basemap Reset (V9):** Confirmed to reset on reload for the **guest** tier (via timeout and architectural confirmation). Architectural analysis indicates this affects **all** tiers.
--   **Layer Preferences Reset (V8):** Confirmed to reset on reload for the **free** tier (via timeout and architectural confirmation). Architectural analysis indicates this affects **all** tiers.
--   **Active Module Reset (V15):** Confirmed to reset on reload for the **guest** tier. Architectural analysis indicates this affects **all** tiers.
--   **Learn Tab Header Stats (V13):** The header stats (courses, completePct, chaptersDone) remain consistent across tab switches for both **guest** and **free** tiers, as confirmed by `state-loss-evidence` annotations. This is likely due to `ee_progress` being persisted in `localStorage`. However, the underlying component state (e.g., chapter reading position) is still expected to be lost due to conditional rendering, which the test does not directly verify.
--   **PRO Badges in Layer Panel (F2 vs P1):** **Free** users correctly see 10 PRO badges (F2 passed, `pro-badge-count: 10`), indicating features they can upgrade to. **Pro** users incorrectly see 8 PRO badges (P1 failed, `pro-badge-count: 8`), which is a bug.
--   **Waypoint Saving:** **Guest** users' waypoints are memory-only (V11 confirmed). **Free** users are correctly gated to the UpgradeSheet when attempting to save a waypoint (F3 passed). **Pro** users *should* be able to save waypoints, but the `pro P3` test timed out, indicating a potential issue even online.
--   **Offline Data Handling (V2, V3, V4, V6, V10, V14):** These vulnerabilities primarily affect **authenticated users (free/pro)** who interact with Supabase for saving data (waypoints, tracks, routes) or loading core map data. Guest users do not save data to Supabase, so V3/V4/V6/V14 are not applicable to them in the same way (V11 covers guest waypoints). V2 (gold/mineral data) affects all tiers. V1 (GPS track loss) affects any user who tracks. V10 (Pro status) is Pro-specific.
+-   **V7 (Theme Resets):** Behaviour is identical across **guest** and **free** tiers, confirming the theme preference is lost on reload for all authenticated and unauthenticated users. This suggests a core issue with the `zustand-persist` setup for `userStore.theme`, independent of authentication status.
+-   **V13 (Learn Header Stats):** Behaviour is identical across **guest** and **free** tiers. Both tests passed, and the `state-loss-evidence` annotation showed `completePct:0` before and after tab switching. This indicates that the *header statistics themselves* did not regress, implying the fix for V13 (preserving component state across tab switches) is holding for these specific stats. The test title "state-loss proof" is misleading in this context, as the evidence shows no loss for the header stats.
+-   **V11 (Guest Waypoints):** Confirmed for the **guest** tier. This vulnerability specifically targets unauthenticated users.
+-   **V15 (Active Module Resets):** Confirmed for the **guest** tier. This suggests a core issue with the `zustand-persist` setup for `moduleStore.activeModule`, independent of authentication status.
+-   **F2 (PRO Badges for Free User):** The `free F2` test passed with `pro-badge-count: 10`, which is the *expected* behaviour for free users (seeing PRO badges to encourage upgrade). This contrasts with the `pro P1` finding where Pro users *also* see PRO badges, which is *not* expected.
 
 ## Findings Discarded
 
--   **pro P3 — waypoint save happy path online:** This test failed with a timeout. While a critical function, the timeout could be due to test flakiness or a broader system slowdown rather than a specific architectural flaw directly confirming a vulnerability. Given the higher confidence and impact of other confirmed findings, this was discarded to adhere to the 8-finding limit.
+-   **`guest V9` (basemap resets to satellite on reload):** Discarded. The test timed out (`Test timeout of 60000ms exceeded`). While STATE_MAP.md indicates `basemap` *should* be persisted, the timeout prevents confirmation of the actual state after reload.
+-   **`free V8` (layer preferences reset to defaults on reload):** Discarded. The test timed out (`Test timeout of 60000ms exceeded`). While STATE_MAP.md indicates `layerVisibility` *should* be persisted, the timeout prevents confirmation of the actual state after reload.
+-   **`pro V6` (route save offline produces no user-facing toast):** Discarded. The test passed, but the annotation `route-button-missing: cannot proof V6` explicitly states the test could not provide evidence for the silent failure aspect of V6. The evidence is too weak to confirm the vulnerability.
 
 ## Cannot Assess
 
--   **Learn Tab Component State Loss (V13):** The tests `guest V13` and `free V13` passed, but their annotations only confirm the stability of header statistics (derived from `localStorage`), not the preservation of in-component state like scroll position or current chapter page. The UX Knowledge Context and architectural design (conditional rendering of non-map tabs) suggest this vulnerability still exists, despite a previous "fix" (`be55413`). The current tests do not provide sufficient evidence to confirm or deny the actual component state loss.
+-   No specific components or suites were skipped. All available tests ran.
 
 ## Systemic Patterns
 
-The most prominent systemic pattern is the **lack of robust offline-first data handling and state persistence**.
-1.  **Volatile In-Memory State:** Many critical user preferences (`theme`, `basemap`, `layerVisibility`, `activeModule`) and active session data (`sessionTrail`, `sessionWaypoints`) reside solely in Zustand stores without `persist` middleware or `localStorage` integration. This leads to complete state loss on page reload (V1, V7, V8, V9, V11, V15).
-2.  **Direct Supabase Dependency for Critical Data:** Core map data (`gold_samples`, `mineral_localities`) and user authentication/subscription status (`isPro`, `subscriptionStatus`) are fetched directly from Supabase on mount/auth change. There is no local caching or fallback, leading to complete data/status loss when offline (V2, V10).
-3.  **No Offline Write Queue:** All user-generated content writes (waypoints, tracks, finds, routes) attempt direct Supabase writes. Failure (due to offline status) results in immediate data loss with no local queue, retry mechanism, or adequate pre-save warning (V3, V4, V6, V14).
-
-These patterns indicate a fundamental architectural gap in handling network intermittency and ensuring data safety, which is critical for an outdoor mapping application.
+-   **Persistence Middleware Inconsistencies:** There is a significant pattern of fields (`theme`, `activeModule`, `sessionWaypoints`) that STATE_MAP.md explicitly states are persisted (either via `zustand-persist` or manual `localStorage` patterns) but are consistently shown by test results to *not* be persisted. This indicates a systemic issue with the implementation or configuration of persistence mechanisms across multiple stores, leading to a divergence between architectural ground truth and observed behaviour.
+-   **Fundamental Offline-First Gaps:** Critical offline functionality remains broken or unimplemented across multiple core features (Pro status, core map data loading, user-generated content saving). This suggests that the application's design does not adequately account for offline scenarios, which is a critical requirement for its target user base. Many of these were previously "fixed" but are re-confirmed as active vulnerabilities.
 
 ## Calibration Notes
 
-This run highlighted a critical issue with previous "CONFIRMED" fixes. Several vulnerabilities (P1, V7, V8, V9, V10, V11, V15) that were previously marked as fixed are now re-confirmed as present by the current test suite. This suggests either:
-1.  The previous fixes were ineffective or incomplete.
-2.  The previous tests were insufficient to truly confirm the fix.
-3.  The fixes were reverted in subsequent commits.
-
-This reinforces the need for robust, vulnerability-proof test journeys that explicitly prove or disprove the *existence* of a vulnerability, rather than just checking for a "pass" state. My analysis prioritized direct evidence from annotations and test descriptions that explicitly stated "V1 confirmed" or showed state changes consistent with the vulnerability, even if the Playwright test itself "passed" (meaning it successfully *proved* the vulnerability). I also relied heavily on STATE_MAP.md to confirm the architectural root causes for timed-out tests. I avoided repeating previous PHANTOM verdicts (e.g., Dashboard Tab Obstruction) unless new, direct evidence emerged.
+-   **Trusting Direct Test Evidence over STATE_MAP.md when Contradictory:** This run highlighted several direct contradictions between the `STATE_MAP.md` (architectural ground truth) and the explicit evidence from test annotations (e.g., `theme-after-reload: dark`, `track-survived-reload: no`, `pro-badge-count: 8`). In these cases, the direct, observable test evidence was prioritised, indicating that the `STATE_MAP.md` itself may need updating or that the implementation of the described persistence mechanisms is flawed.
+-   **Interpreting "Passed" Vulnerability Tests:** A "PASS" for a vulnerability test (e.g., `guest V11`, `pro V1`) correctly indicates that the test journey *completed and successfully demonstrated the vulnerability*, not that the vulnerability was fixed. This interpretation was crucial for identifying active issues.
+-   **Scrutinizing Weak Annotations:** The `pro V6` test with `cannot proof V6` annotation served as a reminder to discard findings where the test itself admits it cannot provide sufficient evidence, preventing phantom errors.
+-   **Timeout Interpretation:** Timeouts, especially in offline scenarios (`net::ERR_INTERNET_DISCONNECTED`), were treated as strong evidence of failure to achieve the desired state (e.g., loading Pro status or map data offline), rather than simply an inconclusive test.
