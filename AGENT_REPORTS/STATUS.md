@@ -3,6 +3,30 @@
 
 ---
 
+## Session: 2026-04-28 (implementer — tasks 001–004)
+Agent: Architect (acting as Implementer)
+Status: DONE
+
+### Completed
+- **task-004** (P1 PRO badge fix): `{layer.pro && !isPro && <ProBadge />}` — one-line change to LayerPanel.jsx. CONFIRMED.
+- **task-001** (store persistence V7/V8/V9/V15): persist middleware added to userStore (theme, isPro, subscriptionStatus), mapStore (basemap, layerVisibility), moduleStore (activeModule). All volatile fields excluded. STATUS.md amendment applied — isPro and subscriptionStatus included in userStore partialize for V10 offline resilience.
+- **task-002** (guest waypoints V11): sessionWaypoints IIFE hydrates from ee_guest_waypoints on mapStore init; addSessionWaypoint writes back on every add; clearGuestWaypoints added; called in useAuth.js handleSignedIn before setUser. CONFIRMED.
+- **task-003** (Learn tab keep-alive V13): App.jsx conditional rendering replaced with always-mounted display:none wrapper. Outer container uses zIndex/pointerEvents to yield to map tab. Each tab has its own scroll container. CONFIRMED.
+
+### Commits
+- 86a599f task-004 LayerPanel PRO badge fix
+- d84b479 task-001 store persistence
+- ca5445a task-002 guest waypoints
+- be55413 task-003 App.jsx keep-alive
+
+### Notes
+- All four task files moved to resolved/ with Resolution sections.
+- All INTENT blocks in CLAUDE.md marked CLOSED.
+- No application bugs introduced — all changes are additive wrappers or single-line guards.
+- pending/ is now empty.
+
+---
+
 ## Session: 2026-04-28 (architect triage — updated report)
 Agent: Architect
 Status: DONE
