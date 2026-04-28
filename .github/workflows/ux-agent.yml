@@ -61,6 +61,12 @@ jobs:
       # ux-agent.js script partitions by spec filename.
       # ────────────────────────────────────────────────────────────────
 
+      - name: Debug — confirm secrets reach the runner
+        run: |
+          echo "TEST_PRO_EMAIL set: ${{ secrets.TEST_PRO_EMAIL != '' }}"
+          echo "TEST_FREE_EMAIL set: ${{ secrets.TEST_FREE_EMAIL != '' }}"
+          echo "VERCEL_PREVIEW_URL set: ${{ secrets.VERCEL_PREVIEW_URL != '' }}"
+
       - name: Run Playwright UX suites (guest + free + pro)
         run: npx playwright test --reporter=json > playwright-report.json || true
         env:
