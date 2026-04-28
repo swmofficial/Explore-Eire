@@ -3,6 +3,23 @@
 
 ---
 
+## Session: 2026-04-28 (emergency fix)
+Agent: Architect (acting as Implementer — budget emergency)
+Status: DONE
+
+### Completed
+- Fixed pro.spec.js and free.spec.js skipping at collection time
+- AUTH_FILE now uses process.cwd() absolute path
+- test.skip condition changed from fs.existsSync (runs too early) to
+  process.env.TEST_PRO/FREE_EMAIL (known at collection time)
+- global-setup.js AUTH_DIR absolute path fix from previous session confirmed
+
+### Notes
+- No application source code modified
+- Pro suite should now run on next pipeline push
+
+---
+
 ## Session: 2026-04-27
 Agent: Architect
 Status: DONE
