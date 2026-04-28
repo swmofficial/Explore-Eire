@@ -17,6 +17,7 @@ Responsibilities:
   indicate bugs not capability proofs — always triage these as potential fixes
 - Never skip a finding without logging the reason in STATUS.md
 - Before diagnosing any failed fix, read the actual source file. Never trust the report alone.
+- Test selector failures and timeouts are valid tasks. Write them to pending/ the same as app bugs.
 Commit prefix: [arch]
 Branch: main (direct push)
 
