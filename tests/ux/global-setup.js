@@ -30,7 +30,7 @@ import { chromium } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
 
-const AUTH_DIR = '.auth';
+const AUTH_DIR = path.join(process.cwd(), '.auth');
 
 async function login(baseURL, email, password, outFile) {
   const browser = await chromium.launch();

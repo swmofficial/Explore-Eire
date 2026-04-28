@@ -30,14 +30,14 @@ import {
 } from './_helpers.js';
 
 const TIER = TIERS.FREE;
-const AUTH_FILE = path.join('.auth', 'free.json');
+const AUTH_FILE = path.join(process.cwd(), '.auth', 'free.json');
 
 // Use the saved auth state for every test in this suite. If the file is
 // missing (e.g. running locally without TEST_FREE_EMAIL set) the entire
 // suite is skipped with a clear reason — better than crashing.
-test.use({ storageState: fs.existsSync(AUTH_FILE) ? AUTH_FILE : undefined });
+test.use({ storageState: AUTH_FILE });
 test.skip(
-  !fs.existsSync(AUTH_FILE),
+  !process.env.TEST_FREE_EMAIL,
   'free.spec.js requires .auth/free.json — set TEST_FREE_EMAIL/TEST_FREE_PASSWORD secrets',
 );
 

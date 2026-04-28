@@ -35,11 +35,11 @@ import {
 } from './_helpers.js';
 
 const TIER = TIERS.PRO;
-const AUTH_FILE = path.join('.auth', 'pro.json');
+const AUTH_FILE = path.join(process.cwd(), '.auth', 'pro.json');
 
-test.use({ storageState: fs.existsSync(AUTH_FILE) ? AUTH_FILE : undefined });
+test.use({ storageState: AUTH_FILE });
 test.skip(
-  !fs.existsSync(AUTH_FILE),
+  !process.env.TEST_PRO_EMAIL,
   'pro.spec.js requires .auth/pro.json — set TEST_PRO_EMAIL/TEST_PRO_PASSWORD secrets',
 );
 
