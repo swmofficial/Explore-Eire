@@ -126,3 +126,9 @@ File: src/store/moduleStore.js
 Change: Wrap create() with persist middleware; partialize to activeModule only.
 Affects: activeModule now loads from localStorage on startup.
 Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
+File: App.jsx
+Change: Replace conditional rendering of non-map tabs with always-mounted CSS display toggling.
+Affects: DashboardView, SettingsView, LearnView, ProfileView are always mounted; only visibility changes via display:none.
+Status: CLOSED

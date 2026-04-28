@@ -72,15 +72,21 @@ export default function App() {
           <MapView />
         </div>
 
-        {/* Non-map tabs rendered conditionally */}
-        {activeTab !== 'map' && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
-            {activeTab === 'dashboard' && <DashboardView onNavigate={setActiveTab} />}
-            {activeTab === 'settings' && <SettingsView onNavigate={setActiveTab} />}
-            {activeTab === 'learn' && <LearnView />}
-            {activeTab === 'profile' && <ProfileView onNavigate={setActiveTab} />}
+        {/* Non-map tabs always mounted — display:none preserves component state across tab switches */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: activeTab !== 'map' ? 1 : -1, pointerEvents: activeTab !== 'map' ? 'auto' : 'none' }}>
+          <div style={{ display: activeTab === 'dashboard' ? 'block' : 'none', height: '100%', overflowY: 'auto' }}>
+            <DashboardView onNavigate={setActiveTab} />
           </div>
-        )}
+          <div style={{ display: activeTab === 'settings' ? 'block' : 'none', height: '100%', overflowY: 'auto' }}>
+            <SettingsView onNavigate={setActiveTab} />
+          </div>
+          <div style={{ display: activeTab === 'learn' ? 'block' : 'none', height: '100%', overflowY: 'auto' }}>
+            <LearnView />
+          </div>
+          <div style={{ display: activeTab === 'profile' ? 'block' : 'none', height: '100%', overflowY: 'auto' }}>
+            <ProfileView onNavigate={setActiveTab} />
+          </div>
+        </div>
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
