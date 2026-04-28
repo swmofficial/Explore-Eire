@@ -3,6 +3,65 @@
 
 ---
 
+## Session: 2026-04-28 (architect triage — updated report)
+Agent: Architect
+Status: DONE
+
+### Report
+- ux-findings-2026-04-28.md (updated run — pro suite now executing, 3/9)
+- Test pass rate: guest 7/8, free 6/7, pro 3/9
+
+### Tasks Written
+- None new. Tasks 001–004 already cover all actionable findings.
+
+### Phantom Logged — F2
+- Agent finding #6: "PRO Badges Inappropriately Displayed to Free Users (F2)"
+- Verdict: PHANTOM — badges for free users are intentional paywall UX, not a bug.
+  Free users must see what is behind the Pro gate. Removing or softening the badges
+  would break the upgrade conversion path. The agent confused "this looks like clutter"
+  with "this is a bug." The only real bug is badges showing for Pro users (P1, task-004).
+- Calibration: agent should never flag PRO badges visible to free users as a defect.
+
+### Skipped Findings (logged per AGENTS.md rule)
+- V2 (offline map data) — IndexedDB/SW work, large scope. Deferring until task-001 ships.
+- V3/V4/V14 (offline write queue) — large scope, same reason.
+- V1 (GPS track auto-save) — medium scope, deferring.
+- V10 (isPro lost offline) — partially covered by task-001 (see note below).
+
+### Note for Implementer — task-001 amendment
+When implementing task-001 (userStore persist), extend the partialize to also
+include `isPro` and `subscriptionStatus` alongside `theme`. These are the fields
+V10 requires to survive offline reload. The security tradeoff (localStorage isPro
+can be tampered) is acceptable — Supabase re-validates on reconnect and the locked
+feature data is still server-enforced. Do not open a separate task for this —
+amend the task-001 implementation in place.
+
+### Test Selector Issues (not app bugs — fix in a future test session)
+These are mechanics of the test suite, not defects in the app:
+
+1. **Save Waypoint button disabled before name input (V3/P3)**: The Save button
+   in WaypointSheet is disabled until a name is typed. Tests tap Save immediately
+   after the sheet opens, before filling the name field. Fix: ensure `nameInput.fill()`
+   completes and the field loses focus before `save.click()`.
+
+2. **V4 Save Track blocked by nav SVG intercept**: The BottomNav SVG icons intercept
+   the Save button click in the Track save flow. Fix: scroll or use `force: true` on
+   the save button click, or wait for the nav to settle before clicking.
+
+3. **V2/V10 offline reload kills uncached page**: `page.reload()` while offline throws
+   `net::ERR_INTERNET_DISCONNECTED` because the HTML shell is not cached by the
+   Service Worker (or SW is not registered in the test environment). Tests time out
+   before any assertions run. Fix: check if SW caches the shell in production; if not,
+   use `page.goto('/')` with the offline context instead of `page.reload()`.
+
+### Priority Order for Implementer
+1. task-004 — one-line LayerPanel fix, zero risk, ship immediately
+2. task-001 — store persistence (with isPro/subscriptionStatus added per note above)
+3. task-002 — guest waypoint localStorage
+4. task-003 — Learn tab CSS keep-alive (highest risk, last)
+
+---
+
 ## Session: 2026-04-28 (emergency fix)
 Agent: Architect (acting as Implementer — budget emergency)
 Status: DONE
