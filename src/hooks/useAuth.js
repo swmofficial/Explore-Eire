@@ -17,14 +17,19 @@ export function useAuth() {
       if (session?.user) handleSignedIn(session.user)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         handleSignedIn(session.user)
       } else {
         setUser(null)
-        setIsPro(false)
-        setSubscriptionStatus('free')
         legalFetchedFor.current = null
+        // Only clear subscription state on genuine sign-out or when online.
+        // If offline, the session was lost due to JWT expiry — persisted Pro
+        // status is the best data available; do not overwrite it.
+        if (event === 'SIGNED_OUT' || navigator.onLine) {
+          setIsPro(false)
+          setSubscriptionStatus('free')
+        }
       }
     })
 
