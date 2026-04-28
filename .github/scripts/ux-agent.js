@@ -374,7 +374,7 @@ const requestBody = {
   systemInstruction: { parts: [{ text: systemPrompt }] },
   contents: [{ parts: contentParts }],
   generationConfig: {
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     temperature: 0.2,
   },
 };

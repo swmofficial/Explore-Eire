@@ -70,6 +70,9 @@ jobs:
           TEST_PRO_EMAIL: ${{ secrets.TEST_PRO_EMAIL }}
           TEST_PRO_PASSWORD: ${{ secrets.TEST_PRO_PASSWORD }}
 
+      - name: Check auth files created
+        run: ls -la .auth/ || echo "No .auth directory"
+
       - name: Collect git context
         run: |
           git log --oneline -20 > git-log.txt
@@ -117,3 +120,5 @@ jobs:
       contents: write
       pull-requests: write
     uses: ./.github/workflows/ux-audit.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
