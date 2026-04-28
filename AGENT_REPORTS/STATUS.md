@@ -291,3 +291,21 @@ Branch: main (direct)
 - V1 data now survives reload; resume-session UX (prompting user to continue) is deferred to a future task.
 - V4 force:true was already present in pro.spec.js before this session — no change needed for task-007C.
 - Vercel pipeline should now test the correct deployment and pro pass rate should improve (target ≥ 6/9).
+
+---
+
+## Session: 2026-04-28 (implementer) — run 2
+Commits: 31c0988, ca97b38
+Branch: main (direct)
+
+### Completed
+- [impl] task-008 CONFIRMED — userStore.js: theme removed from Zustand persist partialize; IIFE reads ee_theme on init; setTheme writes ee_theme. Manual pattern same as sessionWaypoints/sessionTrail.
+- [impl] task-009 CONFIRMED — V1 test now checks ee_session_trail localStorage directly (real assertion if GPS ran); V11 annotates ee_guest_waypoints key presence; V15 annotates ee-module-prefs content; P1 adds 2000ms auth-ready wait + explicit waitFor + force:true toggle.
+
+### Pending
+- None. pending/ is clear.
+
+### Notes
+- V7 Definition of Done: the guest/free V7 test should now FAIL (expect(tReloaded).toBe('dark') will fail because theme is now 'light' after reload). A failing assertion here is the proof that task-008 worked.
+- V1 Definition of Done: if GPS tracking started and trail points accumulated, expect(trail.length).toBeGreaterThan(0) will now pass, signalling V1 is fixed.
+- P1 race: 4500ms total auth wait (2500ms map + 2000ms auth-ready) covers typical CI Supabase latency.
