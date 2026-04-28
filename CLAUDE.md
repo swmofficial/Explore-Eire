@@ -103,4 +103,8 @@ GitHub secrets required: `TEST_FREE_EMAIL`, `TEST_FREE_PASSWORD`,
 > protocol. CLOSED blocks are removed from this file once their commit
 > has landed — historical INTENT records live in commit messages.
 
-(none currently open)
+## INTENT — Implementer — 2026-04-28
+File: AGENTS.md
+Change: Add two Architect triage rules before the Commit prefix line in Instance 1 responsibilities.
+Affects: Architect must now always triage Pro tier annotations as potential fixes and log any skipped finding in STATUS.md.
+Status: CLOSED

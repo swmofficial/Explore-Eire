@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - 'AGENT_REPORTS/**'
+      - 'BRAIN/**'
+      - '**.md'
+  schedule:
+    - cron: '0 6 * * *'
 
 permissions:
   contents: write
