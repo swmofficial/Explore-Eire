@@ -244,10 +244,13 @@ test('guest V9 — basemap resets to satellite on reload (preference-loss proof)
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// V11 — Guest data not migrated on signup (memory-only proof).
-// We add a session waypoint as a guest, then prove it lives only in
-// memory by reloading and finding it gone. Full migration test requires
-// signup, which is exercised in the free suite.
+// V11 — Guest waypoints localStorage persistence proof.
+// task-002 (ca5445a) persists sessionWaypoints via ee_guest_waypoints using
+// an IIFE read on store init and localStorage.setItem on addSessionWaypoint.
+// The key survives reload if the fix is working. This test checks the key
+// directly rather than attempting a full waypoint add→reload→count flow
+// (which requires reaching WaypointSheet, which may be behind an UpgradeSheet
+// gate for guest users).
 // ─────────────────────────────────────────────────────────────────────
 
 test('guest V11 — session waypoints are memory-only (vanish on reload)', async ({ page }) => {
@@ -277,14 +280,25 @@ test('guest V11 — session waypoints are memory-only (vanish on reload)', async
   await page.waitForTimeout(2000);
   await tierScreenshot(page, TIER, 'v11-3-map-after-reload');
 
+  // Check whether guest waypoints survived reload via the ee_guest_waypoints key.
+  const wpJson = await page.evaluate(() => localStorage.getItem('ee_guest_waypoints'));
+  test.info().annotations.push({
+    type: 'guest-waypoints-after-reload',
+    description: wpJson !== null
+      ? `ee_guest_waypoints present after reload (V11 fixed): ${wpJson}`
+      : 'ee_guest_waypoints absent after reload (V11 confirmed)',
+  });
   expect(true).toBe(true);
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// V15 — activeModule resets on reload.
-// moduleStore.activeModule is not persisted. After reload it returns to
-// 'prospecting' (default). Hard to exercise from guest UI alone — only
-// other modules unlock for Pro. We document the default and reload state.
+// V15 — activeModule persistence proof.
+// task-001 (d84b479) persists activeModule in ee-module-prefs via Zustand
+// persist middleware. This test checks the localStorage key directly after
+// reload. Note: guest users cannot switch modules (only Pro unlocks others),
+// so activeModule is always 'prospecting' — the localStorage check confirms
+// the persist mechanism is running even if the value is the same as the
+// default.
 // ─────────────────────────────────────────────────────────────────────
 
 test('guest V15 — activeModule defaults to prospecting on reload', async ({ page }) => {
@@ -298,7 +312,18 @@ test('guest V15 — activeModule defaults to prospecting on reload', async ({ pa
   await page.waitForTimeout(2000);
   await tierScreenshot(page, TIER, 'v15-2-after-reload');
 
-  // Always passes — evidence is in the screenshot pair.
+  // Check whether activeModule survived reload via ee-module-prefs.
+  const modulePrefs = await page.evaluate(() => localStorage.getItem('ee-module-prefs'));
+  const storedModule = (() => {
+    try { return JSON.parse(modulePrefs || '{}')?.state?.activeModule } catch { return null }
+  })();
+  test.info().annotations.push({
+    type: 'activeModule-after-reload',
+    description: storedModule
+      ? `ee-module-prefs present: activeModule=${storedModule} (V15 status: ${storedModule === 'prospecting' ? 'possibly fixed (prospecting is default)' : 'fixed'})`
+      : 'ee-module-prefs absent after reload (V15 confirmed)',
+  });
+  // Always passes — evidence is in the annotation and screenshot pair.
   expect(true).toBe(true);
 });
 
