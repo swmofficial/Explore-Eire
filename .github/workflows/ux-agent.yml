@@ -68,7 +68,7 @@ jobs:
           echo "VERCEL_PREVIEW_URL set: ${{ secrets.VERCEL_PREVIEW_URL != '' }}"
 
       - name: Run Playwright UX suites (guest + free + pro)
-        run: npx playwright test --reporter=json > playwright-report.json || true
+        run: npx playwright test || true
         env:
           BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
           TEST_FREE_EMAIL: ${{ secrets.TEST_FREE_EMAIL }}
