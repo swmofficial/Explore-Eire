@@ -174,6 +174,8 @@ test.describe('pro suite', () => {
     }
     const save = page.getByRole('button', { name: /^save/i }).first();
     if (await save.isVisible().catch(() => false)) {
+      await save.waitFor({ state: 'visible', timeout: 5000 });
+      await expect(save).not.toBeDisabled();
       await save.click();
       await page.waitForTimeout(2500);
     }
@@ -238,6 +240,8 @@ test.describe('pro suite', () => {
     }
     const save = page.getByRole('button', { name: /^save/i }).first();
     if (await save.isVisible().catch(() => false)) {
+      await save.waitFor({ state: 'visible', timeout: 5000 });
+      await expect(save).not.toBeDisabled();
       await save.click();
     }
     await page.waitForTimeout(3500);
@@ -276,10 +280,11 @@ test.describe('pro suite', () => {
     await tierScreenshot(page, TIER, 'v10-1-pro-online');
     const proBadgesOnline = await page.locator('text=PRO').count();
 
-    // Step 2: cut the network and reload. The Service Worker is registered
-    // so the JS bundle still loads; only Supabase fetches fail.
+    // Step 2: cut the network and navigate. page.goto triggers a SW-served
+    // navigation (SW intercepts fetch events); page.reload() bypasses SW in
+    // some Chromium versions causing net::ERR_INTERNET_DISCONNECTED.
     await context.setOffline(true);
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173');
 
     // We cannot rely on waitForAppReady's nav check finishing fast offline
     // (Supabase calls retry). Wait for the BottomNav with a generous
@@ -322,9 +327,10 @@ test.describe('pro suite', () => {
     await page.waitForTimeout(3500); // give time for batched 1000-row fetches
     await tierScreenshot(page, TIER, 'v2-1-online-with-data');
 
-    // Reload offline.
+    // Navigate offline — page.goto triggers SW-served navigation; page.reload()
+    // bypasses SW in some Chromium versions causing net::ERR_INTERNET_DISCONNECTED.
     await context.setOffline(true);
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.goto(process.env.BASE_URL || 'http://localhost:5173');
     await page.locator('nav').first().waitFor({ state: 'visible', timeout: 20000 }).catch(() => {});
     await page.waitForTimeout(3000);
     await page.getByRole('button', { name: 'Map', exact: true }).click();

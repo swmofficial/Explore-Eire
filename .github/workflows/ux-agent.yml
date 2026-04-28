@@ -54,8 +54,8 @@ jobs:
 
       - name: Wait for Vercel deployment
         run: |
-          echo "Waiting 90s for Vercel to build..."
-          sleep 90
+          echo "Waiting 180s for Vercel to build..."
+          sleep 180
           echo "DEPLOYMENT_URL=${{ secrets.VERCEL_PREVIEW_URL }}" >> $GITHUB_ENV
 
       # ────────────────────────────────────────────────────────────────
