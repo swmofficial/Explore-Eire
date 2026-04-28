@@ -111,7 +111,7 @@ function LayerRow({ layer, visible, onToggle, isPro }) {
         {layer.label}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        {layer.pro && <ProBadge />}
+        {layer.pro && !isPro && <ProBadge />}
         <Toggle
           checked={!disabled && (visible ?? false)}
           onChange={() => onToggle(layer.id, layer)}
