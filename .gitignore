@@ -10,3 +10,12 @@ android/app/src/main/assets/capacitor.config.json
 # Xcode user state
 *.xcuserstate
 xcuserdata/
+
+# Playwright UX Agent pipeline outputs — never commit
+# .auth/ contains live Supabase session tokens for the test accounts
+# (test-free@exploreeire.ie, test-pro@exploreeire.ie). Committing these
+# would leak production-equivalent auth to the repo.
+.auth/
+playwright-report.json
+test-results/
+playwright-report/

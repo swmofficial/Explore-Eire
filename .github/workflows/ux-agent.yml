@@ -19,6 +19,22 @@ jobs:
         with:
           fetch-depth: 20
 
+      - name: Check CLAUDE.md size (warn-only)
+        # Warns when CLAUDE.md grows beyond the 6000-char working limit.
+        # We do NOT fail the pipeline — this is a guardrail, not a gate.
+        # If CLAUDE.md grows back to 40KB the next session, this warning
+        # is the early signal to trim again.
+        run: |
+          if [ -f CLAUDE.md ]; then
+            size=$(wc -c < CLAUDE.md)
+            echo "CLAUDE.md size: ${size} chars"
+            if [ "$size" -gt 6000 ]; then
+              echo "::warning file=CLAUDE.md::CLAUDE.md is ${size} chars — limit is 6000. Move overflow to BRAIN/ files."
+            fi
+          else
+            echo "::warning::CLAUDE.md not found"
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -30,32 +46,36 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Install jq
-        run: sudo apt-get install -y jq
-
-      - name: Get test targets from git diff
-        run: node .github/scripts/get-test-targets.js
-
-      - name: Wait for Vercel preview
+      - name: Wait for Vercel deployment
         run: |
           echo "Waiting 90s for Vercel to build..."
           sleep 90
           echo "DEPLOYMENT_URL=${{ secrets.VERCEL_PREVIEW_URL }}" >> $GITHUB_ENV
 
-      - name: Run Playwright UX tests (screenshots on every step)
-        run: |
-          TARGETS=$(cat test-targets.txt | tr '\n' ' ')
-          echo "Running specs: $TARGETS"
-          npx playwright test $TARGETS --reporter=json > playwright-report.json || true
+      # ────────────────────────────────────────────────────────────────
+      # Run the three-tier UX suites SEQUENTIALLY in a single job.
+      # global-setup.js runs once per Playwright invocation and produces
+      # .auth/free.json and .auth/pro.json from live Supabase logins.
+      # We invoke Playwright a single time and let it run all three spec
+      # files; this gives us a single playwright-report.json that the
+      # ux-agent.js script partitions by spec filename.
+      # ────────────────────────────────────────────────────────────────
+
+      - name: Run Playwright UX suites (guest + free + pro)
+        run: npx playwright test --reporter=json > playwright-report.json || true
         env:
           BASE_URL: ${{ secrets.VERCEL_PREVIEW_URL }}
+          TEST_FREE_EMAIL: ${{ secrets.TEST_FREE_EMAIL }}
+          TEST_FREE_PASSWORD: ${{ secrets.TEST_FREE_PASSWORD }}
+          TEST_PRO_EMAIL: ${{ secrets.TEST_PRO_EMAIL }}
+          TEST_PRO_PASSWORD: ${{ secrets.TEST_PRO_PASSWORD }}
 
       - name: Collect git context
         run: |
           git log --oneline -20 > git-log.txt
           git diff HEAD~5..HEAD --stat > git-diff.txt
 
-      - name: Run UX Agent (replaces generic Gemini analysis)
+      - name: Run UX Agent (Gemini analysis with tier-attributed evidence)
         run: node .github/scripts/ux-agent.js
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
