@@ -108,3 +108,21 @@ File: AGENTS.md
 Change: Add two Architect triage rules before the Commit prefix line in Instance 1 responsibilities.
 Affects: Architect must now always triage Pro tier annotations as potential fixes and log any skipped finding in STATUS.md.
 Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
+File: src/store/userStore.js
+Change: Wrap create() with persist middleware; partialize to theme, isPro, subscriptionStatus.
+Affects: These fields now load from localStorage on startup; sign-out path already calls setIsPro(false) which clears the persisted value correctly.
+Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
+File: src/store/mapStore.js
+Change: Wrap create() with persist middleware; partialize to basemap and layerVisibility only. Also added sessionWaypoints IIFE hydration and clearGuestWaypoints action (task-002).
+Affects: basemap and layerVisibility now load from localStorage on startup; sessionWaypoints hydrates from ee_guest_waypoints key.
+Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
+File: src/store/moduleStore.js
+Change: Wrap create() with persist middleware; partialize to activeModule only.
+Affects: activeModule now loads from localStorage on startup.
+Status: CLOSED
