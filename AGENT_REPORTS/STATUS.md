@@ -3,6 +3,49 @@
 
 ---
 
+## Session: 2026-04-28 (architect triage — ux-findings-2026-04-28 final run)
+Agent: Architect
+Status: DONE
+
+### Tasks Written
+- **task-005** (V10 auth fix): `useAuth.onAuthStateChange` only resets `isPro`/`subscriptionStatus`
+  on `SIGNED_OUT` event when `navigator.onLine` is true. Offline JWT expiry now preserves
+  the persisted Pro status.
+- **task-006** (V1 sessionTrail persist): IIFE hydration + write-on-append + clear-on-clear
+  for `sessionTrail` in `mapStore.js`. Same pattern as `sessionWaypoints`. Requires INTENT.
+- **task-007** (test selector + pipeline fixes): 90s Vercel wait → 180s; waypoint Save fills
+  name first; track Save uses force:true; offline tests use `page.goto` not `page.reload`.
+
+### Suspected Phantom Findings (code fixes confirmed present in source)
+The following re-confirmed findings are suspected to be caused by Vercel deployment lag
+(90s wait insufficient — tests ran against pre-fix code). The fixes ARE present in the
+current source files. Verification is expected on the next pipeline run with 180s wait.
+
+- **V7 (theme reset)**: `userStore` persist middleware confirmed in source with `theme` in partialize.
+- **V8 (layerVisibility reset)**: `mapStore` persist confirmed with `layerVisibility` in partialize.
+- **V9 (basemap reset)**: `mapStore` persist confirmed with `basemap` in partialize.
+- **V15 (activeModule reset)**: `moduleStore` persist confirmed with `activeModule` in partialize.
+- **V11 (guest waypoints vanish)**: IIFE from `ee_guest_waypoints` confirmed in `mapStore.js` line 66–70.
+- **P1 (Pro user sees PRO badges)**: `{layer.pro && !isPro && <ProBadge />}` confirmed in `LayerPanel.jsx` line 114.
+  NOTE: P1 will re-appear as long as V10 is not fixed (isPro resets to false offline, causing badges to show).
+  task-005 will close P1 as a side effect.
+
+### Skipped Findings (large scope, deferred)
+- V2 (offline gold/mineral data cache) — IndexedDB/SW scope. Deferred.
+- V3/V4/V6/V14 (offline write queue) — IndexedDB scope. Deferred.
+
+### State Map Updated
+- `BRAIN/STATE_MAP.md` updated: persist middleware documented, "None use persist" claim removed,
+  tab architecture updated to reflect always-mounted keep-alive (task-003). This correction
+  prevents future UX Agent runs from re-flagging already-fixed persistence issues as vulnerabilities.
+
+### Priority Order for Implementer
+1. task-005 — useAuth.js only, zero risk, ship immediately
+2. task-007 — test + pipeline mechanics fixes, no app code touched
+3. task-006 — mapStore.js (shared file, requires INTENT), medium scope
+
+---
+
 ## Session: 2026-04-28 (implementer — tasks 001–004)
 Agent: Architect (acting as Implementer)
 Status: DONE

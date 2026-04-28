@@ -1,13 +1,25 @@
 # Explore Eire — State Map
 > Factual map of all state flows in the application.
 > Source of truth for the UX Agent's architectural foresight.
-> Last updated: 2026-04-27
+> Last updated: 2026-04-28
 
 ---
 
 ## 1. Store Ownership Map
 
-Three Zustand stores. None use persist middleware. All are pure in-memory — destroyed on page reload.
+Three Zustand stores. All three use Zustand `persist` middleware (added task-001, commit d84b479).
+Persisted fields survive page reload. Unpersisted fields are in-memory and are destroyed on reload.
+
+**Persisted fields by store:**
+- `userStore` → `theme`, `isPro`, `subscriptionStatus` (key: `ee-user-prefs`)
+- `mapStore` → `basemap`, `layerVisibility` (key: `ee-map-prefs`)
+  - `sessionWaypoints` persists via a dedicated key `ee_guest_waypoints` (manual IIFE + write pattern, task-002)
+  - `sessionTrail` persists via a dedicated key `ee_session_trail` (task-006, pending)
+- `moduleStore` → `activeModule` (key: `ee-module-prefs`)
+
+**Note on isPro offline:** `useAuth.onAuthStateChange` resets `isPro` to false on any null session,
+including offline JWT-expiry scenarios. Task-005 fixes this by scoping the reset to `SIGNED_OUT`
+events when online. Until task-005 ships, V10 remains partially active despite persist middleware.
 
 ### mapStore (src/store/mapStore.js)
 
@@ -61,7 +73,7 @@ Three Zustand stores. None use persist middleware. All are pure in-memory — de
 | showNotifPrePrompt | boolean | false | triggerNotifPrePromptIfNeeded() | App.jsx → NotificationPrePrompt |
 | theme | string | 'dark' | SettingsView theme picker | App.jsx (data-theme attr) |
 
-**Critical note:** `user`, `isPro`, `subscriptionStatus`, `legalAccepted` are hydrated from Supabase on every auth state change. They survive tab switches (userStore lives in module scope) but are destroyed on page reload and re-fetched. `theme` is NOT persisted to localStorage — it resets to 'dark' on every page reload.
+**Critical note:** `user`, `isPro`, `subscriptionStatus`, `legalAccepted` are hydrated from Supabase on every auth state change. `isPro` and `subscriptionStatus` are also persisted to localStorage via the persist middleware (task-001). `theme` is also persisted. However, `useAuth.onAuthStateChange` may overwrite `isPro` to false on offline JWT expiry — task-005 addresses this.
 
 ### moduleStore (src/store/moduleStore.js)
 
@@ -97,13 +109,16 @@ Every localStorage key in the app, what writes it, and when.
 | `ee_notif_type_{key}` | 'true' / 'false' | NotificationSettings per-type toggles | NotificationSettings mount | NotificationSettings.jsx |
 | `explore_eire_offline_regions` | JSON array of region metadata | After offline download completes, after delete | `useOffline()` initial state, OfflineManager | useOffline.js |
 
-**What is NOT in localStorage (but should be):**
-- `theme` — resets to 'dark' on every page reload
-- `activeModule` — always resets to 'prospecting'
-- `basemap` — always resets to 'satellite'
-- `is3D` — always resets to false
-- `layerVisibility` — always resets to { stream_sediment: true }
-- Any form of offline write queue
+**Persist middleware keys (added task-001, 2026-04-28):**
+- `ee-user-prefs` → `theme`, `isPro`, `subscriptionStatus`
+- `ee-map-prefs` → `basemap`, `layerVisibility`
+- `ee-module-prefs` → `activeModule`
+- `ee_guest_waypoints` → `sessionWaypoints` (manual pattern, task-002)
+- `ee_session_trail` → `sessionTrail` (manual pattern, task-006 pending)
+
+**What is still NOT persisted (genuine vulnerabilities):**
+- `is3D` — resets to false on page reload (low priority)
+- Any form of offline write queue (V3, V4, V6, V14 — large scope, deferred)
 
 ---
 
@@ -168,23 +183,26 @@ Map tab:       ALWAYS MOUNTED — visibility toggled via CSS
                visibility: hidden + pointerEvents: none when not active
                WebGL context preserved (never unmounted)
 
-Dashboard tab: CONDITIONALLY RENDERED — unmounts when leaving
-Settings tab:  CONDITIONALLY RENDERED — unmounts when leaving  
-Learn tab:     CONDITIONALLY RENDERED — unmounts when leaving
-Profile tab:   CONDITIONALLY RENDERED — unmounts when leaving
+Dashboard tab: ALWAYS MOUNTED — display:none + pointerEvents:none when not active (task-003)
+Settings tab:  ALWAYS MOUNTED — display:none + pointerEvents:none when not active (task-003)
+Learn tab:     ALWAYS MOUNTED — display:none + pointerEvents:none when not active (task-003)
+Profile tab:   ALWAYS MOUNTED — display:none + pointerEvents:none when not active (task-003)
 ```
+
+All five tabs are now keep-alive. Component state (scroll position, sub-page
+navigation, in-progress form values) survives tab switches. V13 (Learn tab
+state loss on switch) is resolved.
 
 ### What Dies On Tab Switch
 
 | From → To | What is Destroyed | What Survives |
 |---|---|---|
-| Any → Map | Previous non-map tab unmounts. All component state destroyed. | Map was never unmounted. Zustand stores intact. |
+| Any → Map | Nothing destroyed — all tabs always mounted. | All component state. Zustand stores intact. |
 | Map → Any | Map stays mounted (hidden). | Map WebGL context, all map layers, GPS watch (if tracking). |
-| Learn → Any | LearnView unmounts. **All component state destroyed.** | `ee_progress` and `ee_certificates` in localStorage survive. useProgress initialises from them on re-mount. |
-| Learn (mid-CourseDetail) → Any | CourseDetail unmounts. ChapterReader unmounts. | Same as above — progress persisted per-chapter. |
-| Settings → Any | SettingsView and all sub-pages unmount. | Settings are stateless (read from Supabase/stores on mount). |
-| Dashboard → Any | DashboardView unmounts. | Waypoint/find counts re-fetched on re-mount. |
-| Profile → Any | ProfileView unmounts. Finds list, track history gone from component state. | Data re-fetched from Supabase on re-mount. |
+| Learn → Any | Nothing destroyed (always mounted). | Component state including scroll position, current chapter. |
+| Settings → Any | Nothing destroyed (always mounted). | Sub-page state. |
+| Dashboard → Any | Nothing destroyed (always mounted). | Waypoint/find counts (no re-fetch needed). |
+| Profile → Any | Nothing destroyed (always mounted). | Finds list, track history component state. |
 
 ### What Happens During GPS Tracking + Tab Switch
 
