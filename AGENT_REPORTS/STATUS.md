@@ -3,6 +3,58 @@
 
 ---
 
+## Session: 2026-04-28 (architect triage — ux-findings-2026-04-28 run 2, 15:35)
+Agent: Architect
+Status: DONE
+
+### Source verification
+Read actual source files before diagnosing every finding. Did not trust the
+report alone.
+
+### Tasks Written
+- **task-008** (V7 real fix): Remove `theme` from Zustand persist partialize;
+  add IIFE init (`ee_theme` key) + `localStorage.setItem` in `setTheme`. The
+  manual pattern is empirically proven to work (sessionWaypoints, sessionTrail).
+  Requires INTENT for userStore.js (shared file).
+- **task-009** (test evidence quality): Four tests using wrong metrics or stale
+  comments. V1 checks TrackOverlay UI instead of `ee_session_trail` data. V11
+  stale comment says "no persist middleware" (wrong since task-002). V15 always
+  passes with no localStorage check. P1 reads badge count before Supabase
+  `is_pro` fetch completes (race condition). All four fixed with direct
+  localStorage assertions and an auth-ready wait.
+
+### Confirmed Phantoms
+- **V1 (GPS track lost)**: PHANTOM — test checks for TrackOverlay UI which
+  requires `isTracking=true` (not persisted). After reload, TrackOverlay is
+  always hidden regardless of trail data. task-006 (2c70af7) correctly persists
+  `sessionTrail` to `ee_session_trail`. Test produces false "V1 confirmed"
+  annotation. Fixed in task-009.
+- **V11 (guest waypoints)**: UNCERTAIN → likely PHANTOM — test uses
+  `expect(true).toBe(true)`, stale comment says "no persist middleware" (wrong).
+  task-002 IIFE pattern confirmed in source (mapStore.js:66-70). Task-009 adds
+  a real assertion.
+- **V15 (activeModule)**: UNCERTAIN → likely PHANTOM — `expect(true).toBe(true)`,
+  screenshot-only inference. moduleStore persist confirmed in source. Task-009
+  adds a real assertion.
+- **P1 (Pro badges)**: CODE FIX CORRECT — `{layer.pro && !isPro && <ProBadge />}`
+  at LayerPanel:114 is correct. Badge count of 8 captured before Supabase
+  `is_pro` async fetch completes (race condition in test). task-009 adds 2000ms
+  auth-ready wait.
+
+### Skipped / Deferred
+- **V10 (Pro status offline)**: Test mechanic — `page.goto` while offline throws
+  `net::ERR_INTERNET_DISCONNECTED` (HTML shell not SW-cached in CI). App code fix
+  (task-005, 8182f75) is correct. Cannot verify via this test.
+- **V2 (map data offline)**: Same test mechanic. Large scope (IndexedDB).
+  Deferred.
+- **V3/V4/V14 (offline write queue)**: Large scope (IndexedDB). Deferred.
+
+### Priority Order for Implementer
+1. task-008 — userStore.js only, zero risk, ship immediately
+2. task-009 — test files only, no app code, ship after task-008
+
+---
+
 ## Session: 2026-04-28 (architect triage — ux-findings-2026-04-28 final run)
 Agent: Architect
 Status: DONE
