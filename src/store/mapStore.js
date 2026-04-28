@@ -56,10 +56,21 @@ const useMapStore = create(
 
       // Session GPS trail — array of {lat, lng, alt, heading, ts}
       // Rendered as dots on the map canvas when a session is active
-      sessionTrail: [],
+      sessionTrail: (() => {
+        try {
+          return JSON.parse(localStorage.getItem('ee_session_trail') || '[]')
+        } catch { return [] }
+      })(),
       appendSessionTrailPoint: (pt) =>
-        set((state) => ({ sessionTrail: [...state.sessionTrail, pt] })),
-      clearSessionTrail: () => set({ sessionTrail: [] }),
+        set((state) => {
+          const next = [...state.sessionTrail, pt]
+          try { localStorage.setItem('ee_session_trail', JSON.stringify(next)) } catch {}
+          return { sessionTrail: next }
+        }),
+      clearSessionTrail: () => {
+        try { localStorage.removeItem('ee_session_trail') } catch {}
+        set({ sessionTrail: [] })
+      },
 
       // Session waypoints — hydrated from localStorage for guests;
       // cleared on sign-in via clearGuestWaypoints()

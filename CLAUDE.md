@@ -104,6 +104,12 @@ GitHub secrets required: `TEST_FREE_EMAIL`, `TEST_FREE_PASSWORD`,
 > has landed — historical INTENT records live in commit messages.
 
 ## INTENT — Implementer — 2026-04-28
+File: src/store/mapStore.js
+Change: Add localStorage read/write for sessionTrail (IIFE init + appendSessionTrailPoint writes + clearSessionTrail removes). Same pattern as sessionWaypoints.
+Affects: sessionTrail now survives page reload during active tracking.
+Status: CLOSED
+
+## INTENT — Implementer — 2026-04-28
 File: AGENTS.md
 Change: Add two Architect triage rules before the Commit prefix line in Instance 1 responsibilities.
 Affects: Architect must now always triage Pro tier annotations as potential fixes and log any skipped finding in STATUS.md.
