@@ -11,11 +11,11 @@ Three Zustand stores. All three use Zustand `persist` middleware (added task-001
 Persisted fields survive page reload. Unpersisted fields are in-memory and are destroyed on reload.
 
 **Persisted fields by store:**
-- `userStore` → `theme`, `isPro`, `subscriptionStatus` (key: `ee-user-prefs`)
+- `userStore` → `isPro`, `subscriptionStatus` (key: `ee-user-prefs`, version: 1; `theme` uses manual `ee_theme` key instead)
 - `mapStore` → `basemap`, `layerVisibility` (key: `ee-map-prefs`)
-  - `sessionWaypoints` persists via a dedicated key `ee_guest_waypoints` (manual IIFE + write pattern, task-002)
-  - `sessionTrail` persists via a dedicated key `ee_session_trail` (task-006, pending)
-- `moduleStore` → `activeModule` (key: `ee-module-prefs`)
+  - `sessionWaypoints` persists via `ee_guest_waypoints` (manual IIFE + write pattern, task-002)
+  - `sessionTrail` persists via `ee_session_trail` (manual IIFE + write pattern, task-006)
+- `moduleStore` → `activeModule` via `ee_active_module` (manual IIFE + write pattern, task-013; Zustand persist removed)
 
 **Note on isPro offline:** `useAuth.onAuthStateChange` resets `isPro` to false on any null session,
 including offline JWT-expiry scenarios. Task-005 fixes this by scoping the reset to `SIGNED_OUT`
@@ -109,12 +109,15 @@ Every localStorage key in the app, what writes it, and when.
 | `ee_notif_type_{key}` | 'true' / 'false' | NotificationSettings per-type toggles | NotificationSettings mount | NotificationSettings.jsx |
 | `explore_eire_offline_regions` | JSON array of region metadata | After offline download completes, after delete | `useOffline()` initial state, OfflineManager | useOffline.js |
 
-**Persist middleware keys (added task-001, 2026-04-28):**
-- `ee-user-prefs` → `theme`, `isPro`, `subscriptionStatus`
+**Persist middleware keys:**
+- `ee-user-prefs` → `isPro`, `subscriptionStatus` (version: 1; `theme` was removed in task-012 migration)
 - `ee-map-prefs` → `basemap`, `layerVisibility`
-- `ee-module-prefs` → `activeModule`
+
+**Manual localStorage keys (IIFE read + setItem on write — proven reliable pattern):**
+- `ee_theme` → `userStore.theme` (manual pattern, task-008)
+- `ee_active_module` → `moduleStore.activeModule` (manual pattern, task-013; replaces abandoned `ee-module-prefs` Zustand persist key)
 - `ee_guest_waypoints` → `sessionWaypoints` (manual pattern, task-002)
-- `ee_session_trail` → `sessionTrail` (manual pattern, task-006 pending)
+- `ee_session_trail` → `sessionTrail` (manual pattern, task-006)
 
 **What is still NOT persisted (genuine vulnerabilities):**
 - `is3D` — resets to false on page reload (low priority)

@@ -149,10 +149,10 @@ Status: CLOSED
 File: src/store/userStore.js
 Change: Add version: 1 and migrate to persist config. Migration strips stale theme field from pre-task-008 stored state (task-012).
 Affects: On first load after deploy, old ee-user-prefs with theme: 'dark' is migrated to remove theme. The IIFE-set theme value now survives hydration correctly.
-Status: OPEN
+Status: CLOSED
 
 ## INTENT — Architect — 2026-04-29
 File: src/store/moduleStore.js
 Change: Remove persist wrapper entirely; switch activeModule to manual IIFE reading ee_active_module + localStorage.setItem in setActiveModule (task-013).
 Affects: activeModule now persists via ee_active_module key (simple string). The ee-module-prefs key is abandoned. Zustand persist not used for this store.
-Status: OPEN
+Status: CLOSED

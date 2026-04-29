@@ -140,8 +140,7 @@ test('guest V13 — learn header stats are recomputed on every tab switch (state
 // ─────────────────────────────────────────────────────────────────────
 // V7 — Theme resets on page reload.
 // Path: Settings → theme picker → set 'light' → reload → theme should
-// be dark again because userStore.theme is not persisted to localStorage
-// (STATE_MAP.md section 2: "What is NOT in localStorage").
+// be 'light' after reload (task-008 + task-012 persist migration fixed this).
 // ─────────────────────────────────────────────────────────────────────
 
 test('guest V7 — theme resets to default on reload (preference-loss proof)', async ({ page }) => {
@@ -168,17 +167,22 @@ test('guest V7 — theme resets to default on reload (preference-loss proof)', a
   const tFlipped = await page.locator('html').getAttribute('data-theme');
   test.info().annotations.push({ type: 'theme-after-flip', description: String(tFlipped) });
 
-  // Reload — userStore is in-memory only, so it should reset.
+  const eeThemeBeforeReload = await page.evaluate(() => localStorage.getItem('ee_theme'));
+  test.info().annotations.push({ type: 'ee_theme-before-reload', description: String(eeThemeBeforeReload) });
+
   await page.reload();
   await waitForAppReady(page);
+
+  const eeThemeAfterReload = await page.evaluate(() => localStorage.getItem('ee_theme'));
+  test.info().annotations.push({ type: 'ee_theme-after-reload', description: String(eeThemeAfterReload) });
+
   const tReloaded = await page.locator('html').getAttribute('data-theme');
   await tierScreenshot(page, TIER, 'v7-2-after-reload');
   test.info().annotations.push({ type: 'theme-after-reload', description: String(tReloaded) });
 
-  // V7 prediction: theme is 'dark' after reload regardless of what we set.
-  // If flipped is true and tFlipped !== tReloaded, that is the proof.
+  // V7 fix proof: theme should be 'light' after reload (task-008 manual ee_theme + task-012 migration).
   if (flipped) {
-    expect(tReloaded).toBe('dark');
+    expect(tReloaded).toBe('light');
   }
 });
 
@@ -312,16 +316,13 @@ test('guest V15 — activeModule defaults to prospecting on reload', async ({ pa
   await page.waitForTimeout(2000);
   await tierScreenshot(page, TIER, 'v15-2-after-reload');
 
-  // Check whether activeModule survived reload via ee-module-prefs.
-  const modulePrefs = await page.evaluate(() => localStorage.getItem('ee-module-prefs'));
-  const storedModule = (() => {
-    try { return JSON.parse(modulePrefs || '{}')?.state?.activeModule } catch { return null }
-  })();
+  // Check whether activeModule survived reload via ee_active_module (manual pattern, task-013).
+  const activeModule = await page.evaluate(() => localStorage.getItem('ee_active_module'));
   test.info().annotations.push({
     type: 'activeModule-after-reload',
-    description: storedModule
-      ? `ee-module-prefs present: activeModule=${storedModule} (V15 status: ${storedModule === 'prospecting' ? 'possibly fixed (prospecting is default)' : 'fixed'})`
-      : 'ee-module-prefs absent after reload (V15 confirmed)',
+    description: activeModule !== null
+      ? `ee_active_module present: ${activeModule} (V15 ${activeModule === 'prospecting' ? 'status: prospecting (matches default)' : 'fixed'})`
+      : 'ee_active_module absent after reload (V15 confirmed)',
   });
   // Always passes — evidence is in the annotation and screenshot pair.
   expect(true).toBe(true);

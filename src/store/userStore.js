@@ -61,6 +61,17 @@ const useUserStore = create(
     }),
     {
       name: 'ee-user-prefs',
+      version: 1,
+      // Strip stale theme field written by pre-task-008 code. Without this migration,
+      // Zustand's hydration merges { theme: 'dark' } from the old stored state over
+      // the IIFE-set value, defeating the manual ee_theme persistence pattern.
+      migrate: (persistedState, version) => {
+        if (version < 1) {
+          const { theme: _theme, ...rest } = persistedState
+          return rest
+        }
+        return persistedState
+      },
       // Persist only preference/subscription fields — never UI open-states,
       // callbacks, or auth objects (user contains tokens).
       partialize: (state) => ({

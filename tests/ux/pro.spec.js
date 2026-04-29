@@ -65,11 +65,16 @@ test.describe('pro suite', () => {
 
   test('pro P1 — Pro user does not see UpgradeSheet on Pro affordance tap', async ({ page }) => {
     await page.getByRole('button', { name: 'Map', exact: true }).click();
-    await page.waitForTimeout(2500);
-    // Wait for the Supabase profile fetch to complete. isPro is set async
-    // (useAuth → profiles.is_pro fetch → setIsPro). Without this wait, the
-    // badge count is read before isPro=true propagates to LayerPanel.
-    await page.waitForTimeout(2000);
+    // Wait for isPro to be set (Supabase profile fetch must complete before we read badges).
+    await page.waitForFunction(
+      () => {
+        try {
+          const s = JSON.parse(localStorage.getItem('ee-user-prefs') || '{}');
+          return s?.state?.isPro === true;
+        } catch { return false; }
+      },
+      { timeout: 10000 },
+    ).catch(() => {});
     await page.locator('#tour-layers-btn').first().waitFor({ state: 'visible', timeout: 10000 });
     await page.locator('#tour-layers-btn').first().click();
     await page.waitForTimeout(500);

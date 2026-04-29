@@ -265,8 +265,15 @@ test('free V7 — theme resets on reload for authenticated user', async ({ page 
   const tFlipped = await page.locator('html').getAttribute('data-theme');
   await tierScreenshot(page, TIER, 'v7-1-flipped');
 
+  const eeThemeBeforeReload = await page.evaluate(() => localStorage.getItem('ee_theme'));
+  test.info().annotations.push({ type: 'ee_theme-before-reload', description: String(eeThemeBeforeReload) });
+
   await page.reload();
   await waitForAppReady(page);
+
+  const eeThemeAfterReload = await page.evaluate(() => localStorage.getItem('ee_theme'));
+  test.info().annotations.push({ type: 'ee_theme-after-reload', description: String(eeThemeAfterReload) });
+
   const tReloaded = await page.locator('html').getAttribute('data-theme');
   await tierScreenshot(page, TIER, 'v7-2-reloaded');
 
@@ -274,7 +281,8 @@ test('free V7 — theme resets on reload for authenticated user', async ({ page 
     type: 'theme-evidence',
     description: JSON.stringify({ flipped, tFlipped, tReloaded }),
   });
-  if (flipped) expect(tReloaded).toBe('dark');
+  // V7 fix proof: theme should be 'light' after reload (task-008 + task-012 migration).
+  if (flipped) expect(tReloaded).toBe('light');
 });
 
 // ─────────────────────────────────────────────────────────────────────

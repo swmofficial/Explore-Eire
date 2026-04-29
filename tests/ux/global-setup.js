@@ -77,9 +77,23 @@ async function login(baseURL, email, password, outFile) {
   // the password input disappearing.
   await page.locator('input[type="password"]').first().waitFor({ state: 'detached', timeout: 15000 });
 
-  // Give Supabase + the React tree one final tick to write the session to
-  // localStorage (sb-*-auth-token).
-  await page.waitForTimeout(1000);
+  // Wait until isPro is persisted (Supabase profile fetch may be slow in CI).
+  // For free accounts isPro never becomes true; the poll times out and warns — storageState
+  // is still captured. For pro accounts this eliminates the race between profile fetch and
+  // storageState capture that caused isPro:false to be baked into pro.json.
+  const isPersisted = await page.waitForFunction(
+    () => {
+      try {
+        const s = JSON.parse(localStorage.getItem('ee-user-prefs') || '{}');
+        return s?.state?.isPro === true;
+      } catch { return false; }
+    },
+    { timeout: 15000 },
+  ).catch(() => false);
+
+  if (!isPersisted) {
+    console.warn('[global-setup] isPro not persisted within 15s — storageState may have isPro:false');
+  }
 
   await context.storageState({ path: outFile });
   await browser.close();
