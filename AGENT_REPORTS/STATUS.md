@@ -394,3 +394,65 @@ Branch: main (direct)
 - V15 expected outcome: `ee_active_module present: prospecting` on next pipeline run (V15 resolved).
 - P1 expected outcome: `pro-badge-count: 0` on next pipeline run (race resolved).
 - P3 / V1 / V11 expected outcome: GPS-dependent flows now have valid mock coordinates.
+
+---
+
+## Session: 2026-04-29 (architect — triage ux-findings-2026-04-29.md)
+Agent: Architect
+Commits: (pending)
+Branch: main (direct)
+
+### Context
+
+UX Agent report for 2026-04-29 reflects pipeline run BEFORE tasks 010-013 landed.
+The implementer session that completed 010-013 was the same day (later).
+As a result, most findings in the 2026-04-29 report are already addressed:
+
+| Finding | Status |
+|---|---|
+| V7 theme resets (ee_theme null) | RESOLVED — task-008 + task-012 |
+| P3 Save button disabled (GPS acquiring) | RESOLVED — task-010 (geolocation permission) |
+| P1 UpgradeSheet for Pro user (race) | RESOLVED — task-011 (isPro waitForFunction) |
+| V1/V11 no GPS data in tests | RESOLVED — task-010 (geolocation permission) |
+| V15 activeModule resets | RESOLVED — task-013 (manual IIFE pattern) |
+| V2/V10 offline page.goto failure | RESOLVED — task-007 (switched from reload to goto) |
+
+### Genuinely remaining after 010-013
+
+**V8/V9** — basemap and layerVisibility persistence: mapStore still uses Zustand `persist`
+(ee-map-prefs key). This is the same pattern that failed for theme (ee-user-prefs) and
+activeModule (ee-module-prefs). Both were fixed by switching to manual IIFE pattern.
+The UX report shows V9 and V8 timeouts — strong signal the persist middleware is also
+unreliable for ee-map-prefs in the deployed environment.
+
+**Offline-first architecture** (V2, V3, V4, V6, V10, V14) — large-scope deferred work.
+Not scheduled this session. Will be addressed as State Agent build (separate initiative).
+
+### Tasks Written
+
+- **task-014** — Fix V8/V9: switch basemap (ee_basemap) and layerVisibility (ee_layer_visibility)
+  to manual IIFE + localStorage.setItem pattern. Remove Zustand persist wrapper from mapStore
+  entirely (nothing left to persist after removal). Update V9 and V8 test assertions to read
+  localStorage keys directly instead of relying on screenshot comparison.
+
+### Skipped Findings (not tasked)
+
+- V2/V3/V4/V6/V10/V14 offline-first: Deliberately deferred. These require IndexedDB write queue
+  + service worker enhancements. Scope is too large for single implementer tasks. Will be
+  addressed as a dedicated offline-first architecture sprint.
+
+- V12 (offline map = empty map, UX warning): Not tasked — informational for future work.
+
+- F4/V13 (Learn header stats stable): No action required — confirmed RESOLVED.
+
+### Blockers
+
+None.
+
+### Notes
+
+- UX Agent report timestamps need to be checked against implementer commits before triage.
+  The 2026-04-29 report pre-dated the 010-013 implementer session — several findings were already
+  resolved before the report was read.
+- After task-014 lands, V8 and V9 should resolve. Next pipeline run will confirm.
+- Architect token budget: this session was short (medium model, classification only).
