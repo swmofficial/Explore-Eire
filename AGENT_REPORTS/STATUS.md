@@ -3,6 +3,62 @@
 
 ---
 
+## Session: 2026-04-29 (architect triage — ux-findings-2026-04-29)
+Agent: Architect
+Status: DONE
+
+### Source verification
+Read actual source files before diagnosing every finding (userStore.js, moduleStore.js,
+mapStore.js, LayerPanel.jsx, WaypointSheet.jsx, playwright.config.js, global-setup.js,
+_helpers.js, guest.spec.js, free.spec.js, pro.spec.js). Did not trust the report alone.
+
+### Tasks Written
+- **task-010** (geolocation): playwright.config.js needs `geolocation` + `permissions`.
+  P3 fails because `getCurrentPosition()` rejects in headless Playwright → `coords: null`
+  → Save button disabled. Same root cause makes V1 (GPS track) and V11 (guest waypoints)
+  unprovable — those are PHANTOM findings. App code correct. Test infrastructure fix only.
+- **task-011** (P1 storageState timing): global-setup.js waits only 1000ms before
+  capturing storageState. Supabase profile fetch may not complete → `isPro: false` in
+  stored `ee-user-prefs`. Switch to `waitForFunction` polling for `isPro: true`. Also
+  replace fixed timeouts in P1 test with `waitForFunction`.
+- **task-012** (V7 persist version bump): task-008 manual IIFE pattern is correct but
+  fails because OLD `ee-user-prefs` stored state (pre-task-008) contains `theme: 'dark'`
+  which Zustand persist merges over the IIFE value on hydration. Fix: version bump to 1
+  + migrate that strips stale `theme` field. Also: flip V7 test assertion from `toBe('dark')`
+  to `toBe('light')` and add `ee_theme` localStorage annotations for diagnostics.
+  INTENT declared for userStore.js.
+- **task-013** (V15 moduleStore manual): `ee-module-prefs` absent after reload — Zustand
+  persist for moduleStore not writing in deployed environment. Switch to manual IIFE +
+  direct localStorage pattern (proven reliable: ee_theme, ee_guest_waypoints,
+  ee_session_trail). New key: `ee_active_module` (simple string). Update guest V15 test
+  to check new key. INTENT declared for moduleStore.js.
+
+### Confirmed Phantoms
+- **V1 (GPS track lost)**: PHANTOM — app code correct (task-006 confirmed in source).
+  Test can't accumulate trail points without geolocation permission. Fixed by task-010.
+- **V11 (guest waypoints lost)**: PHANTOM — app code correct (task-002 confirmed in
+  source). Test can't add waypoints without GPS → `addSessionWaypoint` never called →
+  key never written. Fixed by task-010.
+
+### Skipped / Deferred
+- **V14 (no offline pre-save warning)**: REAL finding. Annotation confirmed no offline
+  check before Save Waypoint. However, this is medium scope (requires `navigator.onLine`
+  check + UI warning in WaypointSheet). Deferred until P3 (task-010) ships — P3 must
+  pass before V3/V14 tests are meaningful.
+- **V8/V9 (basemap/layer prefs reset)**: MEDIUM confidence. Tests timeout with browser
+  crash. Cannot confirm. Deferred.
+- **V2/V3/V10 (offline infrastructure)**: Large scope (IndexedDB). ERR_INTERNET_DISCONNECTED
+  test mechanic. Deferred per established policy.
+- **V4/V6 (offline track/route)**: Tests pass (expected behavior). Known deferred.
+
+### Priority Order for Implementer
+1. task-010 — playwright.config.js only, zero app risk, ship immediately
+2. task-011 — test files only (global-setup.js + pro.spec.js), no app code
+3. task-013 — moduleStore.js (shared file, INTENT open), simple IIFE swap
+4. task-012 — userStore.js (shared file, INTENT open), persist version bump
+
+---
+
 ## Session: 2026-04-28 (architect triage — ux-findings-2026-04-28 run 2, 15:35)
 Agent: Architect
 Status: DONE
