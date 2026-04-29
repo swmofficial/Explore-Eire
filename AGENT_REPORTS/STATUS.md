@@ -365,3 +365,32 @@ Branch: main (direct)
 - V7 Definition of Done: the guest/free V7 test should now FAIL (expect(tReloaded).toBe('dark') will fail because theme is now 'light' after reload). A failing assertion here is the proof that task-008 worked.
 - V1 Definition of Done: if GPS tracking started and trail points accumulated, expect(trail.length).toBeGreaterThan(0) will now pass, signalling V1 is fixed.
 - P1 race: 4500ms total auth wait (2500ms map + 2000ms auth-ready) covers typical CI Supabase latency.
+
+---
+
+## Session: 2026-04-29 (implementer — tasks 010-013)
+Agent: Implementer
+Commits: 00a605d
+Branch: main (direct)
+
+### Completed
+
+- **task-010** CONFIRMED — playwright.config.js: added `geolocation: { latitude: 53.3498, longitude: -6.2603 }` and `permissions: ['geolocation']` to global `use:` block. All three GPS-dependent test flows (P3 Save button, V1 trail, V11 guest waypoints) now have a mock position.
+
+- **task-011** CONFIRMED — global-setup.js: replaced `waitForTimeout(1000)` with a `waitForFunction` poll for `isPro:true` in `ee-user-prefs` (15s timeout, catch to false). Eliminates race between Supabase profile fetch and storageState capture for pro.json. pro.spec.js P1: replaced two fixed `waitForTimeout(2500 + 2000)` with `waitForFunction` polling for `isPro:true` (10s timeout).
+
+- **task-013** CONFIRMED — moduleStore.js: removed `persist` middleware and `persist` import entirely; `activeModule` now uses manual IIFE reading `ee_active_module` + `localStorage.setItem` in `setActiveModule`. Same proven pattern as ee_theme, ee_guest_waypoints, ee_session_trail. guest.spec.js V15 test updated to check `ee_active_module` (plain string) instead of parsing `ee-module-prefs` JSON. STATE_MAP.md updated to reflect new key and pattern. Both INTENT blocks CLOSED.
+
+- **task-012** CONFIRMED — userStore.js: added `version: 1` and `migrate` to persist config; migration strips stale `theme` field from pre-task-008 stored state, preventing Zustand hydration from overwriting the IIFE-set `ee_theme` value. guest.spec.js and free.spec.js V7 tests: assertion flipped from `toBe('dark')` to `toBe('light')`; added `ee_theme-before-reload` and `ee_theme-after-reload` localStorage annotations for diagnostic evidence.
+
+### Pending
+- None. pending/ is empty.
+
+### Notes
+- All 4 task files moved to resolved/ with Resolution sections.
+- All INTENT blocks marked CLOSED.
+- No known bugs reintroduced (checked BRAIN/BUGS.md).
+- V7 expected outcome: `theme-after-reload: light` on next pipeline run (V7 resolved).
+- V15 expected outcome: `ee_active_module present: prospecting` on next pipeline run (V15 resolved).
+- P1 expected outcome: `pro-badge-count: 0` on next pipeline run (race resolved).
+- P3 / V1 / V11 expected outcome: GPS-dependent flows now have valid mock coordinates.
