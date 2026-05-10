@@ -1,111 +1,107 @@
 # UX Agent Report — 2026-05-10
 
 ## Run Context
-- Commits analysed: b64d6db, 7d59bad, f24fd59, f13ba93, 2726711, 3aefd7f, 671efc2, 26e79dd, 8d68336, 9c7766c, 67bda0b, 007e57d, adaaf62, 00a605d, f05bbe6, 9dea4f9, bd2ce22, 330c2e1, ca97b38, 31c0988
+- Commits analysed: c772083, e65d970, b64d6db, 7d59bad, f24fd59, f13ba93, 2726711, 3aefd7f, 671efc2, 26e79dd, 8d68336, 9c7766c, 67bda0b, 007e57d, adaaf62, 00a605d, f05bbe6, 9dea4f9, bd2ce22, 330c2e1
 - Screenshots available: YES (12, 4 guest, 4 free, 4 pro)
 - Test pass rate: guest 6/8, free 5/7, pro 4/9
 - Historical accuracy: Confirmed: 17 (71%) | Phantom: 5 (21%) | Misdiagnosed: 1 | Superseded: 1
 
 ## Findings
 
-### 1. Waypoint Save Button Disabled Due to GPS Acquisition Failure (P3, V3)
-- Summary: The "Save Waypoint" button is unexpectedly disabled when attempting to save a waypoint, both online and offline, preventing users from creating new waypoints. The "LOCATION" field consistently shows "Acquiring GPS...".
+### 1. Critical: Waypoint Save Button Disabled Due to GPS Acquisition Failure (P3, V3)
+- Summary: The "Save Waypoint" button is consistently disabled, preventing users from saving waypoints, because the app fails to acquire GPS coordinates, displaying "Acquiring GPS..." even in online tests.
 - Tier(s) affected: Pro (P3, V3 confirmed), likely Free and Guest (as the button logic would be shared).
 - Confidence: HIGH
-- Evidence: `pro P3` and `pro V3` tests failed with `Error: expect(locator).not.toBeDisabled() failed` for the "Save Waypoint" button. Screenshot `test-results/pro/p3-2-waypoint-sheet.png` clearly shows the button disabled and the "LOCATION" field displaying "Acquiring GPS...". The `v14-pre-save-offline-warning: no (V14 confirmed)` annotation for `pro V3` also confirms the lack of an offline pre-check, but the primary issue is the disabled button.
+- Evidence: `pro P3` and `pro V3` tests failed with `Error: expect(locator).not.toBeDisabled() failed` for the "Save Waypoint" button. Screenshot `test-results/pro/p3-2-waypoint-sheet.png` clearly shows the button disabled and the "LOCATION" field displaying "Acquiring GPS...".
 - Cannot confirm: The exact reason the GPS signal isn't being acquired or processed, despite `task-010` adding a geolocation mock.
 - Root cause: The `WaypointSheet`'s save button is gated by the `LOCATION` field's GPS acquisition status (`userLocation` in `mapStore`). The app is either not receiving a valid GPS signal from the Playwright mock, the mock is incorrectly configured, or the `useTracks` hook or `WaypointSheet`'s logic is incorrectly interpreting the signal, leading to the button remaining disabled.
 - User impact: Critical inability to perform a fundamental action (saving waypoints), leading to severe frustration and making the app unusable for its primary purpose.
 - Business impact: Direct impediment to user engagement and content creation, leading to high churn and negative perception of app reliability.
 - Fix direction: Investigate the `WaypointSheet` component's form validation and button state logic, and verify the `useTracks` hook's GPS acquisition and `userLocation` state updates, especially in the context of Playwright's geolocation mock.
 
-### 2. Systemic Persistence Regression: User Preferences & Session Data Lost on Reload (V1, V7, V8, V9, V11, V15)
-- Summary: Multiple critical user preferences (theme, basemap, layer visibility) and session-specific user-generated data (guest waypoints, active module, active GPS track) are not persisting across page reloads, leading to significant data loss and a broken user experience.
-- Tier(s) affected: All (V7, V8, V9), Guest (V11, V15), Pro (V1)
+### 2. Critical: Systemic Persistence Failure: All User Preferences & Session Data Lost on Reload (V1, V7, V8, V9, V11, V15)
+- Summary: A widespread regression causes all user preferences (theme, basemap, layer visibility) and critical session-specific user-generated data (guest waypoints, active module, active GPS track) to be lost upon page reload.
+- Tier(s) affected: All (V7, V8, V9), Guest (V11, V15), Pro (V1, V4, V6).
 - Confidence: HIGH
 - Evidence:
     - `guest V7` & `free V7` FAIL: `Expected: "light" Received: "dark"`. Annotations `ee_theme-before-reload: null`, `ee_theme-after-reload: null` confirm theme preference loss.
-    - `guest V9` FAIL: `Test timeout of 60000ms exceeded.` for basemap, implying reset to default.
-    - `free V8` FAIL: `Test timeout of 60000ms exceeded.` for layer preferences, implying reset to defaults.
+    - `guest V9` & `free V8` FAIL: `Test timeout of 60000ms exceeded.` for basemap and layer preferences, strongly implying reset to default.
     - `guest V11` PASS: `guest-waypoints-after-reload: ee_guest_waypoints absent after reload (V11 confirmed)`. This contradicts `STATE_MAP.md` which states `sessionWaypoints` persists via `ee_guest_waypoints`.
     - `guest V15` PASS: `activeModule-after-reload: ee_active_module absent after reload (V15 confirmed)`. This contradicts `STATE_MAP.md` which states `activeModule` persists via `ee_active_module`.
     - `pro V1` PASS: `track-survived-reload: no — ee_session_trail empty or missing (V1 confirmed)`. This contradicts `STATE_MAP.md` which states `sessionTrail` persists via `ee_session_trail`.
+    - `pro V4` PASS: Track save fails offline (post-stop data loss) - implies the track itself was not persisted before the save attempt.
+    - `pro V6` PASS: Route save offline produces no user-facing toast (silent failure) - implies route points are not persisted locally before save.
 - Cannot confirm: The exact content of `ee-map-prefs` for V8/V9 due to timeouts, but the outcome (reset to default) is clear.
-- Root cause: A systemic regression in `localStorage` persistence. Despite `STATE_MAP.md` indicating persistence for these items via Zustand `persist` middleware or manual `localStorage` IIFE patterns (tasks 001, 002, 006, 008, 013), the `localStorage` keys are reported as `null`, `absent`, or `empty/missing` after reload. This suggests a failure in the `localStorage.setItem` calls, or `localStorage` is being cleared unexpectedly, directly contradicting previous fixes.
-- User impact: Severe frustration as settings constantly reset, and critical user-generated data (waypoints, tracks) is lost, making the app unreliable and untrustworthy.
+- Root cause: A systemic failure in `localStorage` persistence. Despite `STATE_MAP.md` indicating persistence for these items via Zustand `persist` middleware or manual `localStorage` IIFE patterns (tasks 001, 002, 006, 008, 013), the `localStorage` keys are reported as `null`, `absent`, or `empty/missing` after reload. This suggests `localStorage.setItem` calls are failing, `localStorage` is being cleared unexpectedly, or the `initialState` hydration logic is broken.
+- User impact: Severe frustration as settings constantly reset, and critical user-generated data (waypoints, tracks, routes) is lost, making the app unreliable and untrustworthy.
 - Business impact: High churn, negative reviews, and inability to retain users for core features. Directly impacts user trust and engagement.
-- Fix direction: Conduct a thorough audit of all persistence mechanisms, focusing on the read/write logic for both Zustand `persist` and manual `localStorage` keys, ensuring they are correctly integrated with the application's lifecycle and that `localStorage` is not being inadvertently cleared.
+- Fix direction: Conduct a thorough audit of all persistence mechanisms, focusing on the read/write logic for both Zustand `persist` and manual `localStorage` keys, ensuring they are correctly interacting with `localStorage` and that `localStorage` itself is not being cleared prematurely.
 
-### 3. Pro User Incorrectly Shown Upgrade Sheet (P1)
-- Summary: A Pro user is unexpectedly shown the Upgrade Sheet when interacting with a Pro-gated feature, despite having an active Pro subscription.
+### 3. High Priority: Pro User Sees Upgrade Sheet or Experiences Timeout on Pro Affordance Tap (P1)
+- Summary: A Pro user attempting to use a Pro-gated feature either encounters an Upgrade Sheet or the test times out, indicating a failure in correctly identifying the user's Pro status.
 - Tier(s) affected: Pro
 - Confidence: HIGH
-- Evidence: `pro P1` test failed with `Test timeout of 60000ms exceeded.`. This specific test is designed to *pass* if the Upgrade Sheet is *not* visible. A timeout here strongly suggests the test was blocked by the Upgrade Sheet appearing, or by a related modal, indicating a regression from the `P1 Pro badge race` fix (task-011).
-- Cannot confirm: The exact interaction that triggered the Upgrade Sheet, but the test context implies a Pro affordance tap.
-- Root cause: A race condition or incorrect logic in the `useAuth` hook or `UpgradeSheet` gating, where the `isPro` status is not correctly evaluated or propagated before a Pro-gated UI element is interacted with.
-- User impact: Paying Pro users are frustrated by being asked to upgrade for features they already pay for, leading to a degraded premium experience.
-- Business impact: Erodes trust with paying customers, increases support load, and could lead to subscription cancellations.
-- Fix direction: Re-investigate the `isPro` state hydration and `UpgradeSheet` rendering logic, ensuring `isPro` is fully resolved and stable before any Pro-gated UI elements are enabled or interacted with.
+- Evidence: `pro P1` FAIL: `Test timeout of 60000ms exceeded.` The test is designed to ensure a Pro user *does not* see an UpgradeSheet. A timeout here suggests the test either failed to verify the absence of the sheet or the sheet *did* appear, causing the test to hang or fail.
+- Cannot confirm: Whether the UpgradeSheet actually appeared or if the test simply timed out waiting for a condition that was never met.
+- Root cause: Potential race condition in `isPro` state hydration or an incorrect gating logic for Pro features. `STATE_MAP.md` notes `useAuth.onAuthStateChange` may overwrite `isPro` to false on offline JWT expiry (V10), but this test is online. The `global-setup.js` was updated to poll for `isPro:true` in `ee-user-prefs`, suggesting the issue might be in the app's runtime `isPro` state.
+- User impact: Paying Pro users are blocked from accessing features they've paid for, leading to extreme frustration and a sense of being cheated.
+- Business impact: Direct loss of trust from paying customers, leading to cancellations, negative reviews, and significant reputational damage.
+- Fix direction: Re-evaluate the `isPro` state hydration and access control logic, ensuring that `isPro` is correctly and promptly set for authenticated Pro users and that Pro-gated features are accessible without showing upgrade prompts.
 
-### 4. Critical Offline Data Vulnerabilities (V2, V14, V4, V6)
-- Summary: The application lacks fundamental offline data capabilities, leading to critical data loss and functionality breakdown when connectivity is lost. This includes gold/mineral data not being cached (V2), no pre-save warnings for offline operations (V14), and track/route saves failing offline (V4, V6).
-- Tier(s) affected: All (V2, V14, V4, V6)
+### 4. Offline Functionality Untestable Due to Network Disconnection Error (V2, V10)
+- Summary: Critical offline functionality tests for Pro users (gold/mineral data caching and Pro status persistence) cannot be assessed because the Playwright environment fails to simulate an offline state, resulting in `net::ERR_INTERNET_DISCONNECTED` errors during page navigation.
+- Tier(s) affected: Pro (V2, V10)
 - Confidence: HIGH
-- Evidence:
-    - `pro V2` FAIL: `Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. While the test failed to load, `STATE_MAP.md` explicitly states: "Gold samples (9,313 rows) and mineral localities load from Supabase on every mount — no local cache" (V2).
-    - `pro V3` (FAIL): `v14-pre-save-offline-warning: no (V14 confirmed)`. This confirms the lack of a pre-save warning.
-    - `pro V4` PASS: Track save fails offline. This is expected behavior for V4 given the lack of offline data capability.
-    - `pro V6` PASS: Route save offline produces no user-facing toast. This is expected behavior for V6 (silent failure).
-- Cannot confirm: The specific impact of V2 and V10 due to test infrastructure failures preventing offline page loads.
-- Root cause: Fundamental architectural gap in offline-first design. The application relies heavily on Supabase for data retrieval and writes without implementing local caching (for read data like V2) or an offline sync queue (for write data like V4, V6). V14 is a direct consequence of this lack of offline-first design.
-- User impact: Users in rural areas with intermittent connectivity will experience frequent data loss, inability to access critical map data, and a completely broken save experience.
-- Business impact: App is unusable in its target environment, leading to massive churn, negative reviews, and failure to meet core user needs.
-- Fix direction: Implement a comprehensive offline-first strategy, including IndexedDB for caching read data (V2), a persistent sync queue for writes (V4, V6), and pre-save offline warnings (V14).
+- Evidence: `pro V10` FAIL: `Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. `pro V2` FAIL: `Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. Both tests failed at the `page.goto` step, indicating a fundamental issue with the offline test setup.
+- Cannot confirm: The actual state of V2 and V10 vulnerabilities.
+- Root cause: The Playwright test setup for simulating offline conditions is not correctly configured or is being overridden. The `page.goto` command is failing because the browser instance itself is reporting no network connection, preventing the app from loading at all, rather than loading in an offline-simulated state.
+- User impact: Unknown, as the offline behavior for these critical features cannot be verified. If the vulnerabilities are active, Pro users would lose access to cached data and their Pro status when offline.
+- Business impact: Inability to guarantee core offline features for paying users, leading to potential churn and negative feedback if the underlying issues exist.
+- Fix direction: Debug the Playwright test environment's offline simulation. Ensure the `page.route` or `context.setOffline(true)` commands are correctly applied and that `page.goto` can still load the app from cache when offline.
 
-### 5. Learn Tab Header Statistics Persist Across Tab Switches (V13, F4)
-- Summary: The Learn tab header statistics (courses, completePct, chaptersDone) correctly persist across tab switches, indicating that the underlying component state for these specific metrics is being preserved.
-- Tier(s) affected: All (Guest V13, Free V13, Free F4)
-- Confidence: HIGH
+### 5. Learn Tab Header Stats Persist, but Chapter Reading Position Remains Unverified (V13, F4)
+- Summary: The Learn tab's header statistics (courses, completion percentage, chapters done) correctly persist across tab switches and reloads for both Guest and Free users. However, the more granular vulnerability of losing in-progress chapter reading position (page within a chapter) remains unverified by current tests.
+- Tier(s) affected: Guest (V13), Free (V13, F4)
+- Confidence: MEDIUM (for the unverified part) / HIGH (for the persistence of header stats)
 - Evidence:
-    - `guest V13` PASS: `state-loss-evidence: {"before":...,"after":...}` shows identical values, meaning no regression.
-    - `free V13` PASS: `state-loss-evidence: {"before":...,"after":...}` shows identical values, meaning no regression.
-    - `free F4` PASS: `header-stats-pair: {"before":...,"after":...}` shows identical values, explicitly confirming no regression.
-- Cannot confirm: Whether *all* component state within the Learn tab (e.g., scroll position within a chapter, active chapter page) is preserved, as the tests only focus on header stats.
-- Root cause: The fix for V13 ("Preserve Learn tab component state across tab switches") by always mounting the tab content (visibility toggled) appears to be working for the header stats.
-- User impact: Users can switch away from the Learn tab and return without losing their progress overview.
-- Business impact: Improves user experience and engagement with the learning module.
-- Fix direction: This is a confirmed fix for header stats. Further tests would be needed to confirm full component state persistence (e.g., chapter page number).
+    - `guest V13` PASS: `state-loss-evidence` shows `before` and `after` stats are identical (`courses:2, completePct:0, chaptersDone:0`).
+    - `free V13` PASS: `state-loss-evidence` shows `before` and `after` stats are identical.
+    - `free F4` PASS: `header-stats-pair` shows `before` and `after` stats are identical.
+- Cannot confirm: Whether the user's specific page within a chapter (e.g., page 2 of 3) is lost when switching tabs, as the current tests only check the aggregate header stats.
+- Root cause: The `ee_progress` and `ee_certificates` keys in `localStorage` (as per `STATE_MAP.md`) correctly persist the overall progress, which is reflected in the header stats. The `App.jsx` change to always mount tab content (task-012) should prevent component unmount, but the test doesn't verify the specific `ChapterReader` component state.
+- User impact: Users might still lose their exact reading position within a chapter if they navigate away and return, forcing them to find their place again. This is less severe than losing overall progress but still disruptive.
+- Business impact: Minor impact on user engagement with the learning module; could lead to slight frustration but not critical churn.
+- Fix direction: Enhance V13 test to specifically verify the `ChapterReader` component's internal state (e.g., current page number) before and after a tab switch.
 
 ## Tier Comparison
 
-*   **Persistence Failures (V7, V8, V9):** Theme (V7), basemap (V9), and layer preferences (V8) all fail to persist across reloads for **Guest** and **Free** tiers. This indicates a universal regression in `localStorage` handling, affecting all users regardless of authentication status.
-*   **Session Data Loss (V1, V11, V15):** Guest waypoints (V11), active module (V15), and active GPS track (V1) are all lost on reload for **Guest** and **Pro** tiers respectively. This confirms a broad failure in session data persistence across different user types.
-*   **Learn Tab State (V13, F4):** The Learn tab header statistics *do* persist across tab switches for both **Guest** and **Free** tiers, indicating that the fix for V13 (always mounting tab content) is effective for these specific metrics.
-*   **Pro-gated Features (F2, F3, C3, P1):**
-    *   **Free** users correctly see PRO badges (F2) and are routed to the Upgrade Sheet when attempting Pro features (F3).
-    *   **Guest** users are correctly routed to the Upgrade Sheet (C3).
-    *   **Pro** users are *incorrectly* routed to or blocked by the Upgrade Sheet (P1 failure), indicating a specific issue with Pro status recognition.
-*   **Offline Functionality (V2, V3, V4, V6, V10, V14):**
-    *   Waypoint save is blocked by GPS acquisition issues for **Pro** (V3).
-    *   Track save fails offline for **Pro** (V4).
-    *   Route save fails silently offline for **Pro** (V6).
-    *   Lack of offline pre-save warning is confirmed for **Pro** (V14).
-    *   Tests for offline data (V2) and Pro status persistence (V10) failed to load the app offline, preventing tier-specific confirmation, but `STATE_MAP.md` indicates these are general vulnerabilities.
+*   **Persistence Failures (V7, V8, V9):** Theme, basemap, and layer preferences are consistently lost on reload across **all** tiers (Guest, Free, Pro). This indicates a fundamental issue with the `localStorage` read/write mechanism or its initialization, independent of authentication status.
+*   **Session Data Loss (V1, V11, V15):** Guest waypoints (V11), active module (V15), and active GPS track (V1) are lost on reload for **Guest** and **Pro** tiers respectively. This reinforces the systemic `localStorage` failure.
+*   **Learn Tab Header Stats (V13, F4):** The header statistics in the Learn tab (courses, completion percentage, chapters done) correctly persist across tab switches and reloads for both **Guest** and **Free** tiers. This indicates that the `ee_progress` and `ee_certificates` `localStorage` keys are functioning correctly for these specific data points, contrasting with the other widespread persistence failures.
+*   **Waypoint Save Button Disabled (P3, V3):** The "Save Waypoint" button is disabled due to GPS acquisition failure for **Pro** users (P3, V3). This issue is likely present across all tiers, as the underlying GPS acquisition logic is universal.
+*   **Upgrade Sheet Gating (C3, F3, P1):**
+    *   **Guest (C3):** Correctly surfaces the UpgradeSheet when tapping a Pro-gated feature.
+    *   **Free (F3):** Correctly surfaces the UpgradeSheet when attempting to save a waypoint (a Pro feature).
+    *   **Pro (P1):** Fails to correctly bypass the UpgradeSheet or times out, indicating a problem with Pro status recognition. This is a critical difference.
+*   **Offline Testability (V2, V10):** Offline tests for **Pro** users (V2, V10) are completely blocked by a `net::ERR_INTERNET_DISCONNECTED` error, preventing any assessment of these vulnerabilities. This issue is specific to the offline test setup for the Pro tier.
 
 ## Findings Discarded
-- None. All identified issues have sufficient evidence and impact.
+
+*   **pro V4 (Track save fails offline) and pro V6 (Route save offline produces no user-facing toast):** These tests "PASS" because they confirm the existence of the vulnerability (data loss/silent failure). Their user impact is covered by the broader "Systemic Persistence Failure" (Finding 2), which encompasses the loss of session-specific data like tracks and routes. No need for separate findings.
 
 ## Cannot Assess
-- **Pro V10 (Pro status reverts to free on offline reload):** The test failed to load the application offline (`net::ERR_INTERNET_DISCONNECTED`), preventing any assessment of whether the Pro status persists or reverts.
-- **Pro V2 (gold/mineral data missing after offline reload):** Similar to V10, the test failed to load the application offline, preventing assessment of offline data availability.
+
+*   **pro V2 (gold/mineral data missing after offline reload) and pro V10 (Pro status reverts to free on offline reload):** These tests failed with `Error: page.goto: net::ERR_INTERNET_DISCONNECTED`. This indicates a fundamental issue with the Playwright test environment's ability to simulate offline conditions for navigation, preventing the actual vulnerabilities from being assessed.
 
 ## Systemic Patterns
-- **Widespread Persistence Regression:** A critical regression in `localStorage` read/write operations is evident across multiple features (theme, basemap, layers, guest waypoints, active module, GPS track). This suggests a fundamental issue with how `localStorage` is being managed, potentially an accidental clearing or incorrect implementation of the manual IIFE patterns or Zustand `persist` middleware.
-- **GPS Acquisition Failure:** The consistent "Acquiring GPS..." message and disabled save button points to a problem with the GPS mock setup in Playwright or the application's `userLocation` state management.
-- **Incomplete Offline-First Implementation:** The app continues to exhibit severe vulnerabilities in offline scenarios, confirming that a comprehensive offline-first strategy is still missing.
+
+1.  **Widespread `localStorage` Persistence Failure:** Almost all `localStorage` keys (both Zustand `persist` middleware and manual IIFE patterns) appear to be failing to write or read correctly, leading to significant data and preference loss across all tiers. This points to a fundamental issue with `localStorage` access, initialization, or an unexpected clearing event.
+2.  **GPS Acquisition/Mocking Issue:** The app consistently fails to acquire GPS coordinates, leading to disabled functionality (e.g., Waypoint Save button). This suggests either a problem with the Playwright geolocation mock setup or the app's internal `useTracks` hook for processing location data.
+3.  **Flawed Offline Test Environment:** The Playwright setup for simulating offline conditions is broken, preventing critical offline vulnerability tests from even starting.
 
 ## Calibration Notes
-- The previous `CONFIRMED` verdicts for persistence tasks (001, 002, 006, 008, 013) are now contradicted by the current test results. This highlights the importance of continuous regression testing for persistence.
-- The `P1 Pro badge race` fix (task-011) was `CONFIRMED` previously, but the `pro P1` test failing with a timeout suggests the race condition or a related issue has re-emerged or was not fully resolved.
-- The `V13` fix for Learn tab state persistence seems to be working for header stats, which is a positive sign, but the test description could be clearer about what "state-loss proof" means when the evidence shows no loss.
-- The `net::ERR_INTERNET_DISCONNECTED` errors for V2/V10 are a good example of test infrastructure issues preventing assessment, rather than confirming a UX bug. This reinforces the need to distinguish between application errors and test environment limitations.
+
+*   Previous `V7 theme resets`, `V15 activeModule resets`, `V11 guest waypoints`, and `V1 sessionTrail` were marked CONFIRMED and had fixes implemented. The current test results (e.g., `ee_theme-before-reload: null`, `ee_active_module absent`) directly contradict the expected outcome of those fixes, indicating a regression or incomplete implementation of the persistence mechanisms.
+*   The `P1 Pro badge race` was previously CONFIRMED and fixed. The current `pro P1` timeout suggests a regression or a new race condition in Pro status recognition.
+*   The `V13 learn tab state loss` was previously CONFIRMED and fixed by always mounting tabs. The current tests show header stats *are* persistent, confirming the fix for that specific aspect. However, the original V13 vulnerability (loss of in-progress chapter reading position) is not adequately tested by the current `state-loss-evidence` annotation, which only checks aggregate header stats.
+*   The `net::ERR_INTERNET_DISCONNECTED` errors for offline tests represent a new class of failure related to test infrastructure, preventing assessment of the underlying UX issues. This highlights the need to distinguish between application bugs and test environment issues.
