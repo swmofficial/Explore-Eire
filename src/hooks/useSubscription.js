@@ -1,43 +1,3 @@
-// useSubscription.js — Query subscriptions table on mount, keep isPro in sync.
-// useAuth already handles the initial fetch on sign-in; this hook is for
-// explicit re-checks (e.g. after returning from Stripe Checkout).
-import { useEffect, useCallback, useState } from 'react'
-import { supabase } from '../lib/supabase'
-import useUserStore from '../store/userStore'
-
-export function useSubscription() {
-  const { user, setIsPro, setSubscriptionStatus } = useUserStore()
-  const [isVerifying, setIsVerifying] = useState(false)
-
-  const refresh = useCallback(async () => {
-    if (!user) return
-
-    const { data: sub, error } = await supabase
-      .from('subscriptions')
-      .select('status, current_period_end')
-      .eq('user_id', user.id)
-      .single()
-
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows — user has no subscription record yet
-      console.error('useSubscription fetch error:', error.message)
-      return
-    }
-
-    if (sub) {
-      // Also check if subscription has expired
-      const isExpired = sub.current_period_end && 
-        new Date(sub.current_period_end) < new Date()
-      
-      const isActive = sub.status === 'active' && !isExpired
-      setSubscriptionStatus(isActive ? 'active' : sub.status)
-      setIsPro(isActive)
-    } else {
-      setSubscriptionStatus('free')
-      setIsPro(false)
-    }
-  }, [user, setIsPro, setSubscriptionStatus])
-
   /**
    * Server-side verification of subscription status.
    * Use this before performing sensitive premium operations
@@ -54,40 +14,40 @@ export function useSubscription() {
     setIsVerifying(true)
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) return false
+      if (!session?.access_token) {
+        setIsPro(false)
+        setSubscriptionStatus('unauthenticated')
+        return false
+      }
 
       const response = await fetch('/api/verify-subscription', {
+        method: 'GET',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
         }
       })
 
       if (response.ok) {
         const data = await response.json()
         setIsPro(data.isActive)
-        setSubscriptionStatus(data.status)
+        setSubscriptionStatus(data.status || (data.isActive ? 'active' : 'free'))
         return data.isActive
       }
       
-      // 403 means not premium — update local state to match server
-      if (response.status === 403) {
+      // 401 means auth issue, 403 means not premium
+      if (response.status === 401 || response.status === 403) {
+        const data = await response.json().catch(() => ({}))
         setIsPro(false)
-        setSubscriptionStatus('free')
+        setSubscriptionStatus(data.status || 'free')
       }
       
       return false
     } catch (error) {
       console.error('Server subscription verification failed:', error)
+      // Don't change local state on network errors — preserve UX
       return false
     } finally {
       setIsVerifying(false)
     }
   }, [user, setIsPro, setSubscriptionStatus])
-
-  // Run on mount and whenever the user changes
-  useEffect(() => {
-    refresh()
-  }, [refresh])
-
-  return { refresh, serverVerify, isVerifying }
-}
