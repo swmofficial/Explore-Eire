@@ -6,60 +6,69 @@ const supabase = createClient(
 )
 
 /**
- * Server-side subscription verification middleware.
- * Checks if the user has an active subscription before proceeding.
- * 
+ * Verify user has active subscription.
  * @param {string} userId - The authenticated user's ID
- * @returns {Promise<{authorized: boolean, error?: string, status?: number}>}
+ * @returns {Promise<{isActive: boolean, status: string, subscription: object|null}>}
  */
 export async function verifySubscription(userId) {
   if (!userId) {
-    return { authorized: false, error: 'User ID required', status: 401 }
+    return { isActive: false, status: 'unauthenticated', subscription: null }
   }
 
   const { data: subscription, error } = await supabase
     .from('subscriptions')
-    .select('status, current_period_end')
+    .select('status, current_period_end, stripe_subscription_id')
     .eq('user_id', userId)
     .single()
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Subscription verification error:', error.message)
-    return { authorized: false, error: 'Subscription check failed', status: 500 }
+  if (error || !subscription) {
+    return { isActive: false, status: 'free', subscription: null }
   }
 
-  if (!subscription || subscription.status !== 'active') {
-    return { authorized: false, error: 'Premium subscription required', status: 403 }
+  const isActive = subscription.status === 'active'
+  
+  return {
+    isActive,
+    status: subscription.status,
+    subscription
   }
-
-  // Verify subscription hasn't expired (belt and suspenders with Stripe webhooks)
-  if (subscription.current_period_end) {
-    const periodEnd = new Date(subscription.current_period_end)
-    if (periodEnd < new Date()) {
-      return { authorized: false, error: 'Subscription expired', status: 403 }
-    }
-  }
-
-  return { authorized: true }
 }
 
 /**
- * Express-style middleware wrapper for API routes.
- * Returns early with 403 if subscription is not active.
- * 
- * @param {Request} req - Must have userId attached (from auth middleware)
- * @param {Response} res
- * @returns {Promise<boolean>} - true if authorized, false if response already sent
+ * Middleware wrapper that requires active subscription.
+ * Returns 403 if subscription is not active.
+ * @param {Function} handler - The API route handler
+ * @returns {Function} Wrapped handler
  */
-export async function requireActiveSubscription(req, res) {
-  const userId = req.userId || req.headers['x-user-id']
-  
-  const result = await verifySubscription(userId)
-  
-  if (!result.authorized) {
-    res.status(result.status).json({ error: result.error })
-    return false
+export function requireSubscription(handler) {
+  return async (req, res) => {
+    const authHeader = req.headers.authorization
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing authorization header' })
+    }
+
+    const token = authHeader.slice(7)
+    
+    // Verify JWT and get user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid or expired token' })
+    }
+
+    const { isActive, status } = await verifySubscription(user.id)
+    
+    if (!isActive) {
+      return res.status(403).json({ 
+        error: 'Premium subscription required',
+        status 
+      })
+    }
+
+    // Attach user to request for downstream use
+    req.user = user
+    req.subscriptionStatus = status
+    
+    return handler(req, res)
   }
-  
-  return true
 }
