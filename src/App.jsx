@@ -1,4 +1,4 @@
-// App.jsx — Root component. 5-tab navigation shell.
+// sauron watch// App.jsx — Root component. 5-tab navigation shell.
 // Wires auth listener, applies colour theme to <html> data-theme attribute.
 // Path-based routing (no React Router): /subscription/success and /subscription/cancel
 // are handled by checking window.location.pathname on mount.
