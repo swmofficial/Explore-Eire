@@ -1,5 +1,158 @@
-```json
-{
-  "testCode": "// rvsv-001-zustand-auth-token-leak.spec.js — Zustand persist middleware stores auth tokens in localStorage\n//\n// Vulnerability: userStore uses Zustand's persist() middleware. If auth tokens\n// (user object) leak into the persisted state, they are written to localStorage\n// in plain text, accessible to XSS or malicious Capacitor plugins.\n//\n// Attack scenario:\n// 1. Sign in as a free-tier user.\n// 2. Inspect localStorage for 'ee-user-prefs' key.\n// 3. Parse stored JSON and search for auth tokens (access_token, refresh_token).\n// 4. FAIL if tokens are found (vulnerability present).\n// 5. PASS if tokens are absent (partialize() correctly excludes user object).\n//\n// Current state (per source): userStore.js line 62–66 partializes only\n// isPro/subscriptionStatus, excluding the user object. This test verifies\n// that exclusion is enforced at runtime.\n\nimport { test, expect } from '@playwright/test';\nimport {\n  bypassOnboarding,\n  waitForAppReady,\n  attachConsoleCapture,\n  TIERS,\n} from '../_helpers.js';\n\ntest.describe('rvsv-001: Zustand auth token persistence', () => {\n  test.beforeEach(async ({ page }) => {\n    await bypassOnboarding(page);\n    await page.goto('https://explore-eire.vercel.app');\n    await waitForAppReady(page);\n    attachConsoleCapture(page);\n  });\n\n  test('auth tokens must not persist to localStorage after sign-in', async ({ page }) => {\n    // Step 1: Open auth modal and sign in with free-tier test account.\n    // Use the account switcher button in the header (visible on all tiers).\n    await page.locator('button[aria-label=\"Account menu\"]').click();\n    await page.locator('text=Sign In').click();\n\n    // Wait for auth modal to appear.\n    await page.locator('form').filter({ hasText: 'Email' }).waitFor({ state: 'visible' });\n\n    // Fill credentials for free-tier test account (from handover doc).\n    await page.fill('input[type=\"email\"]', 'testuser@exploreeire.com');\n    await page.fill('input[type=\"password\"]', 'TestUser123!');\n    await page.locator('button[type=\"submit\"]').click();\n\n    // Wait for auth to complete — user avatar or account button should update.\n    await page.waitForTimeout(2000); // Allow Supabase auth + store hydration.\n\n    // Step 2: Extract localStorage 'ee-user-prefs' key.\n    const persistedState = await page.evaluate(() => {\n      try {\n        const raw = localStorage.getItem('ee-user-prefs');\n        return raw ? JSON.parse(raw) : null;\n      } catch {\n        return null;\n      }\n    });\n\n    // Step 3: Verify persisted state exists (partialize should write isPro/subscriptionStatus).\n    expect(persistedState).not.toBeNull();\n    expect(persistedState.state).toBeDefined();\n\n    const state = persistedState.state;\n\n    // Step 4: Assert no auth tokens are present.\n    // Check for common Supabase auth token field names.\n    const stateJson = JSON.stringify(state).toLowerCase();\n\n    expect(stateJson).not.toContain('access_token');\n    expect(stateJson).not.toContain('refresh_token');\n    expect(stateJson).not.toContain('access token');\n    expect(stateJson).not.toContain('refresh token');\n\n    // Step 5: Verify the user object itself is not persisted.\n    expect(state.user).toBeUndefined();\n\n    // Step 6: Confirm expected fields ARE present (partialize working correctly).\n    expect(state.isPro).toBeDefined();\n    expect(state.subscriptionStatus).toBeDefined();\n  });\n\n  test('auth tokens must not persist after guest-mode browsing', async ({ page }) => {\n    // Guest mode should never store auth state, but verify partialize prevents leaks.\n    // Trigger guest mode by clicking \"Continue as Guest\" from onboarding or auth modal.\n    // For this test, we assume the app allows guest browsing without sign-in.\n\n    // Extract localStorage immediately (no sign-in performed).\n    const persistedState = await page.evaluate(() => {\n      try {\n        const raw = localStorage.getItem('ee-user-prefs');\n        return raw ? JSON.parse(raw) : null;\n      } catch {\n        return null;\n      }\n    });\n\n    // If no persisted state exists yet, that's fine (guest mode may not trigger persist).\n    if (persistedState && persistedState.state) {\n      const state = persistedState.state;\n      const stateJson = JSON.stringify(state).toLowerCase();\n\n      // Assert no auth tokens present.\n      expect(stateJson).not.toContain('access_token');\n      expect(stateJson).not.toContain('refresh_token');\n      expect(state.user).toBeUndefined();\n    }\n\n    // Step 2: Navigate to LearnView (guest-accessible T6/T7).\n    await page.locator('button[aria-label=\"Learn\"]').click();\n    await page.waitForTimeout(1000);\n\n    // Re-check localStorage after navigation.\n    const persistedStateAfter = await page.evaluate(() => {\n      try {\n        const raw = localStorage.getItem('ee-user-prefs');\n        return raw ? JSON.parse(raw) : null;\n      } catch {\n        return null;\n      }\n    });\n\n    if (persistedStateAfter && persistedStateAfter.state) {\n      const state = persistedStateAfter.state;\n      const stateJson = JSON.stringify(state).toLowerCase();\n\n      expect(stateJson).not.toContain('access_token');\n      expect(stateJson).not.toContain('refresh_token');\n      expect(state.user).toBeUndefined();\n    }\n  });\n\n  test('Capacitor environment: verify encrypted storage is not used (localStorage fallback)', async ({ page }) => {\n    // This test documents the current insecure state: localStorage is used in Capacitor.\n    // Once fixed (using @capacitor/preferences), this test should be updated to verify\n    // that sensitive data is NOT in localStorage but in secure storage.\n\n    // For now, we verify localStorage IS used (documenting the vulnerability).\n    const isLocalStorageUsed = await page.evaluate(() => {\n      try {\n        // Zustand persist writes to localStorage by default.\n        const raw = localStorage.getItem('ee-user-prefs');\n        return raw !== null;\n      } catch {\n        return false;\n      }\n    });\n\n    // Current vulnerable state: localStorage is used.\n    expect(isLocalStorageUsed).toBe(true);\n\n    // TODO: After fix (rvsv-001), this test should assert isLocalStorageUsed === false\n    // and verify @capacitor/preferences.get('ee-user-prefs') returns the data instead.\n    // That would require a Capacitor native bridge mock in Playwright or a manual\n    // verification step in the native app.\n  });\n});\n",
-  "testFilePath": "tests/regression/security/rvsv-001-zustand-auth-token-leak.spec.js",
-  "description": "Verifies that Zustand
+// rvsv-001-zustand-auth-token-leak.spec.js — Zustand persist middleware stores auth tokens in localStorage
+//
+// Vulnerability: userStore uses Zustand's persist() middleware. If auth tokens
+// (user object) leak into the persisted state, they are written to localStorage
+// in plain text, accessible to XSS or malicious Capacitor plugins.
+//
+// Attack scenario:
+// 1. Sign in as a free-tier user.
+// 2. Inspect localStorage for 'ee-user-prefs' key.
+// 3. Parse stored JSON and search for auth tokens (access_token, refresh_token).
+// 4. FAIL if tokens are found (vulnerability present).
+// 5. PASS if tokens are absent (partialize() correctly excludes user object).
+//
+// Current state (per source): userStore.js line 62–66 partializes only
+// isPro/subscriptionStatus, excluding the user object. This test verifies
+// that exclusion is enforced at runtime.
+
+import { test, expect } from '@playwright/test';
+import {
+  bypassOnboarding,
+  waitForAppReady,
+  attachConsoleCapture,
+  TIERS,
+} from '../_helpers.js';
+
+test.describe('rvsv-001: Zustand auth token persistence', () => {
+  test.beforeEach(async ({ page }) => {
+    await bypassOnboarding(page);
+    await page.goto('https://explore-eire.vercel.app');
+    await waitForAppReady(page);
+    attachConsoleCapture(page);
+  });
+
+  test('auth tokens must not persist to localStorage after sign-in', async ({ page }) => {
+    // Step 1: Open auth modal and sign in with free-tier test account.
+    // Use the account switcher button in the header (visible on all tiers).
+    await page.locator('button[aria-label="Account menu"]').click();
+    await page.locator('text=Sign In').click();
+
+    // Wait for auth modal to appear.
+    await page.locator('form').filter({ hasText: 'Email' }).waitFor({ state: 'visible' });
+
+    // Fill credentials for free-tier test account (from handover doc).
+    await page.fill('input[type="email"]', 'testuser@exploreeire.com');
+    await page.fill('input[type="password"]', 'TestUser123!');
+    await page.locator('button[type="submit"]').click();
+
+    // Wait for auth to complete — user avatar or account button should update.
+    await page.waitForTimeout(2000); // Allow Supabase auth + store hydration.
+
+    // Step 2: Extract localStorage 'ee-user-prefs' key.
+    const persistedState = await page.evaluate(() => {
+      try {
+        const raw = localStorage.getItem('ee-user-prefs');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    });
+
+    // Step 3: Verify persisted state exists (partialize should write isPro/subscriptionStatus).
+    expect(persistedState).not.toBeNull();
+    expect(persistedState.state).toBeDefined();
+
+    const state = persistedState.state;
+
+    // Step 4: Assert no auth tokens are present.
+    // Check for common Supabase auth token field names.
+    const stateJson = JSON.stringify(state).toLowerCase();
+
+    expect(stateJson).not.toContain('access_token');
+    expect(stateJson).not.toContain('refresh_token');
+    expect(stateJson).not.toContain('access token');
+    expect(stateJson).not.toContain('refresh token');
+
+    // Step 5: Verify the user object itself is not persisted.
+    expect(state.user).toBeUndefined();
+
+    // Step 6: Confirm expected fields ARE present (partialize working correctly).
+    expect(state.isPro).toBeDefined();
+    expect(state.subscriptionStatus).toBeDefined();
+  });
+
+  test('auth tokens must not persist after guest-mode browsing', async ({ page }) => {
+    // Guest mode should never store auth state, but verify partialize prevents leaks.
+    // Trigger guest mode by clicking "Continue as Guest" from onboarding or auth modal.
+    // For this test, we assume the app allows guest browsing without sign-in.
+
+    // Extract localStorage immediately (no sign-in performed).
+    const persistedState = await page.evaluate(() => {
+      try {
+        const raw = localStorage.getItem('ee-user-prefs');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    });
+
+    // If no persisted state exists yet, that's fine (guest mode may not trigger persist).
+    if (persistedState && persistedState.state) {
+      const state = persistedState.state;
+      const stateJson = JSON.stringify(state).toLowerCase();
+
+      // Assert no auth tokens present.
+      expect(stateJson).not.toContain('access_token');
+      expect(stateJson).not.toContain('refresh_token');
+      expect(state.user).toBeUndefined();
+    }
+
+    // Step 2: Navigate to LearnView (guest-accessible T6/T7).
+    await page.locator('button[aria-label="Learn"]').click();
+    await page.waitForTimeout(1000);
+
+    // Re-check localStorage after navigation.
+    const persistedStateAfter = await page.evaluate(() => {
+      try {
+        const raw = localStorage.getItem('ee-user-prefs');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    });
+
+    if (persistedStateAfter && persistedStateAfter.state) {
+      const state = persistedStateAfter.state;
+      const stateJson = JSON.stringify(state).toLowerCase();
+
+      expect(stateJson).not.toContain('access_token');
+      expect(stateJson).not.toContain('refresh_token');
+      expect(state.user).toBeUndefined();
+    }
+  });
+
+  test('Capacitor environment: verify encrypted storage is not used (localStorage fallback)', async ({ page }) => {
+    // This test documents the current insecure state: localStorage is used in Capacitor.
+    // Once fixed (using @capacitor/preferences), this test should be updated to verify
+    // that sensitive data is NOT in localStorage but in secure storage.
+
+    // For now, we verify localStorage IS used (documenting the vulnerability).
+    const isLocalStorageUsed = await page.evaluate(() => {
+      try {
+        // Zustand persist writes to localStorage by default.
+        const raw = localStorage.getItem('ee-user-prefs');
+        return raw !== null;
+      } catch {
+        return false;
+      }
+    });
+
+    // Current vulnerable state: localStorage is used.
+    expect(isLocalStorageUsed).toBe(true);
+
+    // TODO: After fix (rvsv-001), this test should assert isLocalStorageUsed === false
+    // and verify @capacitor/preferences.get('ee-user-prefs') returns the data instead.
+    // That would require a Capacitor native bridge mock in Playwright or a manual
+    // verification step in the native app.
+  });
+});
