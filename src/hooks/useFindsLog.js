@@ -21,7 +21,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import useUserStore from '../store/userStore'
 import useMapStore from '../store/mapStore'
-import { useOfflineQueue } from './useOfflineQueue'
 
 async function uploadFindPhoto(file, userId) {
   if (!file) return null
@@ -42,7 +41,6 @@ export function useFindsLog() {
   const { user, isGuest } = useUserStore()
   const [finds, setFinds] = useState([])
   const [loading, setLoading] = useState(false)
-  const { queueWrite } = useOfflineQueue()
 
   // ── READ ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -98,23 +96,23 @@ export function useFindsLog() {
       const optimistic = { ...row, id: optimisticId, found_at: new Date().toISOString(), created_at: new Date().toISOString() }
       setFinds((prev) => [optimistic, ...prev])
 
-      const { data, error, offline } = await queueWrite('finds_log', 'insert', row)
-
-      if (offline) {
-        return { data, error: null, offline: true }
-      }
+      const { data, error } = await supabase
+        .from('finds_log')
+        .insert(row)
+        .select()
+        .single()
 
       if (error) {
         console.error('[useFindsLog] insert error:', error.message)
         setFinds((prev) => prev.filter((f) => f.id !== optimisticId))
         addToast({ type: 'error', message: 'Failed to save find.' })
-        return { data: null, error, offline: false }
+        return
       }
 
+      // Replace optimistic row with persisted row
       setFinds((prev) => prev.map((f) => (f.id === optimisticId ? data : f)))
-      return { data, error: null, offline: false }
     },
-    [user, isGuest, finds.length, queueWrite],
+    [user, isGuest],
   )
 
   // ── DELETE ────────────────────────────────────────────────────────
