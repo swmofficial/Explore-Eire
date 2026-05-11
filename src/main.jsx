@@ -2,16 +2,16 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import './styles/global.css'
-import { initSentry, SentryErrorBoundary } from './lib/sentry.js'
+import { initSentry, ErrorBoundary } from './lib/sentry.js'
 import App from './App.jsx'
 
 initSentry()
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <SentryErrorBoundary>
+    <ErrorBoundary>
       <App />
-    </SentryErrorBoundary>
+    </ErrorBoundary>
   </StrictMode>,
 )
 
