@@ -1,121 +1,56 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import useModuleStore from './store/moduleStore'
+import BottomNav from './components/BottomNav'
+import CornerControls from './components/CornerControls'
+import DataSheet from './components/DataSheet'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Surface → module mapping driven by BottomNav tab selection
+const TAB_MODULE_MAP = {
+  map:       'prospecting',
+  dashboard: 'prospecting',
+  learn:     'prospecting',
+  profile:   'prospecting',
+  settings:  'prospecting',
+}
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('map')
+  const { setActiveSurface, setActiveModule } = useModuleStore()
+
+  function handleTabChange(tab) {
+    setActiveTab(tab)
+    setActiveSurface(tab === 'map' ? 'map' : tab)
+    setActiveModule(TAB_MODULE_MAP[tab] ?? 'prospecting')
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      {/* Map placeholder — replace with MapLibre Map component when ready */}
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: '#0d1117',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: '#6B7280',
+          fontSize: 14,
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+        }}
+      >
+        MAP CANVAS
+      </div>
 
-      <div className="ticks"></div>
+      {/* 4-corner floating controls (visible when surface = map) */}
+      <CornerControls />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      {/* Data sheet — 3-state bottom sheet for Prospecting module */}
+      <DataSheet />
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      {/* Bottom nav bar */}
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </>
   )
 }
-
-export default App
